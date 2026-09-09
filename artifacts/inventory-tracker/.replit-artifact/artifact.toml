@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Inventory Tracker"
+description = "A Shopify inventory workspace for tracking product availability across the store and regular wholesaler updates, with SKU matching, status visibility, and supplier data imports."
+version = "1.0.0"
+id = "artifacts/inventory-tracker"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22016
+
+[services.development]
+run = "pnpm --filter @workspace/inventory-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/inventory-tracker", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/inventory-tracker/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22016"
+BASE_PATH = "/"
