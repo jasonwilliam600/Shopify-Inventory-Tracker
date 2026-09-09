@@ -3,20 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Inventory tracking API for Shopify products and wholesaler updates
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: inventory
+    description: Inventory and supplier availability
+  - name: dashboard
+    description: Inventory overview
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +27,142 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get inventory dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [inventory]
+      summary: List inventory items
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, ready, low, unavailable, mismatch, pending]
+            default: all
+        - name: supplier
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+  /inventory/{sku}:
+    get:
+      operationId: getInventoryItem
+      tags: [inventory]
+      summary: Get one inventory item by SKU
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "404":
+          description: Inventory item not found
+  /inventory/{sku}/review:
+    patch:
+      operationId: reviewInventoryItem
+      tags: [inventory]
+      summary: Mark an inventory item as reviewed
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryReviewInput"
+      responses:
+        "200":
+          description: Updated inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "404":
+          description: Inventory item not found
+  /suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [inventory]
+      summary: List suppliers
+      responses:
+        "200":
+          description: Suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplier"
+  /supplier-updates:
+    post:
+      operationId: importSupplierUpdate
+      tags: [inventory]
+      summary: Import wholesaler availability rows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierUpdateInput"
+      responses:
+        "201":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [dashboard]
+      summary: List recent inventory activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
 components:
   schemas:
     HealthStatus:
@@ -31,6 +170,197 @@ components:
       properties:
         status:
           type: string
+      required: [status]
+    Dashboard:
+      type: object
+      properties:
+        totalSkus:
+          type: integer
+        readyToSell:
+          type: integer
+        lowStock:
+          type: integer
+        unavailable:
+          type: integer
+        mismatches:
+          type: integer
+        pendingReview:
+          type: integer
+        lastSupplierUpdate:
+          type: ["string", "null"]
+        shopifyConnected:
+          type: boolean
+        shopifyStoreName:
+          type: ["string", "null"]
       required:
+        - totalSkus
+        - readyToSell
+        - lowStock
+        - unavailable
+        - mismatches
+        - pendingReview
+        - lastSupplierUpdate
+        - shopifyConnected
+        - shopifyStoreName
+    InventoryItem:
+      type: object
+      properties:
+        sku:
+          type: string
+        productName:
+          type: string
+        variant:
+          type: string
+        category:
+          type: string
+        shopifyStock:
+          type: integer
+        supplierStock:
+          type: ["integer", "null"]
+        supplier:
+          type: ["string", "null"]
+        supplierPrice:
+          type: ["number", "null"]
+        supplierEta:
+          type: ["string", "null"]
+        supplierNotes:
+          type: ["string", "null"]
+        supplierUpdatedAt:
+          type: ["string", "null"]
+        importedFields:
+          type: object
+          additionalProperties: true
+        supplierStatus:
+          type: string
+          enum: [available, low, unavailable, unknown]
+        status:
+          type: string
+          enum: [ready, low, unavailable, mismatch, pending]
+        price:
+          type: number
+        updatedAt:
+          type: string
+        reviewedAt:
+          type: ["string", "null"]
+        image:
+          type: string
+      required:
+        - sku
+        - productName
+        - variant
+        - category
+        - shopifyStock
+        - supplierStock
+        - supplier
+        - supplierPrice
+        - supplierEta
+        - supplierNotes
+        - supplierUpdatedAt
+        - importedFields
+        - supplierStatus
         - status
-
+        - price
+        - updatedAt
+        - reviewedAt
+        - image
+    Supplier:
+      type: object
+      properties:
+        name:
+          type: string
+        skuCount:
+          type: integer
+        availableCount:
+          type: integer
+        lastUpdate:
+          type: ["string", "null"]
+      required: [name, skuCount, availableCount, lastUpdate]
+    SupplierUpdateRow:
+      type: object
+      properties:
+        sku:
+          type: string
+          minLength: 1
+        available:
+          type: boolean
+        quantity:
+          type: integer
+          minimum: 0
+        productName:
+          type: ["string", "null"]
+        variant:
+          type: ["string", "null"]
+        supplierPrice:
+          type: ["number", "null"]
+        eta:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        raw:
+          type: object
+          additionalProperties: true
+      required: [sku, available, quantity]
+    SupplierUpdateInput:
+      type: object
+      properties:
+        supplier:
+          type: string
+          minLength: 1
+        fileName:
+          type: string
+          minLength: 1
+        columnMapping:
+          type: object
+          additionalProperties:
+            type: string
+        rows:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SupplierUpdateRow"
+      required: [supplier, fileName, rows]
+    ImportResult:
+      type: object
+      properties:
+        supplier:
+          type: string
+        fileName:
+          type: string
+        totalRows:
+          type: integer
+        matched:
+          type: integer
+        unmatched:
+          type: integer
+        updated:
+          type: integer
+        skipped:
+          type: integer
+        unmatchedSkus:
+          type: array
+          items:
+            type: string
+        lastUpdated:
+          type: string
+      required: [supplier, fileName, totalRows, matched, unmatched, updated, skipped, unmatchedSkus, lastUpdated]
+    InventoryReviewInput:
+      type: object
+      properties:
+        reviewed:
+          type: boolean
+      required: [reviewed]
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [supplier_update, mismatch, review, shopify_sync]
+        title:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+      required: [id, type, title, description, createdAt]
