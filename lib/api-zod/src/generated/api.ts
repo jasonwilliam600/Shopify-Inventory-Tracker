@@ -36,14 +36,23 @@ export const GetDashboardResponse = zod.object({
  * @summary List inventory items
  */
 export const listInventoryQueryStatusDefault = `all`;
+export const listInventoryQueryPageDefault = 1;
+
+export const listInventoryQueryPageSizeDefault = 100;
+export const listInventoryQueryPageSizeMax = 250;
+
+
 
 export const ListInventoryQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "status": zod.enum(['all', 'ready', 'low', 'unavailable', 'mismatch', 'pending']).default(listInventoryQueryStatusDefault),
-  "supplier": zod.coerce.string().optional()
+  "supplier": zod.coerce.string().optional(),
+  "page": zod.coerce.number().int().min(1).default(listInventoryQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listInventoryQueryPageSizeMax).default(listInventoryQueryPageSizeDefault)
 })
 
-export const ListInventoryResponseItem = zod.object({
+export const ListInventoryResponse = zod.object({
+  "items": zod.array(zod.object({
   "sku": zod.string(),
   "productName": zod.string(),
   "variant": zod.string(),
@@ -51,14 +60,23 @@ export const ListInventoryResponseItem = zod.object({
   "shopifyStock": zod.number().int(),
   "supplierStock": zod.number().int().nullable(),
   "supplier": zod.string().nullable(),
+  "supplierPrice": zod.number().nullable(),
+  "supplierEta": zod.string().nullable(),
+  "supplierNotes": zod.string().nullable(),
+  "supplierUpdatedAt": zod.string().nullable(),
+  "importedFields": zod.record(zod.string(), zod.unknown()),
   "supplierStatus": zod.enum(['available', 'low', 'unavailable', 'unknown']),
   "status": zod.enum(['ready', 'low', 'unavailable', 'mismatch', 'pending']),
   "price": zod.number(),
   "updatedAt": zod.string(),
   "reviewedAt": zod.string().nullable(),
   "image": zod.string()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "totalPages": zod.number().int()
 })
-export const ListInventoryResponse = zod.array(ListInventoryResponseItem)
 
 
 /**
@@ -76,6 +94,11 @@ export const GetInventoryItemResponse = zod.object({
   "shopifyStock": zod.number().int(),
   "supplierStock": zod.number().int().nullable(),
   "supplier": zod.string().nullable(),
+  "supplierPrice": zod.number().nullable(),
+  "supplierEta": zod.string().nullable(),
+  "supplierNotes": zod.string().nullable(),
+  "supplierUpdatedAt": zod.string().nullable(),
+  "importedFields": zod.record(zod.string(), zod.unknown()),
   "supplierStatus": zod.enum(['available', 'low', 'unavailable', 'unknown']),
   "status": zod.enum(['ready', 'low', 'unavailable', 'mismatch', 'pending']),
   "price": zod.number(),
@@ -104,6 +127,11 @@ export const ReviewInventoryItemResponse = zod.object({
   "shopifyStock": zod.number().int(),
   "supplierStock": zod.number().int().nullable(),
   "supplier": zod.string().nullable(),
+  "supplierPrice": zod.number().nullable(),
+  "supplierEta": zod.string().nullable(),
+  "supplierNotes": zod.string().nullable(),
+  "supplierUpdatedAt": zod.string().nullable(),
+  "importedFields": zod.record(zod.string(), zod.unknown()),
   "supplierStatus": zod.enum(['available', 'low', 'unavailable', 'unknown']),
   "status": zod.enum(['ready', 'low', 'unavailable', 'mismatch', 'pending']),
   "price": zod.number(),
@@ -130,28 +158,58 @@ export const ListSuppliersResponse = zod.array(ListSuppliersResponseItem)
  */
 
 
+export const importSupplierUpdateBodySourceRowCountMin = 0;
+
+export const importSupplierUpdateBodySkippedRowsMin = 0;
+
 
 export const importSupplierUpdateBodyRowsItemQuantityMin = 0;
-
 
 
 
 export const ImportSupplierUpdateBody = zod.object({
   "supplier": zod.string().min(1),
   "fileName": zod.string().min(1),
+  "columnMapping": zod.record(zod.string(), zod.string()).optional(),
+  "sourceRowCount": zod.number().int().min(importSupplierUpdateBodySourceRowCountMin),
+  "skippedRows": zod.number().int().min(importSupplierUpdateBodySkippedRowsMin),
   "rows": zod.array(zod.object({
   "sku": zod.string().min(1),
   "available": zod.boolean(),
-  "quantity": zod.number().int().min(importSupplierUpdateBodyRowsItemQuantityMin)
-})).min(1)
+  "quantity": zod.number().int().min(importSupplierUpdateBodyRowsItemQuantityMin),
+  "productName": zod.string().nullish(),
+  "variant": zod.string().nullish(),
+  "supplierPrice": zod.number().nullish(),
+  "eta": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "raw": zod.record(zod.string(), zod.unknown()).optional()
+}))
 })
 
 export const ImportSupplierUpdateResponse = zod.object({
   "supplier": zod.string(),
   "fileName": zod.string(),
+  "totalRows": zod.number().int(),
   "matched": zod.number().int(),
   "unmatched": zod.number().int(),
   "updated": zod.number().int(),
+  "skipped": zod.number().int(),
+  "unmatchedSkus": zod.array(zod.string()),
+  "lastUpdated": zod.string()
+})
+
+
+/**
+ * @summary Download and import the newest HobbyTyme inventory export
+ */
+export const RefreshHobbyTymeInventoryResponse = zod.object({
+  "supplier": zod.string(),
+  "fileName": zod.string(),
+  "totalRows": zod.number().int(),
+  "matched": zod.number().int(),
+  "unmatched": zod.number().int(),
+  "updated": zod.number().int(),
+  "skipped": zod.number().int(),
   "unmatchedSkus": zod.array(zod.string()),
   "lastUpdated": zod.string()
 })

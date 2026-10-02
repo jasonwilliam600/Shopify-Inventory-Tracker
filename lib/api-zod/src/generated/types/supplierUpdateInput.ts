@@ -5,6 +5,7 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+import type { SupplierUpdateInputColumnMapping } from './supplierUpdateInputColumnMapping';
 import type { SupplierUpdateRow } from './supplierUpdateRow';
 
 export interface SupplierUpdateInput {
@@ -12,6 +13,10 @@ export interface SupplierUpdateInput {
   supplier: string;
   /** @minLength 1 */
   fileName: string;
-  /** @minItems 1 */
+  columnMapping?: SupplierUpdateInputColumnMapping;
+  /** @minimum 0 */
+  sourceRowCount: number;
+  /** @minimum 0 */
+  skippedRows: number;
   rows: SupplierUpdateRow[];
 }

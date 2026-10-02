@@ -23,6 +23,8 @@ export interface Dashboard {
   shopifyStoreName: string | null;
 }
 
+export type InventoryItemImportedFields = { [key: string]: unknown };
+
 export type InventoryItemSupplierStatus = typeof InventoryItemSupplierStatus[keyof typeof InventoryItemSupplierStatus];
 
 
@@ -54,6 +56,15 @@ export interface InventoryItem {
   supplierStock: number | null;
   /** @nullable */
   supplier: string | null;
+  /** @nullable */
+  supplierPrice: number | null;
+  /** @nullable */
+  supplierEta: string | null;
+  /** @nullable */
+  supplierNotes: string | null;
+  /** @nullable */
+  supplierUpdatedAt: string | null;
+  importedFields: InventoryItemImportedFields;
   supplierStatus: InventoryItemSupplierStatus;
   status: InventoryItemStatus;
   price: number;
@@ -61,6 +72,14 @@ export interface InventoryItem {
   /** @nullable */
   reviewedAt: string | null;
   image: string;
+}
+
+export interface InventoryPage {
+  items: InventoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface Supplier {
@@ -71,29 +90,50 @@ export interface Supplier {
   lastUpdate: string | null;
 }
 
+export type SupplierUpdateRowRaw = { [key: string]: unknown };
+
 export interface SupplierUpdateRow {
   /** @minLength 1 */
   sku: string;
   available: boolean;
   /** @minimum 0 */
   quantity: number;
+  /** @nullable */
+  productName?: string | null;
+  /** @nullable */
+  variant?: string | null;
+  /** @nullable */
+  supplierPrice?: number | null;
+  /** @nullable */
+  eta?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  raw?: SupplierUpdateRowRaw;
 }
+
+export type SupplierUpdateInputColumnMapping = {[key: string]: string};
 
 export interface SupplierUpdateInput {
   /** @minLength 1 */
   supplier: string;
   /** @minLength 1 */
   fileName: string;
-  /** @minItems 1 */
+  columnMapping?: SupplierUpdateInputColumnMapping;
+  /** @minimum 0 */
+  sourceRowCount: number;
+  /** @minimum 0 */
+  skippedRows: number;
   rows: SupplierUpdateRow[];
 }
 
 export interface ImportResult {
   supplier: string;
   fileName: string;
+  totalRows: number;
   matched: number;
   unmatched: number;
   updated: number;
+  skipped: number;
   unmatchedSkus: string[];
   lastUpdated: string;
 }
@@ -124,6 +164,15 @@ export type ListInventoryParams = {
 search?: string;
 status?: ListInventoryStatus;
 supplier?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 250
+ */
+pageSize?: number;
 };
 
 export type ListInventoryStatus = typeof ListInventoryStatus[keyof typeof ListInventoryStatus];

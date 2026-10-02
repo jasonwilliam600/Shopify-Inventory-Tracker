@@ -11,4 +11,13 @@ export type ListInventoryParams = {
 search?: string;
 status?: ListInventoryStatus;
 supplier?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 250
+ */
+pageSize?: number;
 };

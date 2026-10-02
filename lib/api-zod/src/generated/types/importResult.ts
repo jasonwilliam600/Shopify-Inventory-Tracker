@@ -9,9 +9,11 @@
 export interface ImportResult {
   supplier: string;
   fileName: string;
+  totalRows: number;
   matched: number;
   unmatched: number;
   updated: number;
+  skipped: number;
   unmatchedSkus: string[];
   lastUpdated: string;
 }

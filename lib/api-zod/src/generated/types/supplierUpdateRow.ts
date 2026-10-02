@@ -5,6 +5,7 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+import type { SupplierUpdateRowRaw } from './supplierUpdateRowRaw';
 
 export interface SupplierUpdateRow {
   /** @minLength 1 */
@@ -12,4 +13,15 @@ export interface SupplierUpdateRow {
   available: boolean;
   /** @minimum 0 */
   quantity: number;
+  /** @nullable */
+  productName?: string | null;
+  /** @nullable */
+  variant?: string | null;
+  /** @nullable */
+  supplierPrice?: number | null;
+  /** @nullable */
+  eta?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  raw?: SupplierUpdateRowRaw;
 }

@@ -1,6 +1,6 @@
-# [Project name]
+# Inventory Tracker
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Tracks Shopify-facing inventory against wholesaler availability updates, preserving supplier rows and highlighting mismatches that need review.
 
 ## Run & Operate
 
@@ -22,15 +22,25 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/inventory-tracker/` — React inventory dashboard and supplier import experience
+- `artifacts/api-server/src/routes/inventory.ts` — inventory, dashboard, supplier import, and activity API handlers
+- `lib/api-spec/openapi.yaml` — API source of truth
+- `lib/db/src/schema/inventory.ts` — inventory, supplier, and activity persistence
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Shopify remains the product and store inventory source of truth once connected.
+- Supplier imports retain unmatched SKUs as pending records instead of dropping them.
+- The original supplier fields are preserved alongside mapped SKU, quantity, availability, price, ETA, and notes.
+- Shopify webhooks are not available through the connector, so store sync should remain user-driven.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Dashboard for inventory health, urgent mismatches, and recent update activity
+- Searchable inventory comparison between Shopify and supplier availability
+- Flexible wholesaler CSV import with column mapping, quoted-field parsing, row accounting, and unmatched SKU retention
+- Supplier history with availability counts and last update timestamps
+- Protected HobbyTyme refresh that selects the newest export, imports unique SKUs, and runs every six hours
 
 ## User preferences
 
@@ -38,7 +48,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Re-run `pnpm --filter @workspace/api-spec run codegen` after every OpenAPI change.
+- Do not ask for Shopify credentials; use the Replit Shopify Store integration when the user is ready to connect.
+- HobbyTyme credentials belong only in `HOBBYTYME_USERNAME` and `HOBBYTYME_PASSWORD` Secrets; never surface them in logs or browser code.
 
 ## Pointers
 

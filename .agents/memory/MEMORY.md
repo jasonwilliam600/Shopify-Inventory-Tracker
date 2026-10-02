@@ -1,0 +1,1 @@
+- [HobbyTyme export behavior](hobbytyme-export.md) — the protected feed has duplicate SKUs and bounded-text stock values that must be normalized before bulk import.

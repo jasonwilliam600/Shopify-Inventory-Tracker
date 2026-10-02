@@ -25,6 +25,7 @@ import type {
   HealthStatus,
   ImportResult,
   InventoryItem,
+  InventoryPage,
   InventoryReviewInput,
   ListInventoryParams,
   Supplier,
@@ -230,9 +231,9 @@ export const getListInventoryUrl = (params?: ListInventoryParams,) => {
 /**
  * @summary List inventory items
  */
-export const listInventory = async (params?: ListInventoryParams, options?: Parameters<typeof customFetch>[1]): Promise<InventoryItem[]> => {
+export const listInventory = async (params?: ListInventoryParams, options?: Parameters<typeof customFetch>[1]): Promise<InventoryPage> => {
 
-  return customFetch<InventoryItem[]>(getListInventoryUrl(params),
+  return customFetch<InventoryPage>(getListInventoryUrl(params),
   {
     ...options,
     method: 'GET'
@@ -591,6 +592,77 @@ export const useImportSupplierUpdate = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getImportSupplierUpdateMutationOptions(options));
+    }
+
+export const getRefreshHobbyTymeInventoryUrl = () => {
+
+
+
+
+  return `/api/supplier-updates/hobbytyme/refresh`
+}
+
+/**
+ * @summary Download and import the newest HobbyTyme inventory export
+ */
+export const refreshHobbyTymeInventory = async ( options?: Parameters<typeof customFetch>[1]): Promise<ImportResult> => {
+
+  return customFetch<ImportResult>(getRefreshHobbyTymeInventoryUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRefreshHobbyTymeInventoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshHobbyTymeInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshHobbyTymeInventory>>, TError,void, TContext> => {
+
+const mutationKey = ['refreshHobbyTymeInventory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshHobbyTymeInventory>>, void> = () => {
+
+
+          return  refreshHobbyTymeInventory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshHobbyTymeInventoryMutationResult = NonNullable<Awaited<ReturnType<typeof refreshHobbyTymeInventory>>>
+
+    export type RefreshHobbyTymeInventoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Download and import the newest HobbyTyme inventory export
+ */
+export const useRefreshHobbyTymeInventory = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshHobbyTymeInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refreshHobbyTymeInventory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRefreshHobbyTymeInventoryMutationOptions(options));
     }
 
 export const getListActivityUrl = () => {

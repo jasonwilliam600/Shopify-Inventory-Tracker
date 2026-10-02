@@ -5,6 +5,7 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+import type { InventoryItemImportedFields } from './inventoryItemImportedFields';
 import type { InventoryItemStatus } from './inventoryItemStatus';
 import type { InventoryItemSupplierStatus } from './inventoryItemSupplierStatus';
 
@@ -18,6 +19,15 @@ export interface InventoryItem {
   supplierStock: number | null;
   /** @nullable */
   supplier: string | null;
+  /** @nullable */
+  supplierPrice: number | null;
+  /** @nullable */
+  supplierEta: string | null;
+  /** @nullable */
+  supplierNotes: string | null;
+  /** @nullable */
+  supplierUpdatedAt: string | null;
+  importedFields: InventoryItemImportedFields;
   supplierStatus: InventoryItemSupplierStatus;
   status: InventoryItemStatus;
   price: number;
