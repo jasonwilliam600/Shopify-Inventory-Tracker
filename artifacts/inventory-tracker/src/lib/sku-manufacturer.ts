@@ -7,7 +7,7 @@ const heartlandPrefixes = [...HEARTLAND_MANUFACTURERS.keys()].sort((a, b) => b.l
 export function getSkuManufacturer(sku: string, supplier?: string | null, sourceName?: string | null): { prefix: string | null; name: string | null; sharedPrefix?: boolean } {
   const identifier = sku.trim().toUpperCase()
   if (sourceName?.trim()) return { prefix: identifier.match(/^([A-Z0-9+]+)[/:\s_-]/)?.[1] ?? null, name: sourceName.trim() }
-  if (supplier === "Walthers") return { prefix: identifier.match(/^([A-Z0-9+]+)[/:\s_-]/)?.[1] ?? null, name: null }
+  if (supplier === "Walthers" || supplier === "MMD/Squadron") return { prefix: identifier.match(/^([A-Z0-9+]+)[/:\s_-]/)?.[1] ?? null, name: null }
   if (supplier === "Heartland Hobby Wholesale") {
     // Heartland part numbers can start with letters (AANA103), and the
     // six-character RMXCCN code must take precedence over RMX.

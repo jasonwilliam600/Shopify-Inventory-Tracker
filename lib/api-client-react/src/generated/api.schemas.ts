@@ -5,10 +5,10 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
-export type WalthersRefreshStatusState = typeof WalthersRefreshStatusState[keyof typeof WalthersRefreshStatusState];
+export type MmdRefreshStatusState = typeof MmdRefreshStatusState[keyof typeof MmdRefreshStatusState];
 
 
-export const WalthersRefreshStatusState = {
+export const MmdRefreshStatusState = {
   idle: 'idle',
   running: 'running',
   complete: 'complete',
@@ -26,6 +26,29 @@ export interface ImportResult {
   unmatchedSkus: string[];
   lastUpdated: string;
 }
+
+export interface MmdRefreshStatus {
+  state: MmdRefreshStatusState;
+  /** @nullable */
+  startedAt: string | null;
+  fetchedRows: number;
+  totalRows: number;
+  /** @nullable */
+  error: string | null;
+  /** @nullable */
+  warning?: string | null;
+  result: ImportResult | null;
+}
+
+export type WalthersRefreshStatusState = typeof WalthersRefreshStatusState[keyof typeof WalthersRefreshStatusState];
+
+
+export const WalthersRefreshStatusState = {
+  idle: 'idle',
+  running: 'running',
+  complete: 'complete',
+  failed: 'failed',
+} as const;
 
 export interface WalthersRefreshStatus {
   state: WalthersRefreshStatusState;

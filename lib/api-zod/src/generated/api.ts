@@ -398,6 +398,54 @@ export const GetWalthersRefreshStatusResponse = zod.object({
 
 
 /**
+ * @summary Start an independent MMD/Squadron dealer inventory refresh
+ */
+export const RefreshMmdInventoryResponse = zod.object({
+  "state": zod.enum(['idle', 'running', 'complete', 'failed']),
+  "startedAt": zod.coerce.date().nullable(),
+  "fetchedRows": zod.number().int(),
+  "totalRows": zod.number().int(),
+  "error": zod.string().nullable(),
+  "warning": zod.string().nullish(),
+  "result": zod.union([zod.object({
+  "supplier": zod.string(),
+  "fileName": zod.string(),
+  "totalRows": zod.number().int(),
+  "matched": zod.number().int(),
+  "unmatched": zod.number().int(),
+  "updated": zod.number().int(),
+  "skipped": zod.number().int(),
+  "unmatchedSkus": zod.array(zod.string()),
+  "lastUpdated": zod.string()
+}),zod.null()])
+})
+
+
+/**
+ * @summary Get MMD/Squadron refresh progress and result
+ */
+export const GetMmdRefreshStatusResponse = zod.object({
+  "state": zod.enum(['idle', 'running', 'complete', 'failed']),
+  "startedAt": zod.coerce.date().nullable(),
+  "fetchedRows": zod.number().int(),
+  "totalRows": zod.number().int(),
+  "error": zod.string().nullable(),
+  "warning": zod.string().nullish(),
+  "result": zod.union([zod.object({
+  "supplier": zod.string(),
+  "fileName": zod.string(),
+  "totalRows": zod.number().int(),
+  "matched": zod.number().int(),
+  "unmatched": zod.number().int(),
+  "updated": zod.number().int(),
+  "skipped": zod.number().int(),
+  "unmatchedSkus": zod.array(zod.string()),
+  "lastUpdated": zod.string()
+}),zod.null()])
+})
+
+
+/**
  * @summary List recent inventory activity
  */
 export const ListActivityResponseItem = zod.object({

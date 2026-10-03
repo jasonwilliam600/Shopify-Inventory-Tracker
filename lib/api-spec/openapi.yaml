@@ -269,6 +269,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WalthersRefreshStatus"
+  /supplier-updates/mmd/refresh:
+    post:
+      operationId: refreshMmdInventory
+      tags: [inventory]
+      summary: Start an independent MMD/Squadron dealer inventory refresh
+      responses:
+        "202":
+          description: MMD import started or already running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MmdRefreshStatus"
+  /supplier-updates/mmd/status:
+    get:
+      operationId: getMmdRefreshStatus
+      tags: [inventory]
+      summary: Get MMD/Squadron refresh progress and result
+      responses:
+        "200":
+          description: Current MMD refresh state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MmdRefreshStatus"
   /activity:
     get:
       operationId: listActivity
@@ -285,6 +309,24 @@ paths:
                   $ref: "#/components/schemas/Activity"
 components:
   schemas:
+    MmdRefreshStatus:
+      type: object
+      required: [state, startedAt, fetchedRows, totalRows, result, error]
+      properties:
+        state:
+          type: string
+          enum: [idle, running, complete, failed]
+        startedAt:
+          type: ["string", "null"]
+          format: date-time
+        fetchedRows: { type: integer }
+        totalRows: { type: integer }
+        error: { type: ["string", "null"] }
+        warning: { type: ["string", "null"] }
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/ImportResult"
+            - type: "null"
     WalthersRefreshStatus:
       type: object
       required: [state, startedAt, fetchedRows, totalRows, result, error]

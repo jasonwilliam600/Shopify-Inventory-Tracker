@@ -7,3 +7,4 @@
 - [Independent wholesalers](multiple-wholesalers.md) — preserve each wholesaler's stock and pricing, including overlapping SKUs; do not overwrite another supplier.
 - [Manufacturer names](manufacturer-names.md) — show Heartland manufacturer names across inventory views; keep manufacturers distinct from distributors.
 - [Walthers dealer data](walthers-dealer-data.md) — revalidate bulk exports; authenticated catalog searches have a 5,000-result window and need complete facet coverage.
+- [MMD/Squadron dealer data](mmd-dealer-data.md) — stock exports contain MSRP, not cost; use authenticated catalog pricing and report coverage gaps.

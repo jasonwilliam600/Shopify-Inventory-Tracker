@@ -31,6 +31,7 @@ import type {
   InventoryReviewInput,
   ListInventoryGroupsParams,
   ListInventoryParams,
+  MmdRefreshStatus,
   Supplier,
   SupplierUpdateInput,
   WalthersRefreshStatus
@@ -1037,6 +1038,154 @@ export function useGetWalthersRefreshStatus<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWalthersRefreshStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRefreshMmdInventoryUrl = () => {
+
+
+
+
+  return `/api/supplier-updates/mmd/refresh`
+}
+
+/**
+ * @summary Start an independent MMD/Squadron dealer inventory refresh
+ */
+export const refreshMmdInventory = async ( options?: Parameters<typeof customFetch>[1]): Promise<MmdRefreshStatus> => {
+
+  return customFetch<MmdRefreshStatus>(getRefreshMmdInventoryUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRefreshMmdInventoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshMmdInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshMmdInventory>>, TError,void, TContext> => {
+
+const mutationKey = ['refreshMmdInventory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshMmdInventory>>, void> = () => {
+
+
+          return  refreshMmdInventory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshMmdInventoryMutationResult = NonNullable<Awaited<ReturnType<typeof refreshMmdInventory>>>
+
+    export type RefreshMmdInventoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Start an independent MMD/Squadron dealer inventory refresh
+ */
+export const useRefreshMmdInventory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshMmdInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refreshMmdInventory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRefreshMmdInventoryMutationOptions(options));
+    }
+
+export const getGetMmdRefreshStatusUrl = () => {
+
+
+
+
+  return `/api/supplier-updates/mmd/status`
+}
+
+/**
+ * @summary Get MMD/Squadron refresh progress and result
+ */
+export const getMmdRefreshStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<MmdRefreshStatus> => {
+
+  return customFetch<MmdRefreshStatus>(getGetMmdRefreshStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMmdRefreshStatusQueryKey = () => {
+    return [
+    `/api/supplier-updates/mmd/status`
+    ] as const;
+    }
+
+
+export const getGetMmdRefreshStatusQueryOptions = <TData = Awaited<ReturnType<typeof getMmdRefreshStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMmdRefreshStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMmdRefreshStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMmdRefreshStatus>>> = ({ signal }) => getMmdRefreshStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMmdRefreshStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMmdRefreshStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getMmdRefreshStatus>>>
+export type GetMmdRefreshStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get MMD/Squadron refresh progress and result
+ */
+
+export function useGetMmdRefreshStatus<TData = Awaited<ReturnType<typeof getMmdRefreshStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMmdRefreshStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMmdRefreshStatusQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

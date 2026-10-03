@@ -10,6 +10,7 @@ import { Label } from "@radix-ui/react-label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UploadCloud, CheckCircle2, AlertCircle, FileText, ArrowRight, X, RefreshCw } from "lucide-react"
 import { useGetWalthersRefreshStatus, useRefreshWalthersInventory, getGetWalthersRefreshStatusQueryKey, getListInventoryGroupsQueryKey } from "@workspace/api-client-react"
+import { useGetMmdRefreshStatus, useRefreshMmdInventory, getGetMmdRefreshStatusQueryKey } from "@workspace/api-client-react"
 
 type CsvRow = Record<string, string>
 
@@ -64,6 +65,28 @@ export default function Suppliers() {
     query: { queryKey: getListSuppliersQueryKey(), staleTime: 30_000, refetchInterval: 60_000 },
   })
   const queryClient = useQueryClient()
+  const lastCompletedMmdRefresh = useRef<string | null>(null)
+  const { data: mmdJob } = useGetMmdRefreshStatus({
+    query: {
+      queryKey: getGetMmdRefreshStatusQueryKey(),
+      refetchInterval: (query) => query.state.data?.state === "running" ? 3_000 : 60_000,
+    },
+  })
+  const mmdMutation = useRefreshMmdInventory({
+    mutation: {
+      onSuccess: (job) => {
+        queryClient.setQueryData(getGetMmdRefreshStatusQueryKey(), job)
+        queryClient.invalidateQueries({ queryKey: getGetMmdRefreshStatusQueryKey() })
+      },
+    },
+  })
+  React.useEffect(() => {
+    if (mmdJob?.state !== "complete" || !mmdJob.startedAt || lastCompletedMmdRefresh.current === String(mmdJob.startedAt)) return
+    lastCompletedMmdRefresh.current = String(mmdJob.startedAt)
+    for (const key of [getListSuppliersQueryKey(), getListActivityQueryKey(), getGetDashboardQueryKey(), getListInventoryQueryKey(), getListInventoryGroupsQueryKey()]) {
+      queryClient.invalidateQueries({ queryKey: key })
+    }
+  }, [mmdJob, queryClient])
   const lastCompletedWalthersRefresh = useRef<string | null>(null)
   const { data: walthersJob } = useGetWalthersRefreshStatus({
     query: {
@@ -249,6 +272,15 @@ export default function Suppliers() {
         </div>
         <div className="flex flex-wrap gap-2">
         <Button
+          onClick={() => mmdMutation.mutate()}
+          disabled={mmdMutation.isPending || mmdJob?.state === "running"}
+          className="gap-2"
+          data-testid="button-refresh-mmd"
+        >
+          <RefreshCw className={`h-4 w-4 ${mmdMutation.isPending || mmdJob?.state === "running" ? "animate-spin" : ""}`} />
+          {mmdMutation.isPending || mmdJob?.state === "running" ? "Refreshing MMD/Squadron..." : "Refresh MMD/Squadron"}
+        </Button>
+        <Button
           onClick={() => walthersMutation.mutate()}
           disabled={walthersMutation.isPending || walthersJob?.state === "running"}
           className="gap-2"
@@ -282,6 +314,25 @@ export default function Suppliers() {
       <p className="text-sm text-muted-foreground" data-testid="text-walthers-refresh-schedule">
         Walthers inventory refreshes automatically every hour while the server is running. You can also refresh it manually at any time. Quantities remain in Walthers product units; store SKU and pack-size mappings are not assumed.
       </p>
+      <p className="text-sm text-muted-foreground" data-testid="text-mmd-refresh-schedule">
+        MMD/Squadron inventory refreshes automatically every hour while the server is running, using its stock export and authenticated dealer catalog. You can also refresh it manually at any time. Prefix mappings and pack-size rules are not applied.
+      </p>
+      {mmdJob?.state === "running" && (
+        <div role="status" className="rounded-md border bg-muted/30 p-4 text-sm" data-testid="text-mmd-progress">
+          Downloading MMD/Squadron inventory and checking dealer prices: {mmdJob.fetchedRows.toLocaleString()} catalog products checked against {mmdJob.totalRows ? mmdJob.totalRows.toLocaleString() : "…"} stock-export SKUs. This may take several minutes; you may leave this page while it continues.
+        </div>
+      )}
+      {mmdJob?.state === "complete" && mmdJob.result && (
+        <div role="status" className="rounded-md border border-success/30 bg-success/5 p-4 text-sm" data-testid="text-mmd-success">
+          MMD/Squadron refreshed: {mmdJob.result.updated.toLocaleString()} independent supplier SKUs imported. Other suppliers were preserved.
+          {mmdJob.warning && <p className="mt-2 font-medium text-amber-800">{mmdJob.warning}</p>}
+        </div>
+      )}
+      {(mmdMutation.isError || mmdJob?.state === "failed") && (
+        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm" data-testid="text-mmd-error">
+          MMD/Squadron could not be refreshed. Previous inventory was preserved. {mmdJob?.state === "failed" ? mmdJob.error : mmdMutation.error?.message}
+        </div>
+      )}
       {walthersJob?.state === "running" && (
         <div role="status" className="rounded-md border bg-muted/30 p-4 text-sm" data-testid="text-walthers-progress">
           Downloading Walthers dealer inventory: {walthersJob.fetchedRows.toLocaleString()} of {walthersJob.totalRows ? walthersJob.totalRows.toLocaleString() : "…"} records. This can take several minutes; you may leave this page while the import continues.

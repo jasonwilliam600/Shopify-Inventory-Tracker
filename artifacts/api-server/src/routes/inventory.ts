@@ -23,10 +23,13 @@ import {
   ReviewInventoryItemResponse,
   GetWalthersRefreshStatusResponse,
   RefreshWalthersInventoryResponse,
+  GetMmdRefreshStatusResponse,
+  RefreshMmdInventoryResponse,
 } from "@workspace/api-zod";
 import { refreshHobbyTymeInventory } from "../lib/hobbytyme";
 import { refreshHeartlandInventory } from "../lib/heartland";
 import { getWalthersRefreshStatus, startWalthersRefresh } from "../lib/walthers";
+import { getMmdRefreshStatus, startMmdRefresh } from "../lib/mmd";
 import { mapSupplierSkuToStore, mappedStoreSkuExpression } from "../lib/sku-mapping";
 
 const router: IRouter = Router();
@@ -457,6 +460,14 @@ router.post("/supplier-updates/walthers/refresh", requireSupplierMutationAccess,
 
 router.get("/supplier-updates/walthers/status", (_req, res) => {
   res.json(GetWalthersRefreshStatusResponse.parse(getWalthersRefreshStatus()));
+});
+
+router.post("/supplier-updates/mmd/refresh", requireSupplierMutationAccess, (_req, res) => {
+  res.status(202).json(RefreshMmdInventoryResponse.parse(startMmdRefresh()));
+});
+
+router.get("/supplier-updates/mmd/status", (_req, res) => {
+  res.json(GetMmdRefreshStatusResponse.parse(getMmdRefreshStatus()));
 });
 
 router.get("/activity", async (_req, res): Promise<void> => {
