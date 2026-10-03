@@ -11,6 +11,13 @@ import type { InventoryItemSupplierStatus } from './inventoryItemSupplierStatus'
 
 export interface InventoryItem {
   sku: string;
+  /**
+     * Merchant-prefix conversion candidate, not a verified store match
+     * @nullable
+     */
+  mappedStoreSku?: string | null;
+  /** Multiple original SKUs within one supplier convert to this store SKU */
+  skuMappingConflict?: boolean;
   productName: string;
   variant: string;
   category: string;

@@ -5,6 +5,131 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+export type WalthersRefreshStatusState = typeof WalthersRefreshStatusState[keyof typeof WalthersRefreshStatusState];
+
+
+export const WalthersRefreshStatusState = {
+  idle: 'idle',
+  running: 'running',
+  complete: 'complete',
+  failed: 'failed',
+} as const;
+
+export interface ImportResult {
+  supplier: string;
+  fileName: string;
+  totalRows: number;
+  matched: number;
+  unmatched: number;
+  updated: number;
+  skipped: number;
+  unmatchedSkus: string[];
+  lastUpdated: string;
+}
+
+export interface WalthersRefreshStatus {
+  state: WalthersRefreshStatusState;
+  /** @nullable */
+  startedAt: string | null;
+  fetchedRows: number;
+  totalRows: number;
+  /** @nullable */
+  error: string | null;
+  /** @nullable */
+  warning?: string | null;
+  result: ImportResult | null;
+}
+
+export interface DistributorStock {
+  supplier: string;
+  sourceSku: string;
+  /** @nullable */
+  manufacturerName?: string | null;
+  /** Proposed distributor location label, not an assigned Shopify location. */
+  locationName: string;
+  /** @nullable */
+  shopifyLocationId: string | null;
+  /** @nullable */
+  reportedQuantity: number | null;
+  /** @nullable */
+  countedQuantity: number | null;
+  supplierStatus: string;
+  /** @nullable */
+  supplierUpdatedAt: string | null;
+  /** @nullable */
+  wholesalePrice: number | null;
+  mappingConflict: boolean;
+  /** Quantity is a lower bound from the feed, not an exact count. */
+  boundedQuantity: boolean;
+}
+
+export type InventoryGroupMappingState = typeof InventoryGroupMappingState[keyof typeof InventoryGroupMappingState];
+
+
+export const InventoryGroupMappingState = {
+  candidate: 'candidate',
+  unmapped: 'unmapped',
+  conflict: 'conflict',
+} as const;
+
+export type InventoryGroupStatus = typeof InventoryGroupStatus[keyof typeof InventoryGroupStatus];
+
+
+export const InventoryGroupStatus = {
+  available: 'available',
+  unavailable: 'unavailable',
+  review: 'review',
+} as const;
+
+export interface InventoryGroup {
+  groupKey: string;
+  sku: string;
+  /** @nullable */
+  mappedStoreSku: string | null;
+  productName: string;
+  variant: string;
+  mappingState: InventoryGroupMappingState;
+  status: InventoryGroupStatus;
+  /**
+     * Feed availability preview; null when any offer has unknown quantity or a same-supplier collision.
+     * @nullable
+     */
+  distributorTotal: number | null;
+  knownSubtotal: number;
+  /**
+     * Actual verified Shopify quantity; unavailable while disconnected.
+     * @nullable
+     */
+  shopifySellableStock: number | null;
+  boundedQuantity: boolean;
+  distributors: DistributorStock[];
+  /** Distributors with no matching imported record, not confirmed zero stock. */
+  missingSuppliers: string[];
+}
+
+export interface InventoryPublishingState {
+  shopifyConnected: boolean;
+  publishingEnabled: boolean;
+  /** @nullable */
+  blockingReason: string | null;
+  prerequisites: string[];
+}
+
+export interface InventoryGroupPage {
+  items: InventoryGroup[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  suppliers: string[];
+  publishing: InventoryPublishingState;
+}
+
+export interface InventoryGroupDetail {
+  item: InventoryGroup;
+  publishing: InventoryPublishingState;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -48,6 +173,13 @@ export const InventoryItemStatus = {
 
 export interface InventoryItem {
   sku: string;
+  /**
+     * Merchant-prefix conversion candidate, not a verified store match
+     * @nullable
+     */
+  mappedStoreSku?: string | null;
+  /** Multiple original SKUs within one supplier convert to this store SKU */
+  skuMappingConflict?: boolean;
   productName: string;
   variant: string;
   category: string;
@@ -126,18 +258,6 @@ export interface SupplierUpdateInput {
   rows: SupplierUpdateRow[];
 }
 
-export interface ImportResult {
-  supplier: string;
-  fileName: string;
-  totalRows: number;
-  matched: number;
-  unmatched: number;
-  updated: number;
-  skipped: number;
-  unmatchedSkus: string[];
-  lastUpdated: string;
-}
-
 export interface InventoryReviewInput {
   reviewed: boolean;
 }
@@ -165,6 +285,10 @@ search?: string;
 status?: ListInventoryStatus;
 supplier?: string;
 /**
+ * Supplier-imported records only; this is not proof that a SKU is absent from Shopify.
+ */
+source?: ListInventorySource;
+/**
  * @minimum 1
  */
 page?: number;
@@ -185,5 +309,44 @@ export const ListInventoryStatus = {
   unavailable: 'unavailable',
   mismatch: 'mismatch',
   pending: 'pending',
+} as const;
+
+export type ListInventorySource = typeof ListInventorySource[keyof typeof ListInventorySource];
+
+
+export const ListInventorySource = {
+  supplier: 'supplier',
+} as const;
+
+export type ListInventoryGroupsParams = {
+/**
+ * @maxLength 200
+ */
+search?: string;
+/**
+ * Select groups containing this supplier; totals retain all distributors.
+ * @maxLength 200
+ */
+supplier?: string;
+status?: ListInventoryGroupsStatus;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
+};
+
+export type ListInventoryGroupsStatus = typeof ListInventoryGroupsStatus[keyof typeof ListInventoryGroupsStatus];
+
+
+export const ListInventoryGroupsStatus = {
+  all: 'all',
+  available: 'available',
+  unavailable: 'unavailable',
+  review: 'review',
 } as const;
 

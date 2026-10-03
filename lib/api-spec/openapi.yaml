@@ -62,6 +62,13 @@ paths:
           required: false
           schema:
             type: string
+        - name: source
+          in: query
+          required: false
+          description: Supplier-imported records only; this is not proof that a SKU is absent from Shopify.
+          schema:
+            type: string
+            enum: [supplier]
         - name: page
           in: query
           required: false
@@ -84,6 +91,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InventoryPage"
+  /inventory-groups:
+    get:
+      operationId: listInventoryGroups
+      tags: [inventory]
+      summary: Group distributor offers by full store-format candidate SKU
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string, maxLength: 200 }
+        - name: supplier
+          in: query
+          description: Select groups containing this supplier; totals retain all distributors.
+          schema: { type: string, maxLength: 200 }
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, available, unavailable, review], default: all }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        "200":
+          description: Distributor stock preview, not published Shopify inventory
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InventoryGroupPage" }
+        "400":
+          description: Invalid query
+  /inventory-groups/{groupKey}:
+    get:
+      operationId: getInventoryGroup
+      tags: [inventory]
+      summary: Get all distributor offers for an inventory group
+      parameters:
+        - name: groupKey
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Group detail with publishing prerequisites
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InventoryGroupDetail" }
+        "404":
+          description: Group not found
   /inventory/{sku}:
     get:
       operationId: getInventoryItem
@@ -176,6 +231,44 @@ paths:
                 $ref: "#/components/schemas/ImportResult"
         "502":
           description: HobbyTyme export could not be fetched or parsed
+  /supplier-updates/heartland/refresh:
+    post:
+      operationId: refreshHeartlandInventory
+      tags: [inventory]
+      summary: Download Heartland inventory without replacing other suppliers
+      responses:
+        "201":
+          description: Heartland import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+        "502":
+          description: Heartland export could not be fetched or parsed
+  /supplier-updates/walthers/refresh:
+    post:
+      operationId: refreshWalthersInventory
+      tags: [inventory]
+      summary: Start a background Walthers dealer inventory refresh
+      responses:
+        "202":
+          description: Walthers import started or already running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalthersRefreshStatus"
+  /supplier-updates/walthers/status:
+    get:
+      operationId: getWalthersRefreshStatus
+      tags: [inventory]
+      summary: Get progress or the result of the Walthers refresh
+      responses:
+        "200":
+          description: Current Walthers refresh state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalthersRefreshStatus"
   /activity:
     get:
       operationId: listActivity
@@ -192,6 +285,101 @@ paths:
                   $ref: "#/components/schemas/Activity"
 components:
   schemas:
+    WalthersRefreshStatus:
+      type: object
+      required: [state, startedAt, fetchedRows, totalRows, result, error]
+      properties:
+        state:
+          type: string
+          enum: [idle, running, complete, failed]
+        startedAt:
+          type: ["string", "null"]
+          format: date-time
+        fetchedRows: { type: integer }
+        totalRows: { type: integer }
+        error: { type: ["string", "null"] }
+        warning: { type: ["string", "null"] }
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/ImportResult"
+            - type: "null"
+    DistributorStock:
+      type: object
+      required: [supplier, sourceSku, locationName, shopifyLocationId, reportedQuantity, countedQuantity, supplierStatus, supplierUpdatedAt, wholesalePrice, mappingConflict, boundedQuantity]
+      properties:
+        supplier: { type: string }
+        sourceSku: { type: string }
+        manufacturerName: { type: ["string", "null"] }
+        locationName:
+          type: string
+          description: Proposed distributor location label, not an assigned Shopify location.
+        shopifyLocationId: { type: ["string", "null"] }
+        reportedQuantity: { type: ["integer", "null"] }
+        countedQuantity: { type: ["integer", "null"] }
+        supplierStatus: { type: string }
+        supplierUpdatedAt: { type: ["string", "null"], format: date-time }
+        wholesalePrice: { type: ["number", "null"] }
+        mappingConflict: { type: boolean }
+        boundedQuantity:
+          type: boolean
+          description: Quantity is a lower bound from the feed, not an exact count.
+    InventoryGroup:
+      type: object
+      required: [groupKey, sku, mappedStoreSku, productName, variant, mappingState, status, distributorTotal, knownSubtotal, shopifySellableStock, boundedQuantity, distributors, missingSuppliers]
+      properties:
+        groupKey: { type: string }
+        sku: { type: string }
+        mappedStoreSku: { type: ["string", "null"] }
+        productName: { type: string }
+        variant: { type: string }
+        mappingState: { type: string, enum: [candidate, unmapped, conflict] }
+        status: { type: string, enum: [available, unavailable, review] }
+        distributorTotal:
+          type: ["integer", "null"]
+          description: Feed availability preview; null when any offer has unknown quantity or a same-supplier collision.
+        knownSubtotal: { type: integer }
+        shopifySellableStock:
+          type: ["integer", "null"]
+          description: Actual verified Shopify quantity; unavailable while disconnected.
+        boundedQuantity: { type: boolean }
+        distributors:
+          type: array
+          items: { $ref: "#/components/schemas/DistributorStock" }
+        missingSuppliers:
+          type: array
+          description: Distributors with no matching imported record, not confirmed zero stock.
+          items: { type: string }
+    InventoryPublishingState:
+      type: object
+      required: [shopifyConnected, publishingEnabled, blockingReason, prerequisites]
+      properties:
+        shopifyConnected: { type: boolean }
+        publishingEnabled: { type: boolean }
+        blockingReason: { type: ["string", "null"] }
+        prerequisites:
+          type: array
+          items: { type: string }
+    InventoryGroupPage:
+      type: object
+      required: [items, total, page, pageSize, totalPages, suppliers, publishing]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InventoryGroup" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalPages: { type: integer }
+        suppliers:
+          type: array
+          items: { type: string }
+        publishing: { $ref: "#/components/schemas/InventoryPublishingState" }
+    InventoryGroupDetail:
+      type: object
+      required: [item, publishing]
+      properties:
+        item: { $ref: "#/components/schemas/InventoryGroup" }
+        publishing: { $ref: "#/components/schemas/InventoryPublishingState" }
     HealthStatus:
       type: object
       properties:
@@ -234,6 +422,12 @@ components:
       properties:
         sku:
           type: string
+        mappedStoreSku:
+          type: ["string", "null"]
+          description: Merchant-prefix conversion candidate, not a verified store match
+        skuMappingConflict:
+          type: boolean
+          description: Multiple original SKUs within one supplier convert to this store SKU
         productName:
           type: string
         variant:

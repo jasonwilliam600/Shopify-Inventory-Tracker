@@ -47,6 +47,7 @@ export const ListInventoryQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "status": zod.enum(['all', 'ready', 'low', 'unavailable', 'mismatch', 'pending']).default(listInventoryQueryStatusDefault),
   "supplier": zod.coerce.string().optional(),
+  "source": zod.enum(['supplier']).optional().describe('Supplier-imported records only; this is not proof that a SKU is absent from Shopify.'),
   "page": zod.coerce.number().int().min(1).default(listInventoryQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listInventoryQueryPageSizeMax).default(listInventoryQueryPageSizeDefault)
 })
@@ -54,6 +55,8 @@ export const ListInventoryQueryParams = zod.object({
 export const ListInventoryResponse = zod.object({
   "items": zod.array(zod.object({
   "sku": zod.string(),
+  "mappedStoreSku": zod.string().nullish().describe('Merchant-prefix conversion candidate, not a verified store match'),
+  "skuMappingConflict": zod.boolean().optional().describe('Multiple original SKUs within one supplier convert to this store SKU'),
   "productName": zod.string(),
   "variant": zod.string(),
   "category": zod.string(),
@@ -80,6 +83,117 @@ export const ListInventoryResponse = zod.object({
 
 
 /**
+ * @summary Group distributor offers by full store-format candidate SKU
+ */
+export const listInventoryGroupsQuerySearchMax = 200;
+
+export const listInventoryGroupsQuerySupplierMax = 200;
+
+export const listInventoryGroupsQueryStatusDefault = `all`;
+export const listInventoryGroupsQueryPageDefault = 1;
+
+export const listInventoryGroupsQueryPageSizeDefault = 25;
+export const listInventoryGroupsQueryPageSizeMax = 100;
+
+
+
+export const ListInventoryGroupsQueryParams = zod.object({
+  "search": zod.coerce.string().max(listInventoryGroupsQuerySearchMax).optional(),
+  "supplier": zod.coerce.string().max(listInventoryGroupsQuerySupplierMax).optional().describe('Select groups containing this supplier; totals retain all distributors.'),
+  "status": zod.enum(['all', 'available', 'unavailable', 'review']).default(listInventoryGroupsQueryStatusDefault),
+  "page": zod.coerce.number().int().min(1).default(listInventoryGroupsQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listInventoryGroupsQueryPageSizeMax).default(listInventoryGroupsQueryPageSizeDefault)
+})
+
+export const ListInventoryGroupsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "groupKey": zod.string(),
+  "sku": zod.string(),
+  "mappedStoreSku": zod.string().nullable(),
+  "productName": zod.string(),
+  "variant": zod.string(),
+  "mappingState": zod.enum(['candidate', 'unmapped', 'conflict']),
+  "status": zod.enum(['available', 'unavailable', 'review']),
+  "distributorTotal": zod.number().int().nullable().describe('Feed availability preview; null when any offer has unknown quantity or a same-supplier collision.'),
+  "knownSubtotal": zod.number().int(),
+  "shopifySellableStock": zod.number().int().nullable().describe('Actual verified Shopify quantity; unavailable while disconnected.'),
+  "boundedQuantity": zod.boolean(),
+  "distributors": zod.array(zod.object({
+  "supplier": zod.string(),
+  "sourceSku": zod.string(),
+  "manufacturerName": zod.string().nullish(),
+  "locationName": zod.string().describe('Proposed distributor location label, not an assigned Shopify location.'),
+  "shopifyLocationId": zod.string().nullable(),
+  "reportedQuantity": zod.number().int().nullable(),
+  "countedQuantity": zod.number().int().nullable(),
+  "supplierStatus": zod.string(),
+  "supplierUpdatedAt": zod.coerce.date().nullable(),
+  "wholesalePrice": zod.number().nullable(),
+  "mappingConflict": zod.boolean(),
+  "boundedQuantity": zod.boolean().describe('Quantity is a lower bound from the feed, not an exact count.')
+})),
+  "missingSuppliers": zod.array(zod.string()).describe('Distributors with no matching imported record, not confirmed zero stock.')
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "totalPages": zod.number().int(),
+  "suppliers": zod.array(zod.string()),
+  "publishing": zod.object({
+  "shopifyConnected": zod.boolean(),
+  "publishingEnabled": zod.boolean(),
+  "blockingReason": zod.string().nullable(),
+  "prerequisites": zod.array(zod.string())
+})
+})
+
+
+/**
+ * @summary Get all distributor offers for an inventory group
+ */
+export const GetInventoryGroupParams = zod.object({
+  "groupKey": zod.coerce.string()
+})
+
+export const GetInventoryGroupResponse = zod.object({
+  "item": zod.object({
+  "groupKey": zod.string(),
+  "sku": zod.string(),
+  "mappedStoreSku": zod.string().nullable(),
+  "productName": zod.string(),
+  "variant": zod.string(),
+  "mappingState": zod.enum(['candidate', 'unmapped', 'conflict']),
+  "status": zod.enum(['available', 'unavailable', 'review']),
+  "distributorTotal": zod.number().int().nullable().describe('Feed availability preview; null when any offer has unknown quantity or a same-supplier collision.'),
+  "knownSubtotal": zod.number().int(),
+  "shopifySellableStock": zod.number().int().nullable().describe('Actual verified Shopify quantity; unavailable while disconnected.'),
+  "boundedQuantity": zod.boolean(),
+  "distributors": zod.array(zod.object({
+  "supplier": zod.string(),
+  "sourceSku": zod.string(),
+  "manufacturerName": zod.string().nullish(),
+  "locationName": zod.string().describe('Proposed distributor location label, not an assigned Shopify location.'),
+  "shopifyLocationId": zod.string().nullable(),
+  "reportedQuantity": zod.number().int().nullable(),
+  "countedQuantity": zod.number().int().nullable(),
+  "supplierStatus": zod.string(),
+  "supplierUpdatedAt": zod.coerce.date().nullable(),
+  "wholesalePrice": zod.number().nullable(),
+  "mappingConflict": zod.boolean(),
+  "boundedQuantity": zod.boolean().describe('Quantity is a lower bound from the feed, not an exact count.')
+})),
+  "missingSuppliers": zod.array(zod.string()).describe('Distributors with no matching imported record, not confirmed zero stock.')
+}),
+  "publishing": zod.object({
+  "shopifyConnected": zod.boolean(),
+  "publishingEnabled": zod.boolean(),
+  "blockingReason": zod.string().nullable(),
+  "prerequisites": zod.array(zod.string())
+})
+})
+
+
+/**
  * @summary Get one inventory item by SKU
  */
 export const GetInventoryItemParams = zod.object({
@@ -88,6 +202,8 @@ export const GetInventoryItemParams = zod.object({
 
 export const GetInventoryItemResponse = zod.object({
   "sku": zod.string(),
+  "mappedStoreSku": zod.string().nullish().describe('Merchant-prefix conversion candidate, not a verified store match'),
+  "skuMappingConflict": zod.boolean().optional().describe('Multiple original SKUs within one supplier convert to this store SKU'),
   "productName": zod.string(),
   "variant": zod.string(),
   "category": zod.string(),
@@ -121,6 +237,8 @@ export const ReviewInventoryItemBody = zod.object({
 
 export const ReviewInventoryItemResponse = zod.object({
   "sku": zod.string(),
+  "mappedStoreSku": zod.string().nullish().describe('Merchant-prefix conversion candidate, not a verified store match'),
+  "skuMappingConflict": zod.boolean().optional().describe('Multiple original SKUs within one supplier convert to this store SKU'),
   "productName": zod.string(),
   "variant": zod.string(),
   "category": zod.string(),
@@ -212,6 +330,70 @@ export const RefreshHobbyTymeInventoryResponse = zod.object({
   "skipped": zod.number().int(),
   "unmatchedSkus": zod.array(zod.string()),
   "lastUpdated": zod.string()
+})
+
+
+/**
+ * @summary Download Heartland inventory without replacing other suppliers
+ */
+export const RefreshHeartlandInventoryResponse = zod.object({
+  "supplier": zod.string(),
+  "fileName": zod.string(),
+  "totalRows": zod.number().int(),
+  "matched": zod.number().int(),
+  "unmatched": zod.number().int(),
+  "updated": zod.number().int(),
+  "skipped": zod.number().int(),
+  "unmatchedSkus": zod.array(zod.string()),
+  "lastUpdated": zod.string()
+})
+
+
+/**
+ * @summary Start a background Walthers dealer inventory refresh
+ */
+export const RefreshWalthersInventoryResponse = zod.object({
+  "state": zod.enum(['idle', 'running', 'complete', 'failed']),
+  "startedAt": zod.coerce.date().nullable(),
+  "fetchedRows": zod.number().int(),
+  "totalRows": zod.number().int(),
+  "error": zod.string().nullable(),
+  "warning": zod.string().nullish(),
+  "result": zod.union([zod.object({
+  "supplier": zod.string(),
+  "fileName": zod.string(),
+  "totalRows": zod.number().int(),
+  "matched": zod.number().int(),
+  "unmatched": zod.number().int(),
+  "updated": zod.number().int(),
+  "skipped": zod.number().int(),
+  "unmatchedSkus": zod.array(zod.string()),
+  "lastUpdated": zod.string()
+}),zod.null()])
+})
+
+
+/**
+ * @summary Get progress or the result of the Walthers refresh
+ */
+export const GetWalthersRefreshStatusResponse = zod.object({
+  "state": zod.enum(['idle', 'running', 'complete', 'failed']),
+  "startedAt": zod.coerce.date().nullable(),
+  "fetchedRows": zod.number().int(),
+  "totalRows": zod.number().int(),
+  "error": zod.string().nullable(),
+  "warning": zod.string().nullish(),
+  "result": zod.union([zod.object({
+  "supplier": zod.string(),
+  "fileName": zod.string(),
+  "totalRows": zod.number().int(),
+  "matched": zod.number().int(),
+  "unmatched": zod.number().int(),
+  "updated": zod.number().int(),
+  "skipped": zod.number().int(),
+  "unmatchedSkus": zod.array(zod.string()),
+  "lastUpdated": zod.string()
+}),zod.null()])
 })
 
 

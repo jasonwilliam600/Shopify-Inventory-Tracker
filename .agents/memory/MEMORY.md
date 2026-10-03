@@ -1,1 +1,9 @@
 - [HobbyTyme export behavior](hobbytyme-export.md) — the protected feed has duplicate SKUs and bounded-text stock values that must be normalized before bulk import.
+- [Existing Shopify store](shopify-existing-store.md) — store provisioning creates a new shop; verify connector purpose and shop identity before syncing.
+- [SKU matching and wholesale units](sku-units.md) — retail paints sell individually; supplier packs need verified unit semantics and full-identifier mappings.
+- [SKU prefix mappings](sku-prefix-mappings.md) — merchant-provided prefix pairs; confirm direction and separators before applying.
+- [Store dashboard metrics](dashboard-metrics.md) — Total SKUs means the store catalog, never supplier totals or historical import records.
+- [Dashboard visual direction](dashboard-visual-direction.md) — preserve the refined theme; the racing-themed alternative was rejected.
+- [Independent wholesalers](multiple-wholesalers.md) — preserve each wholesaler's stock and pricing, including overlapping SKUs; do not overwrite another supplier.
+- [Manufacturer names](manufacturer-names.md) — show Heartland manufacturer names across inventory views; keep manufacturers distinct from distributors.
+- [Walthers dealer data](walthers-dealer-data.md) — revalidate bulk exports; authenticated catalog searches have a 5,000-result window and need complete facet coverage.

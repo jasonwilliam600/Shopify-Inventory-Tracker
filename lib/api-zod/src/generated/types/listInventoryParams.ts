@@ -5,12 +5,17 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+import type { ListInventorySource } from './listInventorySource';
 import type { ListInventoryStatus } from './listInventoryStatus';
 
 export type ListInventoryParams = {
 search?: string;
 status?: ListInventoryStatus;
 supplier?: string;
+/**
+ * Supplier-imported records only; this is not proof that a SKU is absent from Shopify.
+ */
+source?: ListInventorySource;
 /**
  * @minimum 1
  */

@@ -1,6 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startHobbyTymeRefreshScheduler } from "./lib/hobbytyme";
+import { startHeartlandRefreshScheduler } from "./lib/heartland";
+import { initializeSupplierInventory } from "./lib/supplier-inventory";
 
 const rawPort = process.env["PORT"];
 
@@ -16,7 +18,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
+initializeSupplierInventory().then(() => app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
@@ -24,4 +26,8 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   startHobbyTymeRefreshScheduler();
+  startHeartlandRefreshScheduler();
+})).catch((err) => {
+  logger.error({ err }, "Supplier inventory initialization failed");
+  process.exit(1);
 });

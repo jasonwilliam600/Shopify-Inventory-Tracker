@@ -16,19 +16,23 @@ export function Layout({ children }: LayoutProps) {
   ]
 
   return (
-    <div className="flex min-h-[100dvh] w-full bg-background">
+    <div className="flex min-h-[100dvh] w-full flex-col bg-background md:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r bg-card flex flex-col">
+      <aside className="w-full flex-shrink-0 border-b bg-card flex flex-col md:w-64 md:border-b-0 md:border-r">
         <div className="h-16 flex items-center px-6 border-b">
           <div className="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground">
-              <PackageSearch className="w-5 h-5" />
-            </div>
-            OPS_CONTROL
+            <img
+              src={`${import.meta.env.BASE_URL}app-logo.webp`}
+              alt="Top Speed Hobbies logo"
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 rounded-lg object-contain"
+            />
+            <span className="text-base leading-tight">THS Inventory Sync</span>
           </div>
         </div>
         
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+        <nav className="flex flex-1 gap-1 overflow-x-auto p-2 md:block md:space-y-1 md:overflow-y-auto md:p-4">
           {navItems.map((item) => {
             const isActive = location === item.href
             return (
@@ -49,7 +53,7 @@ export function Layout({ children }: LayoutProps) {
           })}
         </nav>
         
-        <div className="p-4 border-t">
+        <div className="hidden p-4 border-t md:block">
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted cursor-pointer">
             <Settings className="w-4 h-4" />
             Settings
@@ -71,7 +75,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </header>
         
-        <div className="flex-1 overflow-auto p-8 bg-background">
+        <div className={cn("flex-1 overflow-auto bg-background", location === "/" ? "p-0" : "p-4 md:p-8")}>
           <div className="max-w-7xl mx-auto space-y-8">
             {children}
           </div>

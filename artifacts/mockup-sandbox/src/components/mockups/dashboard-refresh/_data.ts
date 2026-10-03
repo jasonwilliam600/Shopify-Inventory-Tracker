@@ -1,0 +1,5 @@
+export const dashboard = {totalSkus:63449,readyToSell:1,lowStock:1,unavailable:0,mismatches:1,pendingReview:63446,lastSupplierUpdate:"2026-10-02T20:26:59.817Z",shopifyConnected:false,shopifyStoreName:null};
+export const activities = [{id:"9",type:"supplier_update",title:"HobbyTyme inventory refreshed",description:"63245 rows kept from InventoryExport_10_2_2026_16_13_10.csv",createdAt:"2026-10-02T20:26:59.817Z"},{id:"8",type:"supplier_update",title:"HobbyTyme inventory refreshed",description:"63245 rows kept from InventoryExport_10_2_2026_15_7_12.csv",createdAt:"2026-10-02T19:16:57.380Z"},{id:"7",type:"supplier_update",title:"HobbyTyme inventory refreshed",description:"63098 rows kept from InventoryExport_9_13_2026_19_10_8.csv",createdAt:"2026-09-13T23:45:14.795Z"}];
+export function useGetDashboard(){return {data:dashboard,isLoading:false}}
+export function useListActivity(){return {data:activities,isLoading:false}}
+export function useHealthCheck(){return {data:{status:"ok"},isLoading:false}}

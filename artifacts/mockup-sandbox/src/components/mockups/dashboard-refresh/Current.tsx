@@ -1,8 +1,9 @@
-import { useGetDashboard, useListActivity, useHealthCheck } from "@workspace/api-client-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { AlertCircle, ArrowUpRight, Box, CheckCircle2, Clock, RefreshCw, ShoppingCart, Store, XCircle } from "lucide-react"
-import { Link } from "wouter"
+import { useGetDashboard, useListActivity, useHealthCheck } from "./_data"
+import "./_group.css"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./_cards"
+import { AlertCircle, ArrowUpRight, Box, CheckCircle2, Clock, RefreshCw, ShoppingCart, Store } from "lucide-react"
+import type { ReactNode } from "react"
+function Link({children}: {href: string; children: ReactNode}) { return <div>{children}</div> }
 import { formatDistanceToNow } from "date-fns"
 
 export default function Dashboard() {
@@ -26,7 +27,7 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-background p-6 text-foreground font-sans"><div className="space-y-6">
       {/* Header and Connection Status */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
@@ -157,6 +158,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div></div>
   )
 }

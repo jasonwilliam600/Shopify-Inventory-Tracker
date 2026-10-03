@@ -1,10 +1,11 @@
 import { Router, type IRouter, type RequestHandler } from "express";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, or, sql } from "drizzle-orm";
 import {
   db,
   inventoryActivityTable,
   inventoryItemsTable,
   suppliersTable,
+  supplierInventoryTable,
   type InventoryItemRecord,
 } from "@workspace/db";
 import {
@@ -20,8 +21,13 @@ import {
   ReviewInventoryItemBody,
   ReviewInventoryItemParams,
   ReviewInventoryItemResponse,
+  GetWalthersRefreshStatusResponse,
+  RefreshWalthersInventoryResponse,
 } from "@workspace/api-zod";
 import { refreshHobbyTymeInventory } from "../lib/hobbytyme";
+import { refreshHeartlandInventory } from "../lib/heartland";
+import { getWalthersRefreshStatus, startWalthersRefresh } from "../lib/walthers";
+import { mapSupplierSkuToStore, mappedStoreSkuExpression } from "../lib/sku-mapping";
 
 const router: IRouter = Router();
 const supplierMutationAttempts = new Map<
@@ -64,6 +70,7 @@ const requireSupplierMutationAccess: RequestHandler = (req, res, next) => {
 function serializeInventoryItem(item: InventoryItemRecord) {
   return {
     ...item,
+    mappedStoreSku: mapSupplierSkuToStore(item.sku, item.supplier),
     supplierUpdatedAt: item.supplierUpdatedAt?.toISOString() ?? null,
     updatedAt: item.updatedAt.toISOString(),
     reviewedAt: item.reviewedAt?.toISOString() ?? null,
@@ -124,6 +131,39 @@ router.get("/inventory", async (req, res): Promise<void> => {
     return;
   }
 
+  if (parsed.data.source === "supplier") {
+    const table = supplierInventoryTable;
+    const mappedSku = mappedStoreSkuExpression(table.sku, table.supplier);
+    const conditions = [];
+    if (parsed.data.search) {
+      const term = `%${parsed.data.search}%`;
+      conditions.push(or(ilike(table.sku, term), ilike(table.productName, term), ilike(table.variant, term), sql`${mappedSku} ILIKE ${term}`));
+    }
+    if (parsed.data.supplier) conditions.push(eq(table.supplier, parsed.data.supplier));
+    if (parsed.data.status && parsed.data.status !== "all") conditions.push(eq(table.status, parsed.data.status));
+    const where = conditions.length ? and(...conditions) : undefined;
+    const [count] = await db.select({ total: sql<number>`count(*)::int` }).from(table).where(where);
+    const total = count?.total ?? 0;
+    const pageSize = parsed.data.pageSize ?? 100;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(parsed.data.page ?? 1, totalPages);
+    const items = await db.select().from(table).where(where)
+      .orderBy(asc(table.sku), asc(table.supplier)).limit(pageSize).offset((page - 1) * pageSize);
+    const candidateSkus = [...new Set(items.map((item) => mapSupplierSkuToStore(item.sku, item.supplier)).filter((sku): sku is string => sku !== null))];
+    const conflicts = candidateSkus.length ? await db.select({
+      mappedSku: mappedSku.as("mapped_store_sku"), supplier: table.supplier,
+    }).from(table).where(sql`${mappedSku} IN (${sql.join(candidateSkus.map((sku) => sql`${sku}`), sql`, `)})`)
+      .groupBy(table.supplier, sql`mapped_store_sku`).having(sql`count(*) > 1`) : [];
+    const conflictKeys = new Set(conflicts.map((row) => `${row.supplier}:${row.mappedSku}`));
+    res.json(ListInventoryResponse.parse({
+      items: items.map((item) => ({
+        ...serializeInventoryItem(item),
+        skuMappingConflict: conflictKeys.has(`${item.supplier}:${mapSupplierSkuToStore(item.sku, item.supplier)}`),
+      })), total, page, pageSize, totalPages,
+    }));
+    return;
+  }
+
   const filters = [];
   if (parsed.data.search) {
     const term = `%${parsed.data.search}%`;
@@ -132,6 +172,7 @@ router.get("/inventory", async (req, res): Promise<void> => {
         ilike(inventoryItemsTable.sku, term),
         ilike(inventoryItemsTable.productName, term),
         ilike(inventoryItemsTable.variant, term),
+        sql`${mappedStoreSkuExpression(inventoryItemsTable.sku, inventoryItemsTable.supplier)} ILIKE ${term}`,
       ),
     );
   }
@@ -156,7 +197,9 @@ router.get("/inventory", async (req, res): Promise<void> => {
     .select()
     .from(inventoryItemsTable)
     .where(where)
-    .orderBy(desc(inventoryItemsTable.updatedAt), asc(inventoryItemsTable.sku))
+    .orderBy(
+      desc(inventoryItemsTable.updatedAt), asc(inventoryItemsTable.sku),
+    )
     .limit(pageSize)
     .offset((resolvedPage - 1) * pageSize);
 
@@ -226,14 +269,14 @@ router.get("/suppliers", async (_req, res): Promise<void> => {
   const response = await db
     .select({
       name: suppliersTable.name,
-      skuCount: sql<number>`count(${inventoryItemsTable.sku})::int`,
-      availableCount: sql<number>`count(${inventoryItemsTable.sku}) filter (where ${inventoryItemsTable.supplierStatus} in ('available', 'low'))::int`,
+      skuCount: sql<number>`count(${supplierInventoryTable.sku})::int`,
+      availableCount: sql<number>`count(${supplierInventoryTable.sku}) filter (where ${supplierInventoryTable.supplierStatus} in ('available', 'low'))::int`,
       lastUpdate: suppliersTable.lastUpdate,
     })
     .from(suppliersTable)
     .leftJoin(
-      inventoryItemsTable,
-      eq(inventoryItemsTable.supplier, suppliersTable.name),
+      supplierInventoryTable,
+      eq(supplierInventoryTable.supplier, suppliersTable.name),
     )
     .groupBy(suppliersTable.name, suppliersTable.lastUpdate)
     .orderBy(desc(suppliersTable.lastUpdate));
@@ -278,7 +321,22 @@ router.post(
           ? ("low" as const)
           : ("available" as const);
 
-      if (existing) {
+      const offer = {
+        sku: row.sku, supplier: parsed.data.supplier,
+        productName: row.productName ?? existing?.productName ?? `Supplier item ${row.sku}`,
+        variant: row.variant ?? "Default", category: "Supplier import",
+        supplierStock: row.quantity, supplierStatus,
+        supplierPrice: row.supplierPrice ?? null, supplierEta: row.eta ?? null,
+        supplierNotes: row.notes ?? null, supplierUpdatedAt: now, updatedAt: now,
+        importedFields: row.raw ?? {},
+      };
+      await tx.insert(supplierInventoryTable).values(offer).onConflictDoUpdate({
+        target: [supplierInventoryTable.supplier, supplierInventoryTable.sku],
+        set: offer,
+      });
+      if (existing && existing.supplier && existing.supplier !== parsed.data.supplier) {
+        matched += 1;
+      } else if (existing) {
         matched += 1;
         await tx
           .update(inventoryItemsTable)
@@ -362,6 +420,19 @@ router.post(
 );
 
 router.post(
+  "/supplier-updates/heartland/refresh",
+  requireSupplierMutationAccess,
+  async (req, res): Promise<void> => {
+    try {
+      res.status(201).json(ImportSupplierUpdateResponse.parse(await refreshHeartlandInventory()));
+    } catch (error) {
+      req.log.error({ err: error }, "Heartland refresh failed");
+      res.status(502).json({ error: error instanceof Error ? error.message : "Heartland inventory refresh failed" });
+    }
+  },
+);
+
+router.post(
   "/supplier-updates/hobbytyme/refresh",
   requireSupplierMutationAccess,
   async (req, res): Promise<void> => {
@@ -379,6 +450,14 @@ router.post(
     }
   },
 );
+
+router.post("/supplier-updates/walthers/refresh", requireSupplierMutationAccess, (_req, res) => {
+  res.status(202).json(RefreshWalthersInventoryResponse.parse(startWalthersRefresh()));
+});
+
+router.get("/supplier-updates/walthers/status", (_req, res) => {
+  res.json(GetWalthersRefreshStatusResponse.parse(getWalthersRefreshStatus()));
+});
 
 router.get("/activity", async (_req, res): Promise<void> => {
   const activity = await db

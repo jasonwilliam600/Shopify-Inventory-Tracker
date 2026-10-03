@@ -12,7 +12,7 @@ import {
 } from 'wouter';
 
 import { Layout } from "@/components/layout";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/store-dashboard";
 import Inventory from "@/pages/inventory";
 import Suppliers from "@/pages/suppliers";
 

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useState, useRef } from "react"
-import { useListSuppliers, useImportSupplierUpdate, useRefreshHobbyTymeInventory, getListSuppliersQueryKey, getListActivityQueryKey, getGetDashboardQueryKey, getListInventoryQueryKey } from "@workspace/api-client-react"
+import { useListSuppliers, useImportSupplierUpdate, useRefreshHobbyTymeInventory, useRefreshHeartlandInventory, getListSuppliersQueryKey, getListActivityQueryKey, getGetDashboardQueryKey, getListInventoryQueryKey } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@radix-ui/react-label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UploadCloud, CheckCircle2, AlertCircle, FileText, ArrowRight, X, RefreshCw } from "lucide-react"
+import { useGetWalthersRefreshStatus, useRefreshWalthersInventory, getGetWalthersRefreshStatusQueryKey, getListInventoryGroupsQueryKey } from "@workspace/api-client-react"
 
 type CsvRow = Record<string, string>
 
@@ -59,8 +60,32 @@ function rowsToObjects(rows: string[][]): { headers: string[]; rows: CsvRow[] } 
 }
 
 export default function Suppliers() {
-  const { data: suppliers, isLoading } = useListSuppliers()
+  const { data: suppliers, isLoading } = useListSuppliers({
+    query: { queryKey: getListSuppliersQueryKey(), staleTime: 30_000, refetchInterval: 60_000 },
+  })
   const queryClient = useQueryClient()
+  const lastCompletedWalthersRefresh = useRef<string | null>(null)
+  const { data: walthersJob } = useGetWalthersRefreshStatus({
+    query: {
+      queryKey: getGetWalthersRefreshStatusQueryKey(),
+      refetchInterval: (query) => query.state.data?.state === "running" ? 3_000 : 60_000,
+    },
+  })
+  const walthersMutation = useRefreshWalthersInventory({
+    mutation: {
+      onSuccess: (job) => {
+        queryClient.setQueryData(getGetWalthersRefreshStatusQueryKey(), job)
+        queryClient.invalidateQueries({ queryKey: getGetWalthersRefreshStatusQueryKey() })
+      },
+    },
+  })
+  React.useEffect(() => {
+    if (walthersJob?.state !== "complete" || !walthersJob.startedAt || lastCompletedWalthersRefresh.current === String(walthersJob.startedAt)) return
+    lastCompletedWalthersRefresh.current = String(walthersJob.startedAt)
+    for (const key of [getListSuppliersQueryKey(), getListActivityQueryKey(), getGetDashboardQueryKey(), getListInventoryQueryKey(), getListInventoryGroupsQueryKey()]) {
+      queryClient.invalidateQueries({ queryKey: key })
+    }
+  }, [walthersJob, queryClient])
 
   // File Import State
   const [file, setFile] = useState<File | null>(null)
@@ -102,6 +127,18 @@ export default function Suppliers() {
   })
 
   // Required mapping fields for the backend
+  const heartlandMutation = useRefreshHeartlandInventory({
+    mutation: {
+      onSuccess: (result) => {
+        setImportResult(result)
+        queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() })
+        queryClient.invalidateQueries({ queryKey: getListActivityQueryKey() })
+        queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() })
+        queryClient.invalidateQueries({ queryKey: getListInventoryQueryKey() })
+      },
+    },
+  })
+
   const requiredFields = [
     { key: 'sku', label: 'SKU (Required)' },
     { key: 'quantity', label: 'Quantity (Required)' }
@@ -210,6 +247,24 @@ export default function Suppliers() {
           <h2 className="text-2xl font-semibold tracking-tight text-foreground">Supplier Operations</h2>
           <p className="text-sm text-muted-foreground">Manage suppliers and import inventory updates.</p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => walthersMutation.mutate()}
+          disabled={walthersMutation.isPending || walthersJob?.state === "running"}
+          className="gap-2"
+          data-testid="button-refresh-walthers"
+        >
+          <RefreshCw className={`h-4 w-4 ${walthersMutation.isPending || walthersJob?.state === "running" ? "animate-spin" : ""}`} />
+          {walthersMutation.isPending || walthersJob?.state === "running" ? "Refreshing Walthers..." : "Refresh Walthers"}
+        </Button>
+        <Button
+          onClick={() => heartlandMutation.mutate()}
+          disabled={heartlandMutation.isPending}
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${heartlandMutation.isPending ? "animate-spin" : ""}`} />
+          {heartlandMutation.isPending ? "Refreshing Heartland..." : "Refresh Heartland"}
+        </Button>
         <Button
           onClick={() => hobbyTymeMutation.mutate()}
           disabled={hobbyTymeMutation.isPending}
@@ -218,7 +273,37 @@ export default function Suppliers() {
           <RefreshCw className={`h-4 w-4 ${hobbyTymeMutation.isPending ? "animate-spin" : ""}`} />
           {hobbyTymeMutation.isPending ? "Refreshing HobbyTyme..." : "Refresh HobbyTyme"}
         </Button>
+        </div>
       </div>
+
+      <p className="text-sm text-muted-foreground" data-testid="text-heartland-refresh-schedule">
+        Heartland inventory refreshes automatically every 30 minutes while the server is running. You can also refresh it manually at any time.
+      </p>
+      <p className="text-sm text-muted-foreground">
+        Walthers refreshes on demand using its authenticated dealer catalog. Quantities remain in Walthers product units; store SKU and pack-size mappings are not assumed.
+      </p>
+      {walthersJob?.state === "running" && (
+        <div role="status" className="rounded-md border bg-muted/30 p-4 text-sm" data-testid="text-walthers-progress">
+          Downloading Walthers dealer inventory: {walthersJob.fetchedRows.toLocaleString()} of {walthersJob.totalRows ? walthersJob.totalRows.toLocaleString() : "…"} records. This can take several minutes; you may leave this page while the import continues.
+        </div>
+      )}
+      {walthersJob?.state === "complete" && walthersJob.result && (
+        <div role="status" className="rounded-md border border-success/30 bg-success/5 p-4 text-sm" data-testid="text-walthers-success">
+          Walthers refreshed: {walthersJob.result.updated.toLocaleString()} supplier SKUs imported. Heartland and HobbyTyme inventory was preserved.
+          {walthersJob.warning && <p className="mt-2 font-medium text-amber-800">{walthersJob.warning}</p>}
+        </div>
+      )}
+      {(walthersMutation.isError || walthersJob?.state === "failed") && (
+        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Walthers could not be refreshed. Previous supplier inventory has been preserved. {walthersJob?.state === "failed" ? walthersJob.error : walthersMutation.error?.message}
+        </div>
+      )}
+
+      {heartlandMutation.isError && (
+        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Heartland could not be refreshed. Previous supplier inventory has been preserved. {heartlandMutation.error.message}
+        </div>
+      )}
 
       {hobbyTymeMutation.isError && (
         <div className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">

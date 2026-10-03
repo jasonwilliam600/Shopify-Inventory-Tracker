@@ -41,6 +41,7 @@ Tracks Shopify-facing inventory against wholesaler availability updates, preserv
 - Flexible wholesaler CSV import with column mapping, quoted-field parsing, row accounting, and unmatched SKU retention
 - Supplier history with availability counts and last update timestamps
 - Protected HobbyTyme refresh that selects the newest export, imports unique SKUs, and runs every six hours
+- Heartland dealer export with manual refresh; supplier catalog retains each wholesaler's stock and pricing independently.
 
 ## User preferences
 
@@ -51,6 +52,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - Re-run `pnpm --filter @workspace/api-spec run codegen` after every OpenAPI change.
 - Do not ask for Shopify credentials; use the Replit Shopify Store integration when the user is ready to connect.
 - HobbyTyme credentials belong only in `HOBBYTYME_USERNAME` and `HOBBYTYME_PASSWORD` Secrets; never surface them in logs or browser code.
+- Heartland credentials belong only in `HEARTLAND_USERNAME` and `HEARTLAND_PASSWORD` Secrets; dealer access is read-only.
 
 ## Pointers
 

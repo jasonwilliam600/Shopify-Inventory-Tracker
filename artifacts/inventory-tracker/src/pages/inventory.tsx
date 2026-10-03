@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useListInventory, useReviewInventoryItem, getListInventoryQueryKey, getGetDashboardQueryKey, useGetInventoryItem, getGetInventoryItemQueryKey } from "@workspace/api-client-react"
+import { useListInventory, useReviewInventoryItem, getListInventoryQueryKey, getGetDashboardQueryKey, useGetInventoryItem, getGetInventoryItemQueryKey, useGetDashboard } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
@@ -8,10 +8,14 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Check, Info, Search, AlertTriangle, ArrowRightLeft, X, Box, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, AlertTriangle, Box, ChevronLeft, ChevronRight } from "lucide-react"
 import React from "react"
+import InventoryGroups from "./inventory-groups"
+import { SkuManufacturerLabel } from "@/components/sku-manufacturer-label"
 
-export default function Inventory() {
+function SourceReviewView() {
+  const { data: dashboard } = useGetDashboard({ query: { queryKey: getGetDashboardQueryKey(), staleTime: 30_000 } })
+  const shopifyConnected = dashboard?.shopifyConnected ?? false
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -92,8 +96,8 @@ export default function Inventory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Inventory Master</h2>
-          <p className="text-sm text-muted-foreground">Search and review inventory discrepancies.</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Source review</h2>
+          <p className="text-sm text-muted-foreground">Review imported supplier records. Marking reviewed does not update Shopify.</p>
         </div>
         
         <div className="flex gap-2 w-full sm:w-auto">
@@ -128,7 +132,7 @@ export default function Inventory() {
           <span data-testid="text-inventory-total">
             {inventoryPage?.total ?? 0} RECORDS FOUND
           </span>
-          <span className="uppercase tracking-wider">Sync Priority: High</span>
+          <span className="uppercase tracking-wider">Imported source records</span>
         </div>
         <Table>
           <TableHeader>
@@ -160,15 +164,21 @@ export default function Inventory() {
             ) : (
               inventory?.map((item) => (
                 <TableRow key={item.sku} className="group">
-                  <TableCell className="font-mono text-sm font-medium">{item.sku}</TableCell>
+                  <TableCell className="font-mono text-sm font-medium">
+                    {item.mappedStoreSku ?? item.sku}
+                    {item.mappedStoreSku && item.mappedStoreSku !== item.sku && (
+                      <div className="mt-1 text-xs font-normal text-muted-foreground">Supplier: {item.sku} · Store candidate</div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium truncate max-w-[200px]" title={item.productName}>{item.productName}</span>
+                      <SkuManufacturerLabel sku={item.sku} supplier={item.supplier} sourceFields={item.importedFields} />
                       <span className="text-xs text-muted-foreground">{item.variant}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-base">{item.shopifyStock}</span>
+                    <span className="font-mono text-base" title={shopifyConnected ? undefined : "Shopify is disconnected; stock is unavailable"}>{shopifyConnected ? item.shopifyStock : "—"}</span>
                   </TableCell>
                   <TableCell>
                     <span className={`font-mono text-base ${item.supplierStock !== item.shopifyStock ? 'text-warning font-bold' : ''}`}>
@@ -190,7 +200,7 @@ export default function Inventory() {
                         onClick={() => handleReview(item.sku)}
                         disabled={reviewMutation.isPending}
                       >
-                        Accept
+                        Mark reviewed
                       </Button>
                     )}
                   </TableCell>
@@ -249,9 +259,11 @@ export default function Inventory() {
       <Dialog open={!!selectedSku} onOpenChange={(open) => !open && setSelectedSku(null)}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Item Details: {selectedSku}</DialogTitle>
+            <DialogTitle>Item Details: {selectedItemDetails?.mappedStoreSku ?? selectedSku}</DialogTitle>
             <DialogDescription>
-              Detailed view of Shopify vs Supplier data.
+              {selectedItemDetails?.mappedStoreSku
+                ? `Supplier SKU: ${selectedSku}. Converted store SKU is a candidate and is awaiting verification.`
+                : "Review the imported supplier record. Shopify stock is not changed by this action."}
             </DialogDescription>
           </DialogHeader>
           
@@ -271,6 +283,7 @@ export default function Inventory() {
                 )}
                 <div>
                   <h4 className="font-semibold text-lg leading-tight">{selectedItemDetails.productName}</h4>
+                  <SkuManufacturerLabel sku={selectedItemDetails.sku} supplier={selectedItemDetails.supplier} sourceFields={selectedItemDetails.importedFields} className="mt-1" />
                   <p className="text-muted-foreground text-sm">{selectedItemDetails.variant}</p>
                   <Badge variant="outline" className="mt-2">{selectedItemDetails.category}</Badge>
                 </div>
@@ -280,8 +293,8 @@ export default function Inventory() {
                 <Card className="shadow-none border-primary/20 bg-primary/5">
                   <CardContent className="p-4 flex flex-col gap-1">
                     <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Shopify Record</span>
-                    <div className="text-3xl font-mono font-bold">{selectedItemDetails.shopifyStock}</div>
-                    <span className="text-xs text-muted-foreground">Available to sell</span>
+                    <div className="text-3xl font-mono font-bold">{shopifyConnected ? selectedItemDetails.shopifyStock : "—"}</div>
+                    <span className="text-xs text-muted-foreground">{shopifyConnected ? "Available to sell" : "Unavailable: Shopify disconnected"}</span>
                   </CardContent>
                 </Card>
                 
@@ -326,7 +339,7 @@ export default function Inventory() {
                 disabled={reviewMutation.isPending}
                 className="w-full sm:w-auto"
               >
-                {reviewMutation.isPending ? "Syncing..." : "Accept Supplier Stock & Sync"}
+                {reviewMutation.isPending ? "Marking reviewed…" : "Mark reviewed"}
               </Button>
             )}
           </DialogFooter>
@@ -334,4 +347,17 @@ export default function Inventory() {
       </Dialog>
     </div>
   )
+}
+
+export default function Inventory() {
+  const [view, setView] = useState<"groups" | "source">("groups")
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-1 rounded-md border bg-muted/30 p-1" role="tablist" aria-label="Inventory views">
+        <Button role="tab" aria-selected={view === "groups"} variant={view === "groups" ? "secondary" : "ghost"} size="sm" onClick={() => setView("groups")} data-testid="tab-grouped-inventory">Grouped inventory</Button>
+        <Button role="tab" aria-selected={view === "source"} variant={view === "source" ? "secondary" : "ghost"} size="sm" onClick={() => setView("source")} data-testid="tab-source-review">Source review</Button>
+      </div>
+    </div>
+    {view === "groups" ? <InventoryGroups /> : <SourceReviewView />}
+  </div>
 }

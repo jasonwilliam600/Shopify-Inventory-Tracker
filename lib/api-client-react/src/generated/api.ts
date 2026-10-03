@@ -24,12 +24,16 @@ import type {
   Dashboard,
   HealthStatus,
   ImportResult,
+  InventoryGroupDetail,
+  InventoryGroupPage,
   InventoryItem,
   InventoryPage,
   InventoryReviewInput,
+  ListInventoryGroupsParams,
   ListInventoryParams,
   Supplier,
-  SupplierUpdateInput
+  SupplierUpdateInput,
+  WalthersRefreshStatus
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -285,6 +289,167 @@ export function useListInventory<TData = Awaited<ReturnType<typeof listInventory
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListInventoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListInventoryGroupsUrl = (params?: ListInventoryGroupsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/inventory-groups?${stringifiedParams}` : `/api/inventory-groups`
+}
+
+/**
+ * @summary Group distributor offers by full store-format candidate SKU
+ */
+export const listInventoryGroups = async (params?: ListInventoryGroupsParams, options?: Parameters<typeof customFetch>[1]): Promise<InventoryGroupPage> => {
+
+  return customFetch<InventoryGroupPage>(getListInventoryGroupsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListInventoryGroupsQueryKey = (params?: ListInventoryGroupsParams,) => {
+    return [
+    `/api/inventory-groups`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListInventoryGroupsQueryOptions = <TData = Awaited<ReturnType<typeof listInventoryGroups>>, TError = ErrorType<void>>(params?: ListInventoryGroupsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listInventoryGroups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListInventoryGroupsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listInventoryGroups>>> = ({ signal }) => listInventoryGroups(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listInventoryGroups>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListInventoryGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof listInventoryGroups>>>
+export type ListInventoryGroupsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Group distributor offers by full store-format candidate SKU
+ */
+
+export function useListInventoryGroups<TData = Awaited<ReturnType<typeof listInventoryGroups>>, TError = ErrorType<void>>(
+ params?: ListInventoryGroupsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listInventoryGroups>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListInventoryGroupsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetInventoryGroupUrl = (groupKey: string,) => {
+
+
+
+
+  return `/api/inventory-groups/${groupKey}`
+}
+
+/**
+ * @summary Get all distributor offers for an inventory group
+ */
+export const getInventoryGroup = async (groupKey: string, options?: Parameters<typeof customFetch>[1]): Promise<InventoryGroupDetail> => {
+
+  return customFetch<InventoryGroupDetail>(getGetInventoryGroupUrl(groupKey),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetInventoryGroupQueryKey = (groupKey: string,) => {
+    return [
+    `/api/inventory-groups/${groupKey}`
+    ] as const;
+    }
+
+
+export const getGetInventoryGroupQueryOptions = <TData = Awaited<ReturnType<typeof getInventoryGroup>>, TError = ErrorType<void>>(groupKey: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInventoryGroup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInventoryGroupQueryKey(groupKey);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInventoryGroup>>> = ({ signal }) => getInventoryGroup(groupKey, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: groupKey !== null && groupKey !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInventoryGroup>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetInventoryGroupQueryResult = NonNullable<Awaited<ReturnType<typeof getInventoryGroup>>>
+export type GetInventoryGroupQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get all distributor offers for an inventory group
+ */
+
+export function useGetInventoryGroup<TData = Awaited<ReturnType<typeof getInventoryGroup>>, TError = ErrorType<void>>(
+ groupKey: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInventoryGroup>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetInventoryGroupQueryOptions(groupKey,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -664,6 +829,225 @@ export const useRefreshHobbyTymeInventory = <TError = ErrorType<void>,
       > => {
       return useMutation(getRefreshHobbyTymeInventoryMutationOptions(options));
     }
+
+export const getRefreshHeartlandInventoryUrl = () => {
+
+
+
+
+  return `/api/supplier-updates/heartland/refresh`
+}
+
+/**
+ * @summary Download Heartland inventory without replacing other suppliers
+ */
+export const refreshHeartlandInventory = async ( options?: Parameters<typeof customFetch>[1]): Promise<ImportResult> => {
+
+  return customFetch<ImportResult>(getRefreshHeartlandInventoryUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRefreshHeartlandInventoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshHeartlandInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshHeartlandInventory>>, TError,void, TContext> => {
+
+const mutationKey = ['refreshHeartlandInventory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshHeartlandInventory>>, void> = () => {
+
+
+          return  refreshHeartlandInventory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshHeartlandInventoryMutationResult = NonNullable<Awaited<ReturnType<typeof refreshHeartlandInventory>>>
+
+    export type RefreshHeartlandInventoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Download Heartland inventory without replacing other suppliers
+ */
+export const useRefreshHeartlandInventory = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshHeartlandInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refreshHeartlandInventory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRefreshHeartlandInventoryMutationOptions(options));
+    }
+
+export const getRefreshWalthersInventoryUrl = () => {
+
+
+
+
+  return `/api/supplier-updates/walthers/refresh`
+}
+
+/**
+ * @summary Start a background Walthers dealer inventory refresh
+ */
+export const refreshWalthersInventory = async ( options?: Parameters<typeof customFetch>[1]): Promise<WalthersRefreshStatus> => {
+
+  return customFetch<WalthersRefreshStatus>(getRefreshWalthersInventoryUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRefreshWalthersInventoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshWalthersInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshWalthersInventory>>, TError,void, TContext> => {
+
+const mutationKey = ['refreshWalthersInventory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshWalthersInventory>>, void> = () => {
+
+
+          return  refreshWalthersInventory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshWalthersInventoryMutationResult = NonNullable<Awaited<ReturnType<typeof refreshWalthersInventory>>>
+
+    export type RefreshWalthersInventoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Start a background Walthers dealer inventory refresh
+ */
+export const useRefreshWalthersInventory = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshWalthersInventory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refreshWalthersInventory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRefreshWalthersInventoryMutationOptions(options));
+    }
+
+export const getGetWalthersRefreshStatusUrl = () => {
+
+
+
+
+  return `/api/supplier-updates/walthers/status`
+}
+
+/**
+ * @summary Get progress or the result of the Walthers refresh
+ */
+export const getWalthersRefreshStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<WalthersRefreshStatus> => {
+
+  return customFetch<WalthersRefreshStatus>(getGetWalthersRefreshStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWalthersRefreshStatusQueryKey = () => {
+    return [
+    `/api/supplier-updates/walthers/status`
+    ] as const;
+    }
+
+
+export const getGetWalthersRefreshStatusQueryOptions = <TData = Awaited<ReturnType<typeof getWalthersRefreshStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWalthersRefreshStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWalthersRefreshStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWalthersRefreshStatus>>> = ({ signal }) => getWalthersRefreshStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWalthersRefreshStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWalthersRefreshStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getWalthersRefreshStatus>>>
+export type GetWalthersRefreshStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get progress or the result of the Walthers refresh
+ */
+
+export function useGetWalthersRefreshStatus<TData = Awaited<ReturnType<typeof getWalthersRefreshStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWalthersRefreshStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWalthersRefreshStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListActivityUrl = () => {
 

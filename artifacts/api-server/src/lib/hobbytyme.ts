@@ -4,6 +4,7 @@ import {
   inventoryActivityTable,
   inventoryItemsTable,
   suppliersTable,
+  supplierInventoryTable,
   type InsertInventoryItem,
 } from "@workspace/db";
 import { logger } from "./logger";
@@ -167,6 +168,18 @@ async function performRefresh(): Promise<HobbyTymeRefreshResult> {
   await db.transaction(async (tx) => {
     for (let offset = 0; offset < values.length; offset += BATCH_SIZE) {
       const batch = values.slice(offset, offset + BATCH_SIZE);
+      await tx.insert(supplierInventoryTable).values(batch.map((value) => ({
+        ...value, supplier: SUPPLIER_NAME,
+      }))).onConflictDoUpdate({
+        target: [supplierInventoryTable.supplier, supplierInventoryTable.sku],
+        set: {
+          productName: sql`excluded.product_name`, variant: sql`excluded.variant`,
+          category: sql`excluded.category`, supplierStock: sql`excluded.supplier_stock`,
+          supplierPrice: sql`excluded.supplier_price`, supplierUpdatedAt: now,
+          importedFields: sql`excluded.imported_fields`, supplierStatus: sql`excluded.supplier_status`,
+          price: sql`excluded.price`, updatedAt: now,
+        },
+      });
       await tx
         .insert(inventoryItemsTable)
         .values(batch)
@@ -192,6 +205,7 @@ async function performRefresh(): Promise<HobbyTymeRefreshResult> {
               ELSE 'ready'
             END`,
           },
+          setWhere: sql`${inventoryItemsTable.supplier} = ${SUPPLIER_NAME} OR ${inventoryItemsTable.supplier} IS NULL`,
         });
     }
 
