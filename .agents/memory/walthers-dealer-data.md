@@ -26,3 +26,9 @@ The standalone profile service can omit the logged-in flag even for a successful
 **Why:** Treating a missing standalone-profile flag as logout would reject a valid import.
 
 **How to apply:** Verify live storefront authentication state rather than interpreting an omitted field as an authentication failure.
+
+The merchant requested hourly automatic Walthers refreshes, with manual refresh still available. Leave other wholesalers' schedules unchanged.
+
+**Why:** The merchant chose “Yes, hourly please” after automatic scheduling was offered.
+
+**How to apply:** Preserve Walthers' hourly cadence unless the merchant requests a change; do not assume Heartland's cadence applies to Walthers.

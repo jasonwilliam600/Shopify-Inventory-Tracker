@@ -279,8 +279,8 @@ export default function Suppliers() {
       <p className="text-sm text-muted-foreground" data-testid="text-heartland-refresh-schedule">
         Heartland inventory refreshes automatically every 30 minutes while the server is running. You can also refresh it manually at any time.
       </p>
-      <p className="text-sm text-muted-foreground">
-        Walthers refreshes on demand using its authenticated dealer catalog. Quantities remain in Walthers product units; store SKU and pack-size mappings are not assumed.
+      <p className="text-sm text-muted-foreground" data-testid="text-walthers-refresh-schedule">
+        Walthers inventory refreshes automatically every hour while the server is running. You can also refresh it manually at any time. Quantities remain in Walthers product units; store SKU and pack-size mappings are not assumed.
       </p>
       {walthersJob?.state === "running" && (
         <div role="status" className="rounded-md border bg-muted/30 p-4 text-sm" data-testid="text-walthers-progress">

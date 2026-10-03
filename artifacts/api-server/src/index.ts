@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { startHobbyTymeRefreshScheduler } from "./lib/hobbytyme";
 import { startHeartlandRefreshScheduler } from "./lib/heartland";
+import { startWalthersRefreshScheduler } from "./lib/walthers";
 import { initializeSupplierInventory } from "./lib/supplier-inventory";
 
 const rawPort = process.env["PORT"];
@@ -27,6 +28,7 @@ initializeSupplierInventory().then(() => app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
   startHobbyTymeRefreshScheduler();
   startHeartlandRefreshScheduler();
+  startWalthersRefreshScheduler();
 })).catch((err) => {
   logger.error({ err }, "Supplier inventory initialization failed");
   process.exit(1);

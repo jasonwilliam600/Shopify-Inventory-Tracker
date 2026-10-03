@@ -126,3 +126,21 @@ export function startWalthersRefresh(): WalthersRefreshStatus {
   });
   return getWalthersRefreshStatus();
 }
+
+let schedulerStarted = false;
+
+export function startWalthersRefreshScheduler() {
+  if (schedulerStarted) return;
+  schedulerStarted = true;
+
+  // Wait one hour before the first scheduled run. Manual and scheduled
+  // refreshes share the running-job guard in startWalthersRefresh.
+  setInterval(() => {
+    if (job.state === "running") {
+      logger.info("Walthers scheduled refresh skipped; an import is already running");
+      return;
+    }
+    startWalthersRefresh();
+  }, 60 * 60 * 1000).unref();
+  logger.info({ intervalMinutes: 60 }, "Walthers automatic inventory refresh scheduled");
+}
