@@ -315,7 +315,7 @@ export default function Suppliers() {
         Walthers inventory refreshes automatically every hour while the server is running. You can also refresh it manually at any time. Quantities remain in Walthers product units; store SKU and pack-size mappings are not assumed.
       </p>
       <p className="text-sm text-muted-foreground" data-testid="text-mmd-refresh-schedule">
-        MMD/Squadron inventory refreshes automatically every hour while the server is running, using its stock export and authenticated dealer catalog. You can also refresh it manually at any time. Prefix mappings and pack-size rules are not applied.
+        MMD/Squadron inventory refreshes automatically every hour while the server is running, using its stock export and authenticated dealer catalog. You can also refresh it manually at any time. Approved AAM, TAM, TRP and SCL prefixes are shown as store-format candidates, not verified store matches. Pack-size conversions are not applied.
       </p>
       {mmdJob?.state === "running" && (
         <div role="status" className="rounded-md border bg-muted/30 p-4 text-sm" data-testid="text-mmd-progress">

@@ -46,3 +46,9 @@ Avoid a large regular-expression alternation for every catalog row when implemen
 **Why:** Testing against the full supplier catalog showed that regex-based prefix extraction substantially increased search latency. Simple prefix string comparisons with a small part-number validation were faster.
 
 **How to apply:** Keep search normalization consistent with displayed conversions, but use bounded string operations for documented fixed-width codes. If mapping codes gain different widths, explicitly adapt and measure the SQL normalization rather than silently truncating them.
+
+For MMD/Squadron, the merchant confirmed unchanged prefixes: AAM for A&A Models, TAM for Tamiya, TRP for Trumpeter, and SCL for Squadron Colors. They said they do not currently carry A&A Models or Squadron Colors, but want to keep AAM and SCL for those brands.
+
+**Why:** These are explicit merchant choices, including naming conventions for brands not currently in the store; they are not inferred mappings or evidence of existing store products.
+
+**How to apply:** Use these four correspondences when preparing MMD SKU rules. Preserve the store's hyphen convention and full part numbers. Do not create store products, infer catalog membership, or extend approval to other MMD prefixes.
