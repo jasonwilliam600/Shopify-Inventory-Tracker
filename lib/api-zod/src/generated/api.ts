@@ -9,6 +9,77 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Read-only historical Shopify variant supplier availability; never inventory publishing
+ */
+export const listSupplierAvailabilityQuerySearchMax = 200;
+
+export const listSupplierAvailabilityQueryIssueDefault = `all`;
+export const listSupplierAvailabilityQueryPageDefault = 1;
+
+export const listSupplierAvailabilityQueryPageSizeDefault = 10;
+export const listSupplierAvailabilityQueryPageSizeMax = 50;
+
+
+
+export const ListSupplierAvailabilityQueryParams = zod.object({
+  "search": zod.coerce.string().max(listSupplierAvailabilityQuerySearchMax).optional(),
+  "issue": zod.enum(['all', 'duplicate', 'missing']).default(listSupplierAvailabilityQueryIssueDefault),
+  "page": zod.coerce.number().int().min(1).default(listSupplierAvailabilityQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listSupplierAvailabilityQueryPageSizeMax).default(listSupplierAvailabilityQueryPageSizeDefault)
+})
+
+export const ListSupplierAvailabilityResponse = zod.object({
+  "items": zod.array(zod.object({
+  "key": zod.string(),
+  "variantId": zod.string().nullable(),
+  "sku": zod.string(),
+  "title": zod.string(),
+  "handle": zod.string(),
+  "options": zod.array(zod.string()),
+  "skuStatus": zod.enum(['unique', 'duplicate', 'missing']),
+  "suppliers": zod.array(zod.object({
+  "supplier": zod.string(),
+  "offers": zod.array(zod.object({
+  "sourceSku": zod.string(),
+  "mappingStatus": zod.enum(['candidate', 'held', 'rejected', 'collision']),
+  "mappingReason": zod.string(),
+  "matchMethod": zod.enum(['exact_identifier', 'prefix', 'exact_sku']),
+  "reportedQuantity": zod.number().int().nullable(),
+  "quantityKind": zod.enum(['exact', 'lower_bound', 'upper_bound', 'unknown']),
+  "quantityText": zod.string(),
+  "availability": zod.enum(['available', 'out_of_stock', 'unknown']),
+  "freshness": zod.enum(['fresh', 'stale', 'unknown']),
+  "lastFeedImport": zod.coerce.date().nullable(),
+  "freshnessLimitMinutes": zod.number().int(),
+  "stockReason": zod.string(),
+  "trusted": zod.boolean(),
+  "publishable": zod.boolean()
+}))
+}))
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "totalPages": zod.number().int(),
+  "catalog": zod.object({
+  "source": zod.enum(['historical', 'unavailable']),
+  "observedAt": zod.coerce.date().nullable(),
+  "verified": zod.boolean(),
+  "containsVariantIds": zod.boolean(),
+  "totalVariants": zod.number().int(),
+  "duplicateSkuGroups": zod.number().int(),
+  "missingSkuVariants": zod.number().int(),
+  "blocker": zod.string(),
+  "rejectedMappings": zod.number().int(),
+  "flaggedCandidates": zod.number().int(),
+  "uniqueHeldSources": zod.number().int(),
+  "publishingEnabled": zod.boolean(),
+  "physicalStockExists": zod.boolean()
+})
+})
+
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

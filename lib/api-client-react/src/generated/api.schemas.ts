@@ -5,6 +5,132 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+export type SupplierAvailabilityOfferMappingStatus = typeof SupplierAvailabilityOfferMappingStatus[keyof typeof SupplierAvailabilityOfferMappingStatus];
+
+
+export const SupplierAvailabilityOfferMappingStatus = {
+  candidate: 'candidate',
+  held: 'held',
+  rejected: 'rejected',
+  collision: 'collision',
+} as const;
+
+export type SupplierAvailabilityOfferMatchMethod = typeof SupplierAvailabilityOfferMatchMethod[keyof typeof SupplierAvailabilityOfferMatchMethod];
+
+
+export const SupplierAvailabilityOfferMatchMethod = {
+  exact_identifier: 'exact_identifier',
+  prefix: 'prefix',
+  exact_sku: 'exact_sku',
+} as const;
+
+export type SupplierAvailabilityOfferQuantityKind = typeof SupplierAvailabilityOfferQuantityKind[keyof typeof SupplierAvailabilityOfferQuantityKind];
+
+
+export const SupplierAvailabilityOfferQuantityKind = {
+  exact: 'exact',
+  lower_bound: 'lower_bound',
+  upper_bound: 'upper_bound',
+  unknown: 'unknown',
+} as const;
+
+export type SupplierAvailabilityOfferAvailability = typeof SupplierAvailabilityOfferAvailability[keyof typeof SupplierAvailabilityOfferAvailability];
+
+
+export const SupplierAvailabilityOfferAvailability = {
+  available: 'available',
+  out_of_stock: 'out_of_stock',
+  unknown: 'unknown',
+} as const;
+
+export type SupplierAvailabilityOfferFreshness = typeof SupplierAvailabilityOfferFreshness[keyof typeof SupplierAvailabilityOfferFreshness];
+
+
+export const SupplierAvailabilityOfferFreshness = {
+  fresh: 'fresh',
+  stale: 'stale',
+  unknown: 'unknown',
+} as const;
+
+export interface SupplierAvailabilityOffer {
+  sourceSku: string;
+  mappingStatus: SupplierAvailabilityOfferMappingStatus;
+  mappingReason: string;
+  matchMethod: SupplierAvailabilityOfferMatchMethod;
+  /** @nullable */
+  reportedQuantity: number | null;
+  quantityKind: SupplierAvailabilityOfferQuantityKind;
+  quantityText: string;
+  availability: SupplierAvailabilityOfferAvailability;
+  freshness: SupplierAvailabilityOfferFreshness;
+  /** @nullable */
+  lastFeedImport: string | null;
+  freshnessLimitMinutes: number;
+  stockReason: string;
+  trusted: boolean;
+  publishable: boolean;
+}
+
+export interface SupplierAvailabilitySupplier {
+  supplier: string;
+  offers: SupplierAvailabilityOffer[];
+}
+
+export type SupplierAvailabilityVariantSkuStatus = typeof SupplierAvailabilityVariantSkuStatus[keyof typeof SupplierAvailabilityVariantSkuStatus];
+
+
+export const SupplierAvailabilityVariantSkuStatus = {
+  unique: 'unique',
+  duplicate: 'duplicate',
+  missing: 'missing',
+} as const;
+
+export interface SupplierAvailabilityVariant {
+  key: string;
+  /** @nullable */
+  variantId: string | null;
+  sku: string;
+  title: string;
+  handle: string;
+  options: string[];
+  skuStatus: SupplierAvailabilityVariantSkuStatus;
+  suppliers: SupplierAvailabilitySupplier[];
+}
+
+export type SupplierAvailabilityCatalogSource = typeof SupplierAvailabilityCatalogSource[keyof typeof SupplierAvailabilityCatalogSource];
+
+
+export const SupplierAvailabilityCatalogSource = {
+  historical: 'historical',
+  unavailable: 'unavailable',
+} as const;
+
+export interface SupplierAvailabilityCatalog {
+  source: SupplierAvailabilityCatalogSource;
+  /** @nullable */
+  observedAt: string | null;
+  verified: boolean;
+  containsVariantIds: boolean;
+  totalVariants: number;
+  duplicateSkuGroups: number;
+  missingSkuVariants: number;
+  blocker: string;
+  rejectedMappings: number;
+  flaggedCandidates: number;
+  uniqueHeldSources: number;
+  publishingEnabled: boolean;
+  physicalStockExists: boolean;
+}
+
+export interface SupplierAvailabilityPage {
+  items: SupplierAvailabilityVariant[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  catalog: SupplierAvailabilityCatalog;
+}
+
 export type MmdRefreshStatusState = typeof MmdRefreshStatusState[keyof typeof MmdRefreshStatusState];
 
 
@@ -302,6 +428,32 @@ export interface Activity {
   description: string;
   createdAt: string;
 }
+
+export type ListSupplierAvailabilityParams = {
+/**
+ * @maxLength 200
+ */
+search?: string;
+issue?: ListSupplierAvailabilityIssue;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+pageSize?: number;
+};
+
+export type ListSupplierAvailabilityIssue = typeof ListSupplierAvailabilityIssue[keyof typeof ListSupplierAvailabilityIssue];
+
+
+export const ListSupplierAvailabilityIssue = {
+  all: 'all',
+  duplicate: 'duplicate',
+  missing: 'missing',
+} as const;
 
 export type ListInventoryParams = {
 search?: string;

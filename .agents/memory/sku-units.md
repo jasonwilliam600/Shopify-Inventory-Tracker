@@ -7,6 +7,12 @@ The user sells the Shopify 18ml paint listings as individual bottles. They state
 
 The user confirmed HobbyTyme's On Hand quantity is a piece count, not a pack count.
 
+On 2026-10-16, the user stated: "No physical store stock exists currently."
+
+**Why:** This is a merchant-provided operating fact, not a conclusion from legacy zero-valued database fields or a Shopify inventory query.
+
+**How to apply:** Do not invent physical stock or add supplier quantities to it in supplier-visibility views. Reconfirm this fact before future publishing work rather than treating it as a permanent restriction on having physical inventory.
+
 The user believes HobbyTyme's Net Price is per pack, but has not confirmed it.
 
 **Why:** Comparing individual retail units directly with wholesale packs can misstate availability and unit costs.

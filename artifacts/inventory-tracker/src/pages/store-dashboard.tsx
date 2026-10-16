@@ -2,9 +2,11 @@ import { useGetDashboard, useListSuppliers, getGetDashboardQueryKey, getListSupp
 import "./store-dashboard.css"
 import { Card } from "@/components/ui/card"
 import { SupplierCatalogBox } from "@/components/supplier-catalog-box"
+import { Link } from "wouter"
 import {
   AlertCircle,
   ArrowDownToLine,
+  ArrowRight,
   Box,
   CircleHelp,
   CircleOff,
@@ -114,6 +116,9 @@ export default function StoreDashboard() {
               </span>
             </span>
           </div>
+          <Link href="/inventory" className="rd-inventory-link" data-testid="link-supplier-availability">
+            View supplier availability <ArrowRight size={14} aria-hidden="true" />
+          </Link>
         </header>
 
         <section className="rd-overview-section" aria-labelledby="rd-store-heading">

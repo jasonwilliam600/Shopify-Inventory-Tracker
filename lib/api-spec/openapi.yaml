@@ -15,6 +15,26 @@ tags:
   - name: dashboard
     description: Inventory overview
 paths:
+  /supplier-availability:
+    get:
+      operationId: listSupplierAvailability
+      tags: [inventory]
+      summary: Read-only historical Shopify variant supplier availability; never inventory publishing
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 200 } }
+        - { name: issue, in: query, schema: { type: string, enum: [all, duplicate, missing], default: all } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        "200":
+          description: Supplier observations, with unverified historical catalog identity
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupplierAvailabilityPage" }
+        "400":
+          description: Invalid query
+        "503":
+          description: Inventory database temporarily unavailable
   /healthz:
     get:
       operationId: healthCheck
@@ -309,6 +329,75 @@ paths:
                   $ref: "#/components/schemas/Activity"
 components:
   schemas:
+    SupplierAvailabilityOffer:
+      type: object
+      required: [sourceSku, mappingStatus, mappingReason, matchMethod, reportedQuantity, quantityKind, quantityText, availability, freshness, lastFeedImport, freshnessLimitMinutes, stockReason, trusted, publishable]
+      properties:
+        sourceSku: { type: string }
+        mappingStatus: { type: string, enum: [candidate, held, rejected, collision] }
+        mappingReason: { type: string }
+        matchMethod: { type: string, enum: [exact_identifier, prefix, exact_sku] }
+        reportedQuantity: { type: [integer, "null"] }
+        quantityKind: { type: string, enum: [exact, lower_bound, upper_bound, unknown] }
+        quantityText: { type: string }
+        availability: { type: string, enum: [available, out_of_stock, unknown] }
+        freshness: { type: string, enum: [fresh, stale, unknown] }
+        lastFeedImport: { type: [string, "null"], format: date-time }
+        freshnessLimitMinutes: { type: integer }
+        stockReason: { type: string }
+        trusted: { type: boolean }
+        publishable: { type: boolean }
+    SupplierAvailabilitySupplier:
+      type: object
+      required: [supplier, offers]
+      properties:
+        supplier: { type: string }
+        offers:
+          type: array
+          items: { $ref: "#/components/schemas/SupplierAvailabilityOffer" }
+    SupplierAvailabilityVariant:
+      type: object
+      required: [key, variantId, sku, title, handle, options, skuStatus, suppliers]
+      properties:
+        key: { type: string }
+        variantId: { type: [string, "null"] }
+        sku: { type: string }
+        title: { type: string }
+        handle: { type: string }
+        options: { type: array, items: { type: string } }
+        skuStatus: { type: string, enum: [unique, duplicate, missing] }
+        suppliers:
+          type: array
+          items: { $ref: "#/components/schemas/SupplierAvailabilitySupplier" }
+    SupplierAvailabilityCatalog:
+      type: object
+      required: [source, observedAt, verified, containsVariantIds, totalVariants, duplicateSkuGroups, missingSkuVariants, blocker, rejectedMappings, flaggedCandidates, uniqueHeldSources, publishingEnabled, physicalStockExists]
+      properties:
+        source: { type: string, enum: [historical, unavailable] }
+        observedAt: { type: [string, "null"], format: date-time }
+        verified: { type: boolean }
+        containsVariantIds: { type: boolean }
+        totalVariants: { type: integer }
+        duplicateSkuGroups: { type: integer }
+        missingSkuVariants: { type: integer }
+        blocker: { type: string }
+        rejectedMappings: { type: integer }
+        flaggedCandidates: { type: integer }
+        uniqueHeldSources: { type: integer }
+        publishingEnabled: { type: boolean }
+        physicalStockExists: { type: boolean }
+    SupplierAvailabilityPage:
+      type: object
+      required: [items, total, page, pageSize, totalPages, catalog]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SupplierAvailabilityVariant" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalPages: { type: integer }
+        catalog: { $ref: "#/components/schemas/SupplierAvailabilityCatalog" }
     MmdRefreshStatus:
       type: object
       required: [state, startedAt, fetchedRows, totalRows, result, error]

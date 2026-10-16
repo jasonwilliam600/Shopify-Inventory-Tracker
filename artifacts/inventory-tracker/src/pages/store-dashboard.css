@@ -1,3 +1,27 @@
+.rd-heading .rd-inventory-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #cddfd8;
+  border-radius: 7px;
+  padding: 10px 13px;
+  color: #356b60;
+  background: #f5faf7;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+.rd-heading .rd-inventory-link:hover {
+  background: #eaf4ef;
+  border-color: #afcfc2;
+}
+.rd-heading .rd-inventory-link:focus-visible {
+  outline: 2px solid #609587;
+  outline-offset: 2px;
+}
 .refined-dashboard {
   --rd-ink: #203846;
   --rd-ink-soft: #526773;

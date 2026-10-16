@@ -31,8 +31,10 @@ import type {
   InventoryReviewInput,
   ListInventoryGroupsParams,
   ListInventoryParams,
+  ListSupplierAvailabilityParams,
   MmdRefreshStatus,
   Supplier,
+  SupplierAvailabilityPage,
   SupplierUpdateInput,
   WalthersRefreshStatus
 } from './api.schemas';
@@ -63,6 +65,90 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListSupplierAvailabilityUrl = (params?: ListSupplierAvailabilityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/supplier-availability?${stringifiedParams}` : `/api/supplier-availability`
+}
+
+/**
+ * @summary Read-only historical Shopify variant supplier availability; never inventory publishing
+ */
+export const listSupplierAvailability = async (params?: ListSupplierAvailabilityParams, options?: Parameters<typeof customFetch>[1]): Promise<SupplierAvailabilityPage> => {
+
+  return customFetch<SupplierAvailabilityPage>(getListSupplierAvailabilityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSupplierAvailabilityQueryKey = (params?: ListSupplierAvailabilityParams,) => {
+    return [
+    `/api/supplier-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSupplierAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof listSupplierAvailability>>, TError = ErrorType<void>>(params?: ListSupplierAvailabilityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSupplierAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSupplierAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSupplierAvailability>>> = ({ signal }) => listSupplierAvailability(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSupplierAvailability>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSupplierAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof listSupplierAvailability>>>
+export type ListSupplierAvailabilityQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read-only historical Shopify variant supplier availability; never inventory publishing
+ */
+
+export function useListSupplierAvailability<TData = Awaited<ReturnType<typeof listSupplierAvailability>>, TError = ErrorType<void>>(
+ params?: ListSupplierAvailabilityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSupplierAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSupplierAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getHealthCheckUrl = () => {
 
