@@ -1,0 +1,93 @@
+**TOP SPEED INVENTORY SYNC — FINAL SKU MAPPING & DATABASE MIGRATION REVIEW**
+
+We are establishing a permanent, reliable SKU translation system for all four wholesalers: Heartland, HobbyTyme, Walthers, and MMD/Squadron.
+
+**PRIMARY OBJECTIVE**
+
+Each wholesaler's original SKU must map to the correct Shopify variant ID.
+
+Most supplier inventory updates contain only the supplier SKU and available quantity. Our system MUST support those updates without requiring UPCs, descriptions, manufacturer names, or additional product information in every feed.
+
+Product identification and verification happen when the mapping is established. Subsequent inventory updates use the saved relationship.
+
+**PART 1 — REVIEW THE EXISTING MIGRATION**
+
+Review these files:
+
+- `docs/proposals/shopify-catalog-and-decisions.forward.sql`
+- `docs/proposals/shopify-catalog-and-decisions.rollback.sql`
+- `docs/proposals/shopify-catalog-and-decisions-review.md`
+
+Verify:
+
+1. The migration creates only the two proposed tables: `shopify_variant_catalog` and `supplier_mapping_decisions`.
+2. All 209 distinct rejected/flagged supplier SKU relationships remain blocked.
+3. Rejected and held decisions take precedence over every existing exact-SKU, normalization, and prefix-mapping rule.
+4. Verified mappings use permanent Shopify variant IDs rather than relying exclusively on Shopify SKU strings.
+5. Multiple wholesalers can map to the same Shopify variant.
+6. Existing supplier inventory tables, records, refresh processes, and configuration remain unchanged.
+7. The rollback affects only the two new tables.
+
+**PART 2 — REVIEW THE UNIQUE MAPPING CONSTRAINT**
+
+Examine the proposed unique index that prevents multiple approved SKUs from the same supplier mapping to one Shopify variant.
+
+Determine whether legitimate duplicate ordering SKUs could exist.
+
+Recommend a safe approach that identifies these collisions for review without silently combining inventory quantities or incorrectly rejecting legitimate relationships.
+
+Do not automatically approve these cases.
+
+**PART 3 — PERMANENT SKU TRANSLATION**
+
+Design the lookup process:
+
+Supplier ID + original supplier SKU → approved Shopify variant ID.
+
+Requirements:
+
+- Preserve original supplier SKUs exactly.
+- Use a separate normalized lookup key only when appropriate; never allow normalization collisions to silently resolve to a match.
+- Prefix rules may suggest candidates but must never establish trusted matches automatically.
+- Approved mappings take precedence over candidate-generation rules, subject to safety holds and identity checks.
+- Rejected and flagged relationships cannot be reactivated automatically.
+- Unknown SKUs go into a review queue.
+- Never delete an approved mapping simply because a supplier temporarily omits the SKU.
+- Detect Shopify variant deletion, SKU changes, duplicate SKUs, and conflicting supplier mappings.
+- Keep quantities from Heartland, HobbyTyme, Walthers, and MMD/Squadron separate.
+- Preserve HobbyTyme's rule that On Hand represents individual pieces, not ordering packs.
+
+**PART 4 — LIVE SHOPIFY CATALOG**
+
+Prepare the next phase for retrieving the CURRENT Shopify catalog through our existing working connection.
+
+Requirements:
+
+- Verify actual granted Shopify scopes.
+- Retrieve product IDs, variant IDs, SKUs, titles, options, and relevant product information.
+- Support complete pagination and rate-limit handling.
+- Detect missing and duplicate Shopify SKUs.
+- Never mark supplier relationships verified merely because SKU strings match.
+- Do not replace our working Shopify authentication or depend on Replit's broken Shopify connector.
+
+**PART 5 — FINAL APPROVAL REPORT**
+
+Provide:
+
+1. Any flaws or risks in the proposed forward SQL.
+2. Any recommended SQL corrections, with explanations.
+3. The exact permanent SKU translation workflow.
+4. Confirmation that SKU-and-quantity-only supplier updates will work.
+5. Confirmation that existing supplier refreshes can continue uninterrupted.
+6. The complete final migration SQL and its SHA-256 hash if changes are recommended.
+7. The rollback procedure and any remaining issues requiring approval.
+
+**STRICT SAFETY REQUIREMENTS**
+
+This is a READ-ONLY REVIEW.
+
+Do not execute SQL migrations, alter database records, modify production code, change supplier integrations, publish the app, change Shopify permissions, or update Shopify inventory.
+
+Do not enable automatic Shopify inventory publishing.
+
+Wait for my explicit approval before implementing any changes.

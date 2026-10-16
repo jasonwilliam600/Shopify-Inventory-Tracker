@@ -36,3 +36,16 @@ Full manufacturer identity plus a matching retained part number does not prove p
 **Why:** The offline safety review found Clear Prop `CP` kit numbers colliding with `CPA` accessory and `CPD` decal numbers. It also found an ICM aircraft incorrectly paired with an IBG halftrack under a mislabeled store vendor. Merchant approval of identifier suggestions did not verify these products.
 
 **How to apply:** Keep kit, accessory, and decal namespaces distinct. Reject demonstrated product-class or model conflicts before assigning inventory, even when the numerical parts and vendor labels agree. Treat supplier descriptions and actual product identity as independent evidence; do not clear selling-unit warnings merely because a prefix mapping was approved.
+
+Most supplier inventory updates contain only the original supplier SKU and
+available quantity. Product identification and selling-unit verification happen
+when establishing the permanent supplier-to-Shopify-variant relationship, not by
+requiring UPCs, descriptions or manufacturer information in every inventory feed.
+
+**Why:** The merchant explicitly defined this feed contract for all four wholesalers.
+
+**How to apply:** Resolve later quantity updates through the saved supplier-ID
+and exact original-SKU relationship to a Shopify variant ID. Missing descriptive
+metadata is not evidence of a changed product. Retain approved mappings when a
+supplier temporarily omits a SKU; send unknown identifiers and actual identity
+conflicts to review rather than guessing or silently retargeting.
