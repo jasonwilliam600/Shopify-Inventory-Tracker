@@ -50,7 +50,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - Re-run `pnpm --filter @workspace/api-spec run codegen` after every OpenAPI change.
-- Do not ask for Shopify credentials; use the Replit Shopify Store integration when the user is ready to connect.
+- Use the authenticated `shopify` Admin API connector for the existing Top Speed Hobbies store, not the `shopify-store` provisioning integration. Do not create another store, overwrite existing products, or modify live store data without approval. Do not request Shopify credentials in chat.
 - HobbyTyme credentials belong only in `HOBBYTYME_USERNAME` and `HOBBYTYME_PASSWORD` Secrets; never surface them in logs or browser code.
 - Heartland credentials belong only in `HEARTLAND_USERNAME` and `HEARTLAND_PASSWORD` Secrets; dealer access is read-only.
 

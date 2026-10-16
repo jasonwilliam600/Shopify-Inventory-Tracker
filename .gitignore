@@ -47,3 +47,105 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Local environment configuration. Examples must contain placeholders only.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
+!.env.*.sample
+!.env.*.template
+
+# Private keys and credential-bearing configuration (not application source).
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+.netrc
+.pgpass
+.my.cnf
+.pypirc
+.npmrc.local
+/.ssh/
+/.aws/
+/.secrets/
+/.credentials/
+credentials.json
+credentials.*.json
+*.credentials.json
+credentials.yaml
+credentials.yml
+credentials.toml
+credentials.ini
+secrets.json
+secrets.*.json
+*.secrets.json
+secrets.yaml
+secrets.yml
+secrets.toml
+secrets.ini
+service-account*.json
+service_account*.json
+*-service-account.json
+application_default_credentials.json
+*firebase-adminsdk*.json
+
+# Sanitized credential examples may be versioned after review.
+!credentials.example.json
+!credentials.sample.json
+!credentials.template.json
+!secrets.example.json
+!secrets.sample.json
+!secrets.template.json
+!service-account.example.json
+!service-account.sample.json
+!service-account.template.json
+!service_account.example.json
+!service_account.sample.json
+!service_account.template.json
+
+# Local database files and backups. Do not ignore all *.sql files:
+# legitimate schema definitions and migrations must remain versioned.
+/backups/
+/database-backups/
+/db-backups/
+*.dump
+*.pgdump
+*.backup
+*.sql.gz
+*.sql.bz2
+*.sql.xz
+*.sql.zip
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+backup*.sql
+*-backup*.sql
+*_backup*.sql
+dump*.sql
+*-dump*.sql
+*_dump*.sql
+pg_dump*.sql
+database.sql
+!**/migrations/**/*.sql
+!**/drizzle/**/*.sql
+
+# Confidential source data and generated supplier/catalog reports.
+# Keep the files locally; these are not required by the running application.
+/attached_assets/products_export_*.zip
+/attached_assets/image_*.png
+/reports/
+
+# Replit asset-library metadata and disposable generated output.
+# Preserve .replit, artifact manifests, application assets, and project memory.
+/.agents/agent_assets_metadata.toml
+/generated-artifacts/

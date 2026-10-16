@@ -28,7 +28,7 @@ export function Layout({ children }: LayoutProps) {
               height={40}
               className="h-10 w-10 shrink-0 rounded-lg object-contain"
             />
-            <span className="text-base leading-tight">THS Inventory Sync</span>
+            <span className="text-base leading-tight">TSH Inventory Sync</span>
           </div>
         </div>
         

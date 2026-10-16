@@ -31,6 +31,7 @@ import { refreshHeartlandInventory } from "../lib/heartland";
 import { getWalthersRefreshStatus, startWalthersRefresh } from "../lib/walthers";
 import { getMmdRefreshStatus, startMmdRefresh } from "../lib/mmd";
 import { mapSupplierSkuToStore, mappedStoreSkuExpression } from "../lib/sku-mapping";
+import { shopifyConnectivity } from "../lib/shopify-readonly";
 
 const router: IRouter = Router();
 const supplierMutationAttempts = new Map<
@@ -117,12 +118,12 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
     pendingReview: 0,
   };
 
+  const shopify = await shopifyConnectivity();
   res.json(
     GetDashboardResponse.parse({
       ...summary,
       lastSupplierUpdate: suppliers[0]?.lastUpdate?.toISOString() ?? null,
-      shopifyConnected: false,
-      shopifyStoreName: null,
+      ...shopify,
     }),
   );
 });

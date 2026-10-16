@@ -311,11 +311,14 @@ export default function Suppliers() {
       <p className="text-sm text-muted-foreground" data-testid="text-heartland-refresh-schedule">
         Heartland inventory refreshes automatically every 30 minutes while the server is running. You can also refresh it manually at any time.
       </p>
+      <p className="text-sm text-muted-foreground">
+        All 46 suggestions from the store-export comparison are approved as identifier candidates, covering 4,774 exact supplier-to-store SKU pairs. Item-level mappings preserve mixed prefixes, case, separators, and alphabetic series instead of forcing a universal format. These are offline catalog candidates, not verified Shopify variant assignments. 200 pairs retain product or selling-unit review flags; approval does not apply pack conversions or publish stock or prices.
+      </p>
       <p className="text-sm text-muted-foreground" data-testid="text-walthers-refresh-schedule">
-        Walthers inventory refreshes automatically every hour while the server is running. You can also refresh it manually at any time. Quantities remain in Walthers product units; store SKU and pack-size mappings are not assumed.
+        Walthers inventory refreshes automatically every hour while the server is running. You can also refresh it manually at any time. The approved Woodland Scenics code 785 maps to WDS without a prefix hyphen (785-105 → WDS105), shown as a store-format candidate, not a verified store match. Original supplier SKUs are preserved. Quantities remain in Walthers product units; pack-size conversions are not applied.
       </p>
       <p className="text-sm text-muted-foreground" data-testid="text-mmd-refresh-schedule">
-        MMD/Squadron inventory refreshes automatically every hour while the server is running, using its stock export and authenticated dealer catalog. You can also refresh it manually at any time. Approved AAM, TAM, TRP and SCL prefixes are shown as store-format candidates, not verified store matches. Pack-size conversions are not applied.
+        MMD/Squadron inventory refreshes automatically every hour while the server is running, using its stock export and authenticated dealer catalog. You can also refresh it manually at any time. Approved AAM, TAM, TRP, SCL, EVG, EDU, HBB, ICM, MIN → MIA, MBL → MTB and ACD → ACY prefixes are shown as store-format candidates, not verified store matches. Eduard (EDU) and MiniArt (MIA) store SKUs have no hyphen between the prefix and part number; other approved rules use a hyphen. Pack-size conversions are not applied.
       </p>
       {mmdJob?.state === "running" && (
         <div role="status" className="rounded-md border bg-muted/30 p-4 text-sm" data-testid="text-mmd-progress">

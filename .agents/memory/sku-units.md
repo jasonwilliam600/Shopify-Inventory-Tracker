@@ -24,3 +24,9 @@ Only classify supplier SKUs as absent from the store after comparing against a v
 **Why:** Zero store stock does not mean the product is absent, and matching against accumulated supplier imports does not prove store catalog membership.
 
 **How to apply:** Keep unverified comparison candidates distinct from confirmed missing SKUs and do not use stock or review status as a catalog-membership test.
+
+Full manufacturer identity plus a matching retained part number does not prove product identity when prefixes distinguish product classes.
+
+**Why:** The offline safety review found Clear Prop `CP` kit numbers colliding with `CPA` accessory and `CPD` decal numbers. It also found an ICM aircraft incorrectly paired with an IBG halftrack under a mislabeled store vendor. Merchant approval of identifier suggestions did not verify these products.
+
+**How to apply:** Keep kit, accessory, and decal namespaces distinct. Reject demonstrated product-class or model conflicts before assigning inventory, even when the numerical parts and vendor labels agree. Treat supplier descriptions and actual product identity as independent evidence; do not clear selling-unit warnings merely because a prefix mapping was approved.

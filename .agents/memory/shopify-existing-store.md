@@ -3,9 +3,9 @@ name: Existing Shopify store connection
 description: Distinguish development-store provisioning from connecting the merchant's existing store.
 ---
 
-The user wants Inventory Tracker connected to their existing Shopify store, not a newly provisioned store.
+The user wants Inventory Tracker connected to their existing Shopify store, Top Speed Hobbies, not a newly provisioned store. Do not create another Shopify store, overwrite existing products, or modify live store data without their approval.
 
-**Why:** The Shopify Store provisioning integration created a new development store and returned a claim link, which does not connect the user's existing catalog.
+**Why:** The Shopify Store provisioning integration created a new development store and returned a claim link, which does not connect the user's existing catalog. The user explicitly restated the existing-store and approval boundaries.
 
 **How to apply:** Verify the integration's purpose and connected shop identity before importing data. The catalog also exposes a Shopify connector described as authenticated Admin API access; inspect its setup and capabilities for existing-store access. Do not treat a claim link as existing-store authorization.
 
@@ -32,3 +32,9 @@ Do not identify the email-shaped `api_key` in the OAuth error as the merchant's 
 **Why:** The user explicitly corrected that attribution: the displayed address is not attached to the store. Its origin has not been established.
 
 **How to apply:** Describe it only as the invalid app-identifier value shown in the error. Do not infer account ownership or request a different email as a replacement Shopify app API key.
+
+Keep the merchant's independently supplied app connection distinct from the Replit Shopify connector.
+
+**Why:** On 2026-10-16, the user confirmed that their existing store was connected after installing their own server-side connectivity patch and restarting the development API. This does not establish that Replit's connector was repaired or that supplier-to-Shopify synchronization was validated.
+
+**How to apply:** Do not send the user back through connector onboarding merely to replace their independently established connection. Continue observing the Agent's Shopify instructions, and require validation and explicit approval of supplier-to-Shopify synchronization rules before inventory writes.
