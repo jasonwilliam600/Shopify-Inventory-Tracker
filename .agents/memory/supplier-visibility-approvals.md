@@ -1,0 +1,26 @@
+---
+name: Supplier visibility approval boundaries
+description: Merchant acceptance of historical visibility and explicit SQL approval requirements for catalog/review storage.
+---
+
+The merchant accepted clearly labeled historical-catalog supplier visibility as
+an interim result, not current Shopify variant verification.
+
+**Why:** They explicitly accepted the read-only dashboard implementation even
+though current Shopify variant IDs and product/selling-unit approvals remained
+blocked prerequisites.
+
+**How to apply:** Preserve the distinction between historical candidate
+relationships and verified current variants when replacing the catalog reader.
+Acceptance of the preview does not approve matches, inventory writes or publishing.
+
+For Shopify catalog and mapping-decision storage, approval of the table design
+does not authorize executing a migration.
+
+**Why:** The merchant separately required final SQL approval after approving the
+two-table design, repeating the execution boundary.
+
+**How to apply:** Present exact SQL with keys/indexes, preservation of existing
+holds, duplicate-SKU handling, rollback and supplier-data impact. Wait for explicit
+approval of the final SQL before any schema execution. Keep this additive
+migration's write set outside existing supplier tables and records.

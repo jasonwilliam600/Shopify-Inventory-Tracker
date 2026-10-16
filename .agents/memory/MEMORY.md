@@ -11,3 +11,4 @@
 - [MMD/Squadron dealer data](mmd-dealer-data.md) — stock exports contain MSRP, not cost; use authenticated catalog pricing and report coverage gaps.
 - [Deployment startup](deployment-startup.md) — database backfills must not block HTTP liveness; report inventory readiness separately and retry bounded failures.
 - [Read-only audit exports](read-only-audit-exports.md) — page SQL results and validate completeness; release large notebook payloads after saving report data.
+- [Supplier visibility approvals](supplier-visibility-approvals.md) — historical previews are acceptable when labeled; schema design approval never authorizes migration execution.
