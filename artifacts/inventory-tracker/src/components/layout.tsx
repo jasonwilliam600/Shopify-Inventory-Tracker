@@ -41,7 +41,7 @@ export function Layout({ children }: LayoutProps) {
               <Link key={item.href} href={item.href}>
                 <div
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold transition-colors cursor-pointer",
                     isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -56,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
         </nav>
         
         <div className="hidden p-4 border-t md:block">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted cursor-pointer">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:bg-muted cursor-pointer">
             <Settings className="w-4 h-4" />
             Settings
           </div>

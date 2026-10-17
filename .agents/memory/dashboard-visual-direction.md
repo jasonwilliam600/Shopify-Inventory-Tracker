@@ -14,3 +14,16 @@ Keep the store connection badge at the top of the dashboard, even when connectio
 **Why:** The user said the badge is "very important info and needs to be at the top."
 
 **How to apply:** Do not remove the top badge as redundant when simplifying connection information.
+
+The final primary font for the entire TSH Inventory Sync application is
+**Space Grotesk**, including customizable authentication UI.
+
+**Why:** The owner explicitly selected it as the final font and requested a bold,
+modern technology-platform appearance without changing the blue-and-white theme,
+layout, functionality or business logic.
+
+**How to apply:** Use 700 for major page titles and section headings, 600 for
+navigation/buttons/labels, and 400 or 500 for body text/tables through shared
+typography settings. Remove decorative/serif and italicized display treatments.
+The owner specified numeric weight 700 for titles even when calling it ExtraBold;
+do not substitute 800 or invent a different font.

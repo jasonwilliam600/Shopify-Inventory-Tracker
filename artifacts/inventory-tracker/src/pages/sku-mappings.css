@@ -65,7 +65,7 @@
   letter-spacing: -.055em;
   line-height: 1.08;
 }
-.mapping-intro-copy h1 em { color: #718b7c; font-family: var(--app-font-serif), Georgia, serif; font-weight: 500; }
+.mapping-intro-copy h1 em { color: #718b7c; font-family: var(--app-font-sans), sans-serif; font-style: normal; font-weight: 700; }
 .mapping-intro-copy > p { max-width: 600px; margin: 0; color: #687a80; font-size: 14px; line-height: 1.65; }
 .catalog-date-card {
   display: flex;

@@ -3,7 +3,7 @@
 .matrixify-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding:12px 0 18px;border-bottom:1px solid var(--mx-line)}
 .matrixify-eyebrow{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:var(--mx-blue);font:600 11px/1.2 var(--app-font-mono,monospace);letter-spacing:.11em}
 .matrixify-intro h2{font-size:clamp(26px,3vw,36px);line-height:1.1;letter-spacing:-.045em;margin:0}
-.matrixify-intro h2 em{font-family:Georgia,serif;font-weight:400;color:#7488a0}
+.matrixify-intro h2 em{font-family:var(--app-font-sans,sans-serif);font-style:normal;font-weight:700;color:#7488a0}
 .matrixify-intro p:not(.matrixify-eyebrow){max-width:660px;color:var(--mx-muted);font-size:14px;line-height:1.6;margin:9px 0 0}
 .matrixify-readonly-mark{display:flex;align-items:center;gap:9px;border:1px solid var(--mx-line);background:#fff;padding:10px 13px;border-radius:6px;color:var(--mx-blue);font-size:12px;font-weight:650;white-space:nowrap}
 .matrixify-notice,.matrixify-blockers,.matrixify-warnings{display:flex;align-items:flex-start;gap:12px;background:#fff;border:1px solid var(--mx-line);border-left:3px solid var(--mx-blue);border-radius:6px;padding:15px 17px}

@@ -24,9 +24,9 @@
 .sa-history-banner p { color:#5c746e; font-size:12px; line-height:1.65; margin:3px 0 0; max-width:1000px; }
 .sa-catalog-strip { display:flex; flex-wrap:wrap; align-items:stretch; background:var(--sa-paper); border:1px solid var(--sa-line); border-radius:9px; overflow:hidden; }
 .sa-catalog-strip > div:not(.sa-catalog-observed) { min-width:125px; flex:1; padding:12px 14px; border-right:1px solid #e7eeeb; display:flex; flex-direction:column; gap:3px; }
-.sa-catalog-strip strong { font:600 18px/1.2 'Spline Sans Mono',monospace; color:#2e6058; }
+.sa-catalog-strip strong { font:600 18px/1.2 var(--app-font-sans),sans-serif; color:#2e6058; }
 .sa-catalog-strip span { color:var(--sa-muted); font-size:10px; line-height:1.35; }
-.sa-catalog-trust strong { font:700 11px/1.3 'Plus Jakarta Sans',sans-serif; color:#6b746d; }
+.sa-catalog-trust strong { font:700 11px/1.3 var(--app-font-sans),sans-serif; color:#6b746d; }
 .sa-catalog-observed { display:flex; align-items:center; gap:6px; color:var(--sa-muted); font-size:10px; padding:10px 14px; }
 .sa-blocker { display:flex; align-items:center; gap:9px; color:#765c31; background:#fbf7ed; border:1px solid #eee2c9; border-radius:7px; padding:10px 13px; font-size:11px; line-height:1.5; }
 .sa-blocker > svg { flex:0 0 auto; }
@@ -47,7 +47,7 @@
 .sa-product-eyebrow { display:block; text-transform:uppercase; letter-spacing:.1em; color:#8b9c97; font-size:9px; font-weight:700; margin-bottom:4px; }
 .sa-product h3 { margin:0; color:#29443f; font-size:14px; line-height:1.4; font-weight:700; }
 .sa-product-meta { display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:5px; color:#788a84; font-size:10px; }
-.sa-product-meta code,.sa-source code { font-family:'Spline Sans Mono',monospace; color:#476660; font-size:10px; overflow-wrap:anywhere; }
+.sa-product-meta code,.sa-source code { font-family:var(--app-font-sans),sans-serif; color:#476660; font-size:10px; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .sa-sku-state,.sa-status { display:inline-flex; align-items:center; white-space:nowrap; border-radius:20px; padding:4px 8px; font-size:9px; line-height:1.2; font-weight:700; }
 .sa-sku-unique { background:#edf4f0; color:#58766b; }
 .sa-sku-duplicate { background:#fff4df; color:#8a6326; }
@@ -73,7 +73,7 @@
 .sa-freshness-fresh { color:#4c7763!important; }
 .sa-freshness-stale { color:#9a7134!important; }
 .sa-no-match { display:flex; align-items:center; gap:10px; padding:11px 12px; border:1px dashed #d9e3df; border-radius:7px; background:#fafcfb; }
-.sa-no-match-mark { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:#edf2ef; color:#71837c; font-family:monospace; }
+.sa-no-match-mark { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:#edf2ef; color:#71837c; font-family:var(--app-font-sans),sans-serif; }
 .sa-no-match > div { display:flex; flex-direction:column; gap:2px; }
 .sa-no-match strong { color:#536b64; font-size:10px; }
 .sa-no-match span { color:#879791; font-size:10px; line-height:1.4; }
