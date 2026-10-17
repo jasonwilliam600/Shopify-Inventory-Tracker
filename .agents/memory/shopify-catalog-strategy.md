@@ -14,3 +14,15 @@ authentication, bulk-operation submission, result downloads, imports and
 activation. Each live step requires the applicable explicit authorization and a
 policy-permitted execution path. Completing offline preparation authorizes none
 of those actions and does not establish a freshly measured catalog count.
+
+## Closed original export evidence
+
+The merchant is finished collecting evidence for the original Shopify catalog
+export. Stop requesting the same original information repeatedly.
+
+**Why:** The merchant explicitly closed collection and corrected the repeated
+requests.
+
+**How to apply:** Preserve the original packet as received. Do not fabricate its
+unknowns or relax the validation contract. Treat future independent observations
+and their authorization as separate work, not another request for original evidence.
