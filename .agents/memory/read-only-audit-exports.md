@@ -13,4 +13,4 @@ Keep large raw query responses scoped narrowly and release them after saving rep
 
 **Why:** Retaining payloads across notebook calls exceeded its 32 MiB memory limit and reset all notebook variables, including earlier approved manifests.
 
-**How to apply:** Persist necessary audit inputs in an ignored report directory, keep only small summaries in notebook state, and never assume previous variables survive a reset.
+**How to apply:** Persist necessary audit inputs in an ignored report directory, keep only small summaries in notebook state, and never assume previous variables survive a reset. Run catalog-scale per-record joins in a shell/Python process: retaining per-source objects and Maps can exceed the limit even when the serialized input is small.
