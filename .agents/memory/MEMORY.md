@@ -15,3 +15,4 @@
 - [Read-only audit exports](read-only-audit-exports.md) — page SQL results and validate completeness; release large notebook payloads after saving report data.
 - [Supplier visibility approvals](supplier-visibility-approvals.md) — historical previews are acceptable when labeled; schema design approval never authorizes migration execution.
 - [Isolated SQL review](sql-review-safety.md) — preserve exact proposals, isolate tests from application DBs, and preserve Unicode and SQL dollar quoting.
+- [Completion scope](launch-scope.md) — finish existing four-supplier inventory and pricing sync toward one launch; separate explicit approvals for live operations.

@@ -3,8 +3,12 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { inventoryStartup } from "./lib/inventory-startup";
+import { ApplicationSynchronization } from "./lib/application-synchronization";
 
 const app: Express = express();
+// Construct services only: no archive/key creation, DB import, new timer or
+// Shopify access. Explicitly configured and authorized operations are separate.
+app.locals.synchronization = new ApplicationSynchronization();
 
 app.use(
   pinoHttp({
