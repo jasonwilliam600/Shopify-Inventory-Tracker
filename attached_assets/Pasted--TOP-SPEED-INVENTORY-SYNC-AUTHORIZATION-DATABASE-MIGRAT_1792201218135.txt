@@ -1,0 +1,186 @@
+# TOP SPEED INVENTORY SYNC
+## AUTHORIZATION: DATABASE MIGRATION + SUPPLIERS PAGE REDESIGN
+
+I approve two specific tasks in my existing Top Speed Inventory Sync application.
+
+**TASK 1: Install the reviewed SKU Mapping Manager database schema.**
+
+**TASK 2: Redesign the Suppliers page layout and improve refresh timestamps.**
+
+Do not expand the scope beyond these two tasks.
+
+---
+
+## PART 1 — APPROVED DATABASE MIGRATION
+
+I authorize installation of the previously reviewed and tested revised database schema.
+
+Use these EXACT files:
+
+- `reports/sku-mapping-final-schema-review/final-proposed-revised.sql`
+- `reports/sku-mapping-final-schema-review/rollback-before-use-revised.sql`
+- `reports/sku-mapping-final-schema-review/test-results-revised.json`
+
+Before execution:
+
+1. Verify the forward SQL SHA-256 equals:
+   `1cdd3b1500156e3abed021d322b42a05cb004cc7e3dc6c4287fb9b2567410fa0`
+
+2. Verify the rollback SQL SHA-256 equals:
+   `b25457b4098713e46fb7163d41a1fbe6440493ce02517fd2c49d31b8446d197a`
+
+3. Confirm the target is the correct existing DEVELOPMENT PostgreSQL database for Top Speed Inventory Sync, not an unrelated database or production database.
+
+4. Confirm a recent, restorable database backup exists. If not, create and verify a backup before proceeding.
+
+5. Verify the four proposed tables and their associated functions do not already exist. Do not overwrite or replace existing objects.
+
+6. Confirm the schema creates only:
+   - `shopify_variant_catalog`
+   - `supplier_mapping_decisions`
+   - `supplier_mapping_audit_events`
+   - `supplier_mapping_hold_resolutions`
+
+7. Confirm existing supplier inventory records, importers, and schedules will remain untouched.
+
+If any prerequisite fails, STOP and report it. Do not improvise another migration.
+
+### Authorized execution
+
+After passing every prerequisite, execute ONLY the exact reviewed forward SQL against the confirmed development database.
+
+Do not use a modified version or silently resolve errors by changing constraints.
+
+### Post-migration verification
+
+Confirm:
+
+- All four tables exist.
+- Required indexes, constraints, triggers, and functions exist.
+- The 209 previously blocked supplier SKU sources remain protected by the baseline policy.
+- No mapping approvals have been created.
+- No Shopify catalog records have been imported.
+- Existing supplier record counts and supplier schedules remain intact.
+- The current SKU Mapping Manager still loads.
+- Save, Approve, and Resolve & Approve remain DISABLED.
+
+Do not execute the rollback automatically if there is a failure. Stop, preserve the evidence, and report the problem.
+
+**Do not enable permanent mapping approvals or Shopify inventory publishing.**
+
+---
+
+## PART 2 — SUPPLIERS PAGE REDESIGN
+
+Redesign the existing Suppliers page to eliminate the unnecessary horizontal scrolling on desktop.
+
+### New page layout
+
+**FIRST CARD: Active Suppliers**
+
+- Make this card full-width.
+- Display all four suppliers in a clear table.
+- Use the available width for readable columns.
+- Keep supplier name, SKU count, and refresh information visible without horizontal scrolling on a normal desktop display.
+
+**SECOND CARD: Import Supplier Data**
+
+- Move the entire existing Import Supplier Data card directly BELOW the Active Suppliers card.
+- Make it full-width or appropriately sized within the main page width.
+- Preserve all existing CSV import functionality.
+- Do not change file processing, validation, or import behavior.
+
+### Timestamp improvements
+
+Rename the existing "Last Update" column to:
+
+**Last Successful Update**
+
+Display:
+
+`MM/DD/YYYY h:mm AM/PM EDT`
+
+or
+
+`MM/DD/YYYY h:mm AM/PM EST`
+
+depending on daylight saving time.
+
+Requirements:
+
+1. Use the actual recorded timestamp of the last successful supplier inventory refresh.
+2. Display timestamps in `America/New_York`.
+3. Automatically distinguish EST from EDT.
+4. Never substitute the current time, last attempted refresh, or API startup time.
+5. Preserve the previous successful timestamp when a refresh fails.
+6. Show "Unknown" when a reliable successful timestamp is unavailable.
+7. If refresh status is already available, display it separately from the timestamp.
+
+### Responsive layout
+
+- Desktop: Full-width Active Suppliers table, no unnecessary horizontal scrollbar.
+- Tablet: Responsive table sizing.
+- Mobile: Use a stacked supplier-card layout if needed.
+- Do not clip supplier names, timestamps, or action controls.
+- Keep the Import Supplier Data card directly below Active Suppliers at every screen size.
+
+### Preserve existing functionality
+
+Do not alter:
+- Supplier refresh intervals.
+- Supplier importers.
+- Inventory quantities.
+- SKU mapping rules.
+- Existing dashboard APIs unless a display-only adjustment is essential.
+- Shopify settings or inventory.
+- CSV import functionality.
+
+---
+
+## PART 3 — TESTING
+
+After completing both tasks:
+
+1. Verify the database schema and safety constraints.
+2. Run API and dashboard TypeScript checks.
+3. Run relevant mapping and safety regression tests.
+4. Verify API health.
+5. Confirm all four supplier integrations remain operational.
+6. Verify timestamp values against their actual recorded database timestamps.
+7. Check the redesigned Suppliers page at desktop, tablet, and mobile widths.
+8. Confirm the horizontal scrollbar is eliminated on normal desktop screens.
+9. Confirm CSV import controls still work without performing a real inventory import.
+10. Confirm the SKU Mapping Manager still loads and approval actions remain disabled.
+
+Restart only the necessary DEVELOPMENT workflows if required. Normal supplier refreshes are authorized, but do not modify their code or scheduling.
+
+Do not republish or redeploy the production application.
+
+---
+
+## PART 4 — FINAL REPORT
+
+Tell me:
+
+1. Whether the migration was successfully installed.
+2. Whether all four tables and safety protections were verified.
+3. Whether the database backup was created and verified.
+4. Which application files were modified for the Suppliers page.
+5. Whether the Last Successful Update timestamps show actual Eastern Time with EDT/EST.
+6. Whether the horizontal scrollbar is gone.
+7. Whether the SKU Mapping Manager still works.
+8. Which tests passed and any remaining blockers.
+
+**IMPORTANT:**
+
+This authorization covers installing the reviewed database schema and redesigning the Suppliers page ONLY.
+
+It does NOT authorize:
+- Live Shopify catalog imports.
+- Permanent SKU approval API activation.
+- Shopify inventory modifications.
+- Automatic inventory publishing.
+- Shopify Admin extension deployment.
+- Changes to Shopify permissions or authentication.
+
+Proceed only within these boundaries.

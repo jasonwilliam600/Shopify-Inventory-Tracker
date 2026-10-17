@@ -37,3 +37,13 @@ approvals may supersede only the explicitly reviewed hold/cause, with reviewer
 identity and audit evidence retained. Other, new or changed holds still block.
 An old exact-item null must not veto a separately authorized permanent decision
 after its applicable holds have been resolved.
+
+Authorization to install reviewed mapping storage does not authorize live catalog
+imports, permanent approval APIs, reviewer-authentication changes, or activation
+of Save/Approve.
+
+**Why:** The merchant explicitly separated schema installation from those later
+capabilities and required approval controls to remain disabled after installation.
+
+**How to apply:** Keep each capability behind its own approval and verified
+prerequisites; database object existence alone must never unlock mapping actions.

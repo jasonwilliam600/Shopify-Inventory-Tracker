@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UploadCloud, CheckCircle2, AlertCircle, FileText, ArrowRight, X, RefreshCw } from "lucide-react"
 import { useGetWalthersRefreshStatus, useRefreshWalthersInventory, getGetWalthersRefreshStatusQueryKey, getListInventoryGroupsQueryKey } from "@workspace/api-client-react"
 import { useGetMmdRefreshStatus, useRefreshMmdInventory, getGetMmdRefreshStatusQueryKey } from "@workspace/api-client-react"
+import { formatSupplierSuccessfulUpdate } from "@/lib/supplier-timestamps"
 
 type CsvRow = Record<string, string>
 
@@ -366,46 +367,126 @@ export default function Suppliers() {
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Suppliers List */}
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Active Suppliers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="animate-pulse flex flex-col gap-4">
-                <div className="h-12 bg-muted rounded"></div>
-                <div className="h-12 bg-muted rounded"></div>
-              </div>
-            ) : suppliers?.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-4">No suppliers found. Import a file to create one.</div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>SKUs</TableHead>
-                    <TableHead>Last Update</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {suppliers?.map(s => (
-                    <TableRow key={s.name}>
-                      <TableCell className="font-semibold text-primary">{s.name}</TableCell>
-                      <TableCell className="font-mono">{s.skuCount}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {s.lastUpdate ? new Date(s.lastUpdate).toLocaleDateString() : 'Never'}
-                      </TableCell>
+      {/* Suppliers List */}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Active Suppliers</CardTitle>
+          <CardDescription>Supplier inventory counts and the last successfully recorded update.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="animate-pulse flex flex-col gap-4" aria-label="Loading suppliers">
+              <div className="h-12 bg-muted rounded" />
+              <div className="h-12 bg-muted rounded" />
+            </div>
+          ) : suppliers?.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-4">No suppliers found. Import a file to create one.</div>
+          ) : (
+            <>
+              <div className="hidden lg:block">
+                <Table className="table-fixed">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[34%]">Supplier</TableHead>
+                      <TableHead className="w-[12%]">SKUs</TableHead>
+                      <TableHead className="w-[31%]">Last Successful Update</TableHead>
+                      <TableHead className="w-[23%]">Refresh State</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {suppliers?.map((s) => {
+                      const supplierKey = s.name.toLowerCase()
+                      const isMmd = supplierKey.includes("mmd") || supplierKey.includes("squadron")
+                      const isWalthers = supplierKey.includes("walthers")
+                      const isHeartland = supplierKey.includes("heartland")
+                      const isHobbyTyme = supplierKey.includes("hobbytyme")
+                      const rawLastUpdate = s.lastUpdate
+                      const parsedLastUpdate = rawLastUpdate ? new Date(String(rawLastUpdate)) : null
+                      const hasValidLastUpdate = parsedLastUpdate !== null && Number.isFinite(parsedLastUpdate.getTime())
+                      const refreshState = isMmd
+                        ? mmdJob?.state
+                        : isWalthers
+                          ? walthersJob?.state
+                          : undefined
+                      const refreshPending = (isHeartland && heartlandMutation.isPending)
+                        || (isHobbyTyme && hobbyTymeMutation.isPending)
+                      const refreshLabel = refreshState
+                        ? refreshState === "running" ? "Refreshing" : refreshState === "complete" ? "Refresh complete" : refreshState === "failed" ? "Refresh failed" : "Idle"
+                        : refreshPending ? "Refresh in progress" : "Not reported"
+                      return (
+                        <TableRow key={s.name} data-testid={`row-supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`}>
+                          <TableCell className="whitespace-normal break-words font-semibold text-primary">{s.name}</TableCell>
+                          <TableCell className="font-mono tabular-nums">{s.skuCount}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {hasValidLastUpdate ? (
+                              <time dateTime={parsedLastUpdate!.toISOString()}>
+                                {formatSupplierSuccessfulUpdate(rawLastUpdate)}
+                              </time>
+                            ) : (
+                              formatSupplierSuccessfulUpdate(rawLastUpdate)
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{refreshLabel}</TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="grid gap-3 lg:hidden">
+                {suppliers?.map((s) => {
+                  const supplierKey = s.name.toLowerCase()
+                  const isMmd = supplierKey.includes("mmd") || supplierKey.includes("squadron")
+                  const isWalthers = supplierKey.includes("walthers")
+                  const isHeartland = supplierKey.includes("heartland")
+                  const isHobbyTyme = supplierKey.includes("hobbytyme")
+                  const rawLastUpdate = s.lastUpdate
+                  const parsedLastUpdate = rawLastUpdate ? new Date(String(rawLastUpdate)) : null
+                  const hasValidLastUpdate = parsedLastUpdate !== null && Number.isFinite(parsedLastUpdate.getTime())
+                  const refreshState = isMmd
+                    ? mmdJob?.state
+                    : isWalthers
+                      ? walthersJob?.state
+                      : undefined
+                  const refreshPending = (isHeartland && heartlandMutation.isPending)
+                    || (isHobbyTyme && hobbyTymeMutation.isPending)
+                  const refreshLabel = refreshState
+                    ? refreshState === "running" ? "Refreshing" : refreshState === "complete" ? "Refresh complete" : refreshState === "failed" ? "Refresh failed" : "Idle"
+                    : refreshPending ? "Refresh in progress" : "Not reported"
+                  return (
+                    <article key={s.name} className="rounded-md border bg-card p-4" data-testid={`card-supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`}>
+                      <div className="flex min-w-0 items-start justify-between gap-4">
+                        <h4 className="min-w-0 break-words font-semibold text-primary">{s.name}</h4>
+                        <span className="shrink-0 font-mono tabular-nums text-sm">{s.skuCount} <span className="font-sans text-muted-foreground">SKUs</span></span>
+                      </div>
+                      <dl className="mt-4 grid gap-3 text-sm">
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Last Successful Update</dt>
+                          <dd className="mt-1 break-words text-muted-foreground">
+                            {hasValidLastUpdate ? (
+                              <time dateTime={parsedLastUpdate!.toISOString()}>
+                                {formatSupplierSuccessfulUpdate(rawLastUpdate)}
+                              </time>
+                            ) : (
+                              formatSupplierSuccessfulUpdate(rawLastUpdate)
+                            )}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Refresh State</dt>
+                          <dd className="mt-1 text-muted-foreground">{refreshLabel}</dd>
+                        </div>
+                      </dl>
+                    </article>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* CSV Import Flow */}
+      {/* CSV Import Flow */}
         <Card className="border-primary/20 shadow-md">
           <CardHeader className="bg-primary/5 border-b pb-4">
             <CardTitle className="flex items-center gap-2">
@@ -598,7 +679,6 @@ export default function Suppliers() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
