@@ -1,0 +1,41 @@
+﻿Shop: top-speed-hobbies.myshopify.com
+API Version: 2026-07
+Bulk Operation ID: gid://shopify/BulkOperation/8696528765227
+Operation Type: QUERY
+Status: COMPLETED
+Error Code: 
+Created UTC: 2026-10-17T10:50:08Z
+Completed UTC: 2026-10-17T10:50:20Z
+Object Count: 42308
+Root Object Count: 42308
+File Size: 17067428
+Original Query SHA256: c4a2fee2cde59c925c489c32d045b58e34ccdfa0e46d58ca135b6813044694d1
+Signed URL SHA256: 0155cac127ba0308e38c15abbb47789e5c1d219e61507528875b05c43ebecd90
+Local File Last Write: 2026-10-17T06:52:06.7558181-04:00
+Local File SHA256: 7cda114018eec0dba72a0d740ffa8cef898751b0b077d89785fc5cd4ff2318a1
+
+Original Inner GraphQL Query:
+{
+  productVariants {
+    edges {
+      node {
+        id
+        sku
+        title
+        selectedOptions {
+          name
+          value
+        }
+        inventoryItem {
+          id
+        }
+        product {
+          id
+          title
+          vendor
+          status
+        }
+      }
+    }
+  }
+}
