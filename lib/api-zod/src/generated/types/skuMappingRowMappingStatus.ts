@@ -12,6 +12,7 @@ export type SkuMappingRowMappingStatus = typeof SkuMappingRowMappingStatus[keyof
 export const SkuMappingRowMappingStatus = {
   unmatched: 'unmatched',
   candidate: 'candidate',
+  held: 'held',
   flagged: 'flagged',
   rejected: 'rejected',
   ambiguous: 'ambiguous',

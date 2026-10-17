@@ -194,3 +194,23 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+.clerk-page {
+  min-height: calc(100dvh - 8rem);
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  background: hsl(var(--background));
+}
+.clerk-setup-message {
+  width: min(100% - 2rem, 480px);
+  margin: 12vh auto;
+  border: 1px solid hsl(var(--border));
+  border-left: 3px solid hsl(var(--warning));
+  border-radius: 6px;
+  background: hsl(var(--card));
+  padding: 1.5rem;
+  color: hsl(var(--foreground));
+}
+.clerk-setup-message h1 { margin: 0; font-size: 1.2rem; }
+.clerk-setup-message p { margin: .6rem 0 0; color: hsl(var(--muted-foreground)); font-size: .875rem; line-height: 1.6; }

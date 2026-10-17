@@ -8,6 +8,226 @@
 import * as zod from 'zod';
 
 
+/**
+ * @summary Return server-verified Clerk reviewer session and allowlist status
+ */
+export const GetReviewerSessionResponse = zod.object({
+  "configured": zod.boolean(),
+  "authenticated": zod.boolean(),
+  "authorized": zod.boolean(),
+  "subject": zod.string().nullable(),
+  "issuer": zod.string().nullable(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Atomically save and approve one supplier-to-variant identity
+ */
+export const approveSkuMappingBodyOriginalSkuMax = 300;
+
+export const approveSkuMappingBodyVariantIdRegExp = new RegExp('^gid://shopify/ProductVariant/[1-9][0-9]*$');
+
+export const approveSkuMappingBodyExpectedCostAmountDefault = null;
+export const approveSkuMappingBodyIdentityFingerprintRegExp = new RegExp('^[a-f0-9]{64}$');
+export const approveSkuMappingBodySourceIdentityFingerprintRegExp = new RegExp('^[a-f0-9]{64}$');
+export const approveSkuMappingBodyReasonMin = 12;
+export const approveSkuMappingBodyReasonMax = 2000;
+
+export const approveSkuMappingBodyCostConfirmedDefault = false;
+export const approveSkuMappingBodyCostBasisDefault = `unknown`;
+export const approveSkuMappingBodyPackSizeDefault = null;
+export const approveSkuMappingBodyPackSizeMax = 100000;
+
+export const approveSkuMappingBodyCostEvidenceDefault = ``;
+export const approveSkuMappingBodyCostEvidenceMax = 2000;
+
+
+
+export const ApproveSkuMappingBody = zod.object({
+  "supplier": zod.enum(['Heartland Hobby Wholesale', 'HobbyTyme', 'Walthers', 'MMD/Squadron']),
+  "originalSku": zod.string().min(1).max(approveSkuMappingBodyOriginalSkuMax),
+  "variantId": zod.string().regex(approveSkuMappingBodyVariantIdRegExp),
+  "expectedVersion": zod.number().int().min(1).nullable(),
+  "expectedCostAmount": zod.string().nullish().default(approveSkuMappingBodyExpectedCostAmountDefault).describe('Exact supplier cost string displayed in the review; send unchanged to reject a changed source cost.'),
+  "identityFingerprint": zod.string().regex(approveSkuMappingBodyIdentityFingerprintRegExp),
+  "identityConfirmed": zod.literal(true),
+  "sourceIdentityFingerprint": zod.string().regex(approveSkuMappingBodySourceIdentityFingerprintRegExp),
+  "unitConfirmed": zod.literal(true),
+  "reason": zod.string().min(approveSkuMappingBodyReasonMin).max(approveSkuMappingBodyReasonMax),
+  "costConfirmed": zod.boolean().default(approveSkuMappingBodyCostConfirmedDefault),
+  "costBasis": zod.enum(['piece', 'pack', 'unknown']).default(approveSkuMappingBodyCostBasisDefault),
+  "packSize": zod.number().int().min(1).max(approveSkuMappingBodyPackSizeMax).nullable().default(approveSkuMappingBodyPackSizeDefault),
+  "costEvidence": zod.string().max(approveSkuMappingBodyCostEvidenceMax).default(approveSkuMappingBodyCostEvidenceDefault)
+})
+
+export const ApproveSkuMappingResponse = zod.object({
+  "id": zod.string(),
+  "version": zod.number().int(),
+  "state": zod.string()
+})
+
+
+/**
+ * @summary Revoke an approved source relationship
+ */
+export const revokeSkuMappingBodyOriginalSkuMax = 300;
+
+
+export const revokeSkuMappingBodyReasonMin = 12;
+export const revokeSkuMappingBodyReasonMax = 2000;
+
+
+
+export const RevokeSkuMappingBody = zod.object({
+  "supplier": zod.enum(['Heartland Hobby Wholesale', 'HobbyTyme', 'Walthers', 'MMD/Squadron']),
+  "originalSku": zod.string().min(1).max(revokeSkuMappingBodyOriginalSkuMax),
+  "expectedVersion": zod.number().int().min(1),
+  "reason": zod.string().min(revokeSkuMappingBodyReasonMin).max(revokeSkuMappingBodyReasonMax)
+})
+
+export const RevokeSkuMappingResponse = zod.object({
+  "id": zod.string(),
+  "version": zod.number().int(),
+  "state": zod.string()
+})
+
+
+/**
+ * @summary Read authorized Matrixify export prerequisites
+ */
+export const GetMatrixifyStatusResponse = zod.object({
+  "catalogCount": zod.number().int(),
+  "catalogReady": zod.boolean(),
+  "policyReady": zod.boolean(),
+  "pricingApproved": zod.boolean(),
+  "metafieldsReady": zod.boolean(),
+  "locationName": zod.string().nullable(),
+  "blockers": zod.array(zod.string()),
+  "shopDomain": zod.string(),
+  "policySummary": zod.string()
+})
+
+
+/**
+ * @summary Read a page of the existing preview
+ */
+export const retrieveMatrixifyPreviewPageQueryPageDefault = 1;
+
+export const retrieveMatrixifyPreviewPageQueryViewDefault = `changes`;
+
+export const RetrieveMatrixifyPreviewPageQueryParams = zod.object({
+  "previewId": zod.coerce.string(),
+  "page": zod.coerce.number().int().min(1).default(retrieveMatrixifyPreviewPageQueryPageDefault),
+  "view": zod.enum(['changes', 'exceptions']).default(retrieveMatrixifyPreviewPageQueryViewDefault)
+})
+
+export const RetrieveMatrixifyPreviewPageResponse = zod.object({
+  "id": zod.string(),
+  "digest": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "shopDomain": zod.string(),
+  "locationName": zod.string().nullable(),
+  "blockers": zod.array(zod.string()),
+  "counts": zod.object({
+  "variants": zod.number().int(),
+  "inventoryRows": zod.number().int(),
+  "metafieldRows": zod.number().int(),
+  "priceRows": zod.number().int(),
+  "exceptions": zod.number().int()
+}),
+  "page": zod.number().int(),
+  "totalPages": zod.number().int(),
+  "totalRows": zod.number().int(),
+  "rows": zod.array(zod.object({
+  "variantId": zod.string(),
+  "sku": zod.string(),
+  "title": zod.string(),
+  "beforeQuantity": zod.number().nullable().describe('Null means unknown and must never be represented as zero.'),
+  "afterQuantity": zod.number().nullable(),
+  "beforePrice": zod.string().nullable(),
+  "afterPrice": zod.string().nullable(),
+  "supplierSummary": zod.array(zod.string())
+})),
+  "exceptions": zod.array(zod.object({
+  "variantId": zod.string(),
+  "code": zod.string(),
+  "supplier": zod.string().nullable(),
+  "originalSku": zod.string().nullable()
+})),
+  "warnings": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Validate a fresh owner-supplied Matrixify Products CSV without importing it
+ */
+export const createMatrixifyPreviewBodyBaselineCsvMax = 20000000;
+
+export const createMatrixifyPreviewBodyVariantIdsItemRegExp = new RegExp('^gid://shopify/ProductVariant/[1-9][0-9]*$');
+export const createMatrixifyPreviewBodyVariantIdsMax = 10000;
+
+
+
+export const CreateMatrixifyPreviewBody = zod.object({
+  "baselineCsv": zod.string().min(1).max(createMatrixifyPreviewBodyBaselineCsvMax),
+  "baselineObservedAt": zod.coerce.date(),
+  "baselineConfirmed": zod.literal(true),
+  "variantIds": zod.array(zod.string().regex(createMatrixifyPreviewBodyVariantIdsItemRegExp)).min(1).max(createMatrixifyPreviewBodyVariantIdsMax).optional().describe('Optional owner-selected subset of full ProductVariant GIDs; baseline validation remains full-catalog.')
+})
+
+export const CreateMatrixifyPreviewResponse = zod.object({
+  "id": zod.string(),
+  "digest": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "shopDomain": zod.string(),
+  "locationName": zod.string().nullable(),
+  "blockers": zod.array(zod.string()),
+  "counts": zod.object({
+  "variants": zod.number().int(),
+  "inventoryRows": zod.number().int(),
+  "metafieldRows": zod.number().int(),
+  "priceRows": zod.number().int(),
+  "exceptions": zod.number().int()
+}),
+  "page": zod.number().int(),
+  "totalPages": zod.number().int(),
+  "totalRows": zod.number().int(),
+  "rows": zod.array(zod.object({
+  "variantId": zod.string(),
+  "sku": zod.string(),
+  "title": zod.string(),
+  "beforeQuantity": zod.number().nullable().describe('Null means unknown and must never be represented as zero.'),
+  "afterQuantity": zod.number().nullable(),
+  "beforePrice": zod.string().nullable(),
+  "afterPrice": zod.string().nullable(),
+  "supplierSummary": zod.array(zod.string())
+})),
+  "exceptions": zod.array(zod.object({
+  "variantId": zod.string(),
+  "code": zod.string(),
+  "supplier": zod.string().nullable(),
+  "originalSku": zod.string().nullable()
+})),
+  "warnings": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Download one profile-specific XLSX workbook for manual Matrixify import
+ */
+export const downloadMatrixifyWorkbookBodyDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const DownloadMatrixifyWorkbookBody = zod.object({
+  "previewId": zod.string().uuid(),
+  "digest": zod.string().regex(downloadMatrixifyWorkbookBodyDigestRegExp),
+  "profile": zod.enum(['inventory', 'supplier_metafields', 'prices'])
+})
+
+export const DownloadMatrixifyWorkbookResponse = zod.unknown()
+
+
 export const listSkuMappingRowsQueryPageDefault = 1;
 
 export const listSkuMappingRowsQueryPageSizeDefault = 25;
@@ -18,7 +238,7 @@ export const listSkuMappingRowsQueryPageSizeMax = 100;
 export const ListSkuMappingRowsQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "supplier": zod.coerce.string().optional(),
-  "status": zod.enum(['all', 'unmatched', 'candidate', 'flagged', 'rejected', 'ambiguous', 'approved']).optional(),
+  "status": zod.enum(['all', 'unmatched', 'candidate', 'held', 'flagged', 'rejected', 'ambiguous', 'approved']).optional(),
   "page": zod.coerce.number().int().min(1).default(listSkuMappingRowsQueryPageDefault),
   "pageSize": zod.coerce.number().int().min(1).max(listSkuMappingRowsQueryPageSizeMax).default(listSkuMappingRowsQueryPageSizeDefault)
 })
@@ -35,14 +255,20 @@ export const ListSkuMappingRowsResponse = zod.object({
   "availability": zod.string(),
   "freshness": zod.string(),
   "lastFeedImport": zod.string().nullable(),
-  "mappingStatus": zod.enum(['unmatched', 'candidate', 'flagged', 'rejected', 'ambiguous', 'approved']),
+  "mappingStatus": zod.enum(['unmatched', 'candidate', 'held', 'flagged', 'rejected', 'ambiguous', 'approved']),
   "reason": zod.string(),
   "supplierProductName": zod.string().nullable(),
   "shopifyTitles": zod.array(zod.string()),
   "trusted": zod.boolean(),
   "publishable": zod.boolean(),
   "ruleDecision": zod.string().nullable(),
-  "warnings": zod.array(zod.string())
+  "warnings": zod.array(zod.string()),
+  "decisionId": zod.string().nullish(),
+  "decisionVersion": zod.number().int().nullish(),
+  "approvedVariantId": zod.string().nullish(),
+  "identityFingerprint": zod.string().nullish(),
+  "costAmount": zod.string().nullish(),
+  "sourceIdentityFingerprint": zod.string().nullish()
 })),
   "total": zod.number().int(),
   "page": zod.number().int(),
@@ -78,7 +304,8 @@ export const SearchMappingCatalogResponse = zod.object({
   "productTitle": zod.string().optional(),
   "variantTitle": zod.string().optional(),
   "productStatus": zod.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']).optional(),
-  "verifiedAt": zod.string().nullish()
+  "verifiedAt": zod.string().nullish(),
+  "identityFingerprint": zod.string().nullish()
 })),
   "total": zod.number().int(),
   "source": zod.string(),

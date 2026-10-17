@@ -11,6 +11,7 @@ export type SkuMappingRowMappingStatus = typeof SkuMappingRowMappingStatus[keyof
 export const SkuMappingRowMappingStatus = {
   unmatched: 'unmatched',
   candidate: 'candidate',
+  held: 'held',
   flagged: 'flagged',
   rejected: 'rejected',
   ambiguous: 'ambiguous',
@@ -41,6 +42,18 @@ export interface SkuMappingRow {
   /** @nullable */
   ruleDecision: string | null;
   warnings: string[];
+  /** @nullable */
+  decisionId?: string | null;
+  /** @nullable */
+  decisionVersion?: number | null;
+  /** @nullable */
+  approvedVariantId?: string | null;
+  /** @nullable */
+  identityFingerprint?: string | null;
+  /** @nullable */
+  costAmount?: string | null;
+  /** @nullable */
+  sourceIdentityFingerprint?: string | null;
 }
 
 export type SkuMappingPageCounts = {[key: string]: number};
@@ -83,6 +96,8 @@ export interface MappingCatalogVariant {
   productStatus?: MappingCatalogVariantProductStatus;
   /** @nullable */
   verifiedAt?: string | null;
+  /** @nullable */
+  identityFingerprint?: string | null;
 }
 
 export interface MappingCatalogPage {
@@ -101,6 +116,208 @@ export interface MappingCapabilities {
   scopesVerified: boolean;
   grantedScopes: string[];
   blockers: string[];
+}
+
+export interface ReviewerSession {
+  configured: boolean;
+  authenticated: boolean;
+  authorized: boolean;
+  /** @nullable */
+  subject: string | null;
+  /** @nullable */
+  issuer: string | null;
+  message: string;
+}
+
+export interface MappingDecisionResult {
+  id: string;
+  version: number;
+  state: string;
+}
+
+export type SkuMappingApprovalInputSupplier = typeof SkuMappingApprovalInputSupplier[keyof typeof SkuMappingApprovalInputSupplier];
+
+
+export const SkuMappingApprovalInputSupplier = {
+  Heartland_Hobby_Wholesale: 'Heartland Hobby Wholesale',
+  HobbyTyme: 'HobbyTyme',
+  Walthers: 'Walthers',
+  'MMD/Squadron': 'MMD/Squadron',
+} as const;
+
+export type SkuMappingApprovalInputCostBasis = typeof SkuMappingApprovalInputCostBasis[keyof typeof SkuMappingApprovalInputCostBasis];
+
+
+export const SkuMappingApprovalInputCostBasis = {
+  piece: 'piece',
+  pack: 'pack',
+  unknown: 'unknown',
+} as const;
+
+export interface SkuMappingApprovalInput {
+  supplier: SkuMappingApprovalInputSupplier;
+  /**
+     * @minLength 1
+     * @maxLength 300
+     */
+  originalSku: string;
+  /** @pattern ^gid://shopify/ProductVariant/[1-9][0-9]*$ */
+  variantId: string;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  expectedVersion: number | null;
+  /**
+     * Exact supplier cost string displayed in the review; send unchanged to reject a changed source cost.
+     * @nullable
+     */
+  expectedCostAmount?: string | null;
+  /** @pattern ^[a-f0-9]{64}$ */
+  identityFingerprint: string;
+  identityConfirmed: true;
+  /** @pattern ^[a-f0-9]{64}$ */
+  sourceIdentityFingerprint: string;
+  unitConfirmed: true;
+  /**
+     * @minLength 12
+     * @maxLength 2000
+     */
+  reason: string;
+  costConfirmed: boolean;
+  costBasis: SkuMappingApprovalInputCostBasis;
+  /**
+     * @minimum 1
+     * @maximum 100000
+     * @nullable
+     */
+  packSize: number | null;
+  /** @maxLength 2000 */
+  costEvidence: string;
+}
+
+export type SkuMappingRevocationInputSupplier = typeof SkuMappingRevocationInputSupplier[keyof typeof SkuMappingRevocationInputSupplier];
+
+
+export const SkuMappingRevocationInputSupplier = {
+  Heartland_Hobby_Wholesale: 'Heartland Hobby Wholesale',
+  HobbyTyme: 'HobbyTyme',
+  Walthers: 'Walthers',
+  'MMD/Squadron': 'MMD/Squadron',
+} as const;
+
+export interface SkuMappingRevocationInput {
+  supplier: SkuMappingRevocationInputSupplier;
+  /**
+     * @minLength 1
+     * @maxLength 300
+     */
+  originalSku: string;
+  /** @minimum 1 */
+  expectedVersion: number;
+  /**
+     * @minLength 12
+     * @maxLength 2000
+     */
+  reason: string;
+}
+
+export interface MatrixifyStatus {
+  catalogCount: number;
+  catalogReady: boolean;
+  policyReady: boolean;
+  pricingApproved: boolean;
+  metafieldsReady: boolean;
+  /** @nullable */
+  locationName: string | null;
+  blockers: string[];
+  shopDomain: string;
+  policySummary: string;
+}
+
+export interface MatrixifyPreviewInput {
+  /**
+     * @minLength 1
+     * @maxLength 20000000
+     */
+  baselineCsv: string;
+  baselineObservedAt: string;
+  baselineConfirmed: true;
+  /**
+     * Optional owner-selected subset of full ProductVariant GIDs; baseline validation remains full-catalog.
+     * @minItems 1
+     * @maxItems 10000
+     * @items.pattern ^gid://shopify/ProductVariant/[1-9][0-9]*$
+     */
+  variantIds?: string[];
+}
+
+export type MatrixifyDownloadInputProfile = typeof MatrixifyDownloadInputProfile[keyof typeof MatrixifyDownloadInputProfile];
+
+
+export const MatrixifyDownloadInputProfile = {
+  inventory: 'inventory',
+  supplier_metafields: 'supplier_metafields',
+  prices: 'prices',
+} as const;
+
+export interface MatrixifyDownloadInput {
+  previewId: string;
+  /** @pattern ^[a-f0-9]{64}$ */
+  digest: string;
+  profile: MatrixifyDownloadInputProfile;
+}
+
+export interface MatrixifyPreviewRow {
+  variantId: string;
+  sku: string;
+  title: string;
+  /**
+     * Null means unknown and must never be represented as zero.
+     * @nullable
+     */
+  beforeQuantity: number | null;
+  /** @nullable */
+  afterQuantity: number | null;
+  /** @nullable */
+  beforePrice: string | null;
+  /** @nullable */
+  afterPrice: string | null;
+  supplierSummary: string[];
+}
+
+export interface MatrixifyPreviewException {
+  variantId: string;
+  code: string;
+  /** @nullable */
+  supplier: string | null;
+  /** @nullable */
+  originalSku: string | null;
+}
+
+export interface MatrixifyPreviewCounts {
+  variants: number;
+  inventoryRows: number;
+  metafieldRows: number;
+  priceRows: number;
+  exceptions: number;
+}
+
+export interface MatrixifyPreview {
+  id: string;
+  digest: string;
+  expiresAt: string;
+  shopDomain: string;
+  /** @nullable */
+  locationName: string | null;
+  blockers: string[];
+  counts: MatrixifyPreviewCounts;
+  page: number;
+  totalPages: number;
+  totalRows: number;
+  rows: MatrixifyPreviewRow[];
+  exceptions: MatrixifyPreviewException[];
+  warnings: string[];
 }
 
 export type SupplierAvailabilityOfferMappingStatus = typeof SupplierAvailabilityOfferMappingStatus[keyof typeof SupplierAvailabilityOfferMappingStatus];
@@ -527,6 +744,23 @@ export interface Activity {
   createdAt: string;
 }
 
+export type RetrieveMatrixifyPreviewPageParams = {
+previewId: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+view?: RetrieveMatrixifyPreviewPageView;
+};
+
+export type RetrieveMatrixifyPreviewPageView = typeof RetrieveMatrixifyPreviewPageView[keyof typeof RetrieveMatrixifyPreviewPageView];
+
+
+export const RetrieveMatrixifyPreviewPageView = {
+  changes: 'changes',
+  exceptions: 'exceptions',
+} as const;
+
 export type ListSkuMappingRowsParams = {
 search?: string;
 supplier?: string;
@@ -549,6 +783,7 @@ export const ListSkuMappingRowsStatus = {
   all: 'all',
   unmatched: 'unmatched',
   candidate: 'candidate',
+  held: 'held',
   flagged: 'flagged',
   rejected: 'rejected',
   ambiguous: 'ambiguous',

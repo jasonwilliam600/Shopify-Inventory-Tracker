@@ -50,6 +50,7 @@ export class SynchronizationExecutor {
   stop(): void { this.#stopped = true; }
   status() { return { stopped: this.#stopped, busy: this.#busy, automaticSynchronizationEnabled: false as const }; }
   async authorizeExactPlan(plan: SyncPlan, evidence: unknown): Promise<SyncExecutionGrant> {
+    if (plan.target === "matrixify_export") fail("OFFLINE_EXPORT_CANNOT_AUTHORIZE_API_WRITES");
     this.#check(plan);
     const verified = await this.ports.authorization.verify({ action: "execute_sync_plan", planDigest: plan.digest,
       shopDomain: plan.shopDomain, operations: plan.operations, evidence });

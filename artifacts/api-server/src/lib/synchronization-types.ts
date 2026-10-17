@@ -72,6 +72,7 @@ export interface VariantSupplierVisibility {
   variantId: string; sku: string; suppliers: readonly SupplierVisibilityRow[];
 }
 export interface SyncPlan {
+  readonly target?: "shopify_api" | "matrixify_export";
   runId: string; createdAt: string; expiresAt: string; shopDomain: string;
   digest: string; policyDigest: string; inputDigest: string;
   operations: readonly SyncOperation[];

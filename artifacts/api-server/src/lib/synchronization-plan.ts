@@ -37,7 +37,8 @@ function validatePolicy(p: SyncPolicy): void {
     || !integer(p.pricing.basisPoints) || p.pricing.basisPoints > (p.pricing.mode === "margin" ? 9999 : 100000))) fail("INVALID_PRICING_POLICY");
 }
 export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapshot;
-  mappings: readonly SyncMapping[]; offers: readonly SupplierSyncOffer[]; nowMs?: number }): SyncPlan {
+  mappings: readonly SyncMapping[]; offers: readonly SupplierSyncOffer[]; nowMs?: number;
+  target?: "shopify_api" | "matrixify_export" }): SyncPlan {
   const { policy: p, snapshot: s, mappings, offers } = input, now = input.nowMs ?? Date.now();
   validatePolicy(p);
   if (!Number.isFinite(now)) fail("INVALID_SYNC_TIME");
@@ -48,7 +49,9 @@ export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapsho
     || !Number.isFinite(verification) || verification > now || now - verification > p.maxPlanAgeSeconds * 1000) blockers.push("CURRENT_COMPLETE_SHOP_SNAPSHOT_REQUIRED");
   const required = ["read_products", "read_inventory", "read_locations", "write_inventory"];
   if (p.pricing.mode !== "preserve" || p.supplierMetafields) required.push("write_products");
-  if (required.some(scope => !s.scopes.includes(scope))) blockers.push("SHOPIFY_SCOPES_MISSING");
+  // An offline file does not make Admin API requests or acquire API authority.
+  // Its target is fingerprinted and is explicitly refused by the API executor.
+  if (input.target !== "matrixify_export" && required.some(scope => !s.scopes.includes(scope))) blockers.push("SHOPIFY_SCOPES_MISSING");
   if (!s.variants.length || new Set(s.variants.map(v => v.variantId)).size !== s.variants.length
     || new Set(s.variants.map(v => v.inventoryItemId)).size !== s.variants.length) blockers.push("INVALID_CATALOG_IDENTITIES");
   let expires = Number.isFinite(verification) ? Math.min(now + p.maxPlanAgeSeconds * 1000, verification + p.maxPlanAgeSeconds * 1000) : now;
@@ -143,7 +146,7 @@ export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapsho
     const base = { variantId: v.variantId, productId: v.productId, inventoryItemId: v.inventoryItemId,
       locationId: p.locationId, identityFingerprint: v.identityFingerprint, sku: v.sku,
       contributors, relationshipFingerprint, committedQuantity: v.committedQuantity };
-    if (p.supplierMetafields) {
+      if (p.supplierMetafields && input.target !== "matrixify_export") {
       try {
         const meta = prepareSupplierMetafields(v, visibility);
         // Compare values, not different JSON representations of the same object.
@@ -193,7 +196,7 @@ export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapsho
   if (changed > p.maxChangedVariants) blockers.push("MAX_CHANGED_VARIANTS_EXCEEDED");
   if (zeroed > p.maxZeroedVariants) blockers.push("MAX_ZEROED_VARIANTS_EXCEEDED");
   if (operations.some(o => o.field === "inventory" && Math.abs(Number(o.after) - Number(o.before)) > p.maxQuantityDelta)) blockers.push("MAX_QUANTITY_DELTA_EXCEEDED");
-  const body = { runId: randomUUID(), createdAt: new Date(now).toISOString(),
+  const body = { target: input.target ?? "shopify_api", runId: randomUUID(), createdAt: new Date(now).toISOString(),
     expiresAt: new Date(expires).toISOString(),
     shopDomain: p.shopDomain, policyDigest: digest(p), inputDigest: digest({ snapshot: s, mappings, offers }),
     operations, holds, blockers, supplierVisibility, summary: { variants: s.variants.length, changedVariants: changed, zeroedVariants: zeroed,

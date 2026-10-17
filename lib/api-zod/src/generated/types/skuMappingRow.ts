@@ -31,4 +31,16 @@ export interface SkuMappingRow {
   /** @nullable */
   ruleDecision: string | null;
   warnings: string[];
+  /** @nullable */
+  decisionId?: string | null;
+  /** @nullable */
+  decisionVersion?: number | null;
+  /** @nullable */
+  approvedVariantId?: string | null;
+  /** @nullable */
+  identityFingerprint?: string | null;
+  /** @nullable */
+  costAmount?: string | null;
+  /** @nullable */
+  sourceIdentityFingerprint?: string | null;
 }

@@ -1,3 +1,30 @@
+.mapping-dialog .mapping-evidence-fields textarea,
+.mapping-dialog .mapping-evidence-fields input:not([type="checkbox"]),
+.mapping-dialog .mapping-evidence-fields select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 5px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 12px;
+}
+.mapping-dialog .mapping-evidence-fields textarea { resize: vertical; min-height: 72px; }
+.mapping-evidence-fields > label:first-child { display: block; font-size: 12px; font-weight: 650; }
+.mapping-evidence-fields > label:first-child span { display: block; color: hsl(var(--muted-foreground)); font-size: 10px; font-weight: 400; margin-top: 3px; }
+.mapping-check-label { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 11px; }
+.mapping-check-label input { accent-color: hsl(var(--primary)); }
+.mapping-cost-evidence { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); padding: 10px; background: hsl(var(--muted)); border-radius: 5px; }
+.mapping-cost-evidence label { display: block; font-size: 10px; font-weight: 600; }
+.mapping-write-message,.mapping-write-error { display: block; flex-basis: 100%; font-size: 11px; }
+.mapping-write-message { color: #34745d; }
+.mapping-write-error { color: #a3463e; }
+.mapping-dialog-actions { flex-wrap: wrap; }
+.mapping-dialog .reviewer-sign-in { border: 1px solid hsl(var(--border)); border-radius: 5px; padding: 8px 10px; background: hsl(var(--muted)); color: hsl(var(--foreground)); font: inherit; font-size: 11px; cursor: pointer; }
+.mapping-dialog .auth-not-configured { flex-basis: 100%; }
 .sku-mappings-page {
   --map-ink: #20343d;
   --map-muted: #73838a;

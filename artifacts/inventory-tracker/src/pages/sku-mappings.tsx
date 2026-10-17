@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -21,10 +22,17 @@ import {
   useGetSkuMappingCapabilities,
   useListSkuMappingRows,
   useSearchMappingCatalog,
+  getGetReviewerSessionQueryKey,
+  useGetReviewerSession,
+  useApproveSkuMapping,
+  useRevokeSkuMapping,
 } from "@workspace/api-client-react";
+import { ReviewerSignIn } from "@/lib/clerk-host";
 import type {
   ListSkuMappingRowsStatus,
   MappingCatalogVariant,
+  SkuMappingApprovalInputSupplier,
+  SkuMappingRevocationInputSupplier,
   SkuMappingRow,
 } from "@workspace/api-client-react";
 import "./sku-mappings.css";
@@ -33,6 +41,7 @@ const statusFilters: { value: ListSkuMappingRowsStatus; label: string }[] = [
   { value: "all", label: "All mappings" },
   { value: "unmatched", label: "Unmatched" },
   { value: "candidate", label: "Candidate" },
+  { value: "held", label: "Held" },
   { value: "flagged", label: "Flagged" },
   { value: "rejected", label: "Rejected" },
   { value: "ambiguous", label: "Ambiguous" },
@@ -71,35 +80,110 @@ function sourceWarnings(row: SkuMappingRow) {
   return [...new Set(warnings)];
 }
 
-function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => void }) {
+function MappingDialog({ row, onClose, canApprove, reviewerAuthorized }: {
+  row: SkuMappingRow;
+  onClose: () => void;
+  canApprove: boolean;
+  reviewerAuthorized: boolean;
+}) {
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogSource, setCatalogSource] = useState<"historical" | "live">("historical");
   const [selectedVariant, setSelectedVariant] = useState<MappingCatalogVariant | null>(null);
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
   const [unitConfirmed, setUnitConfirmed] = useState(false);
+  const [reason, setReason] = useState("");
+  const [costConfirmed, setCostConfirmed] = useState(false);
+  const [costBasis, setCostBasis] = useState<"piece" | "pack" | "unknown">("unknown");
+  const [packSize, setPackSize] = useState("");
+  const [costEvidence, setCostEvidence] = useState("");
+  const [writeMessage, setWriteMessage] = useState("");
+  const queryClient = useQueryClient();
+  const approveMapping = useApproveSkuMapping();
+  const revokeMapping = useRevokeSkuMapping();
   const trimmedSearch = catalogSearch.trim();
   const canSearchHistorical = trimmedSearch.length >= 2;
   const catalogParams = useMemo(
     () => ({ search: canSearchHistorical ? trimmedSearch : undefined, source: catalogSource }),
     [canSearchHistorical, trimmedSearch, catalogSource],
   );
+  const liveReady = catalogSource === "historical" || (reviewerAuthorized && canApprove);
   const catalogQuery = useSearchMappingCatalog(catalogParams, {
     query: {
-      enabled: canSearchHistorical,
+      enabled: canSearchHistorical && liveReady,
       queryKey: getSearchMappingCatalogQueryKey(catalogParams),
       staleTime: 30_000,
     },
   });
 
-  const historicalOnly = catalogQuery.data?.source === "historical";
   const provenanceValid = catalogQuery.data?.source === catalogSource && (
     catalogSource === "historical"
       ? catalogQuery.data.verified === false && catalogQuery.data.items.every(v => v.historical && v.variantId === null)
       : catalogQuery.data.verified === true && catalogQuery.data.items.every(v =>
         !v.historical && /^gid:\/\/shopify\/ProductVariant\/\d+$/.test(v.variantId ?? "")
-        && Boolean(v.verifiedAt) && Number.isFinite(Date.parse(v.verifiedAt ?? "")))
+        && Boolean(v.verifiedAt) && Number.isFinite(Date.parse(v.verifiedAt ?? ""))
+        && Boolean(v.identityFingerprint))
   );
   const visibleVariants = provenanceValid ? catalogQuery.data?.items ?? [] : [];
+  const permanentlyDisabled = row.mappingStatus === "held" || row.mappingStatus === "flagged" || row.mappingStatus === "rejected";
+  const writePending = approveMapping.isPending || revokeMapping.isPending;
+  const reasonValid = reason.trim().length >= 12;
+  const approvalReady = reviewerAuthorized && canApprove && !permanentlyDisabled
+    && selectedVariant !== null && !selectedVariant.historical
+    && selectedVariant.skuStatus === "unique"
+    && Boolean(selectedVariant.identityFingerprint) && Boolean(row.sourceIdentityFingerprint)
+    && identityConfirmed && unitConfirmed && reasonValid
+    && (!costConfirmed || (costEvidence.trim().length >= 12 && (costBasis === "piece"
+      || (costBasis === "pack" && Number.isSafeInteger(Number(packSize)) && Number(packSize) > 0))));
+  const saveApproval = async () => {
+    if (!approvalReady || !selectedVariant?.variantId || !selectedVariant.identityFingerprint) return;
+    setWriteMessage("");
+    try {
+      await approveMapping.mutateAsync({ data: {
+        supplier: row.supplier as SkuMappingApprovalInputSupplier,
+        originalSku: row.originalSku,
+        sourceIdentityFingerprint: row.sourceIdentityFingerprint!,
+        variantId: selectedVariant.variantId,
+        expectedVersion: row.decisionVersion ?? null,
+        expectedCostAmount: costConfirmed ? row.costAmount ?? null : null,
+        identityFingerprint: selectedVariant.identityFingerprint,
+        identityConfirmed: true,
+        unitConfirmed: true,
+        reason: reason.trim(),
+        costConfirmed,
+        costBasis,
+        packSize: costBasis === "pack" && packSize ? Number(packSize) : null,
+        costEvidence: costEvidence.trim(),
+      } });
+      setWriteMessage("Mapping approved. The decision was saved atomically.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/sku-mappings"] }),
+        queryClient.invalidateQueries({ queryKey: getGetSkuMappingCapabilitiesQueryKey() }),
+      ]);
+      onClose();
+    } catch (error) {
+      setWriteMessage(error instanceof Error ? error.message : "Approval failed. No automatic retry was attempted.");
+    }
+  };
+  const revokeApproval = async () => {
+    if (!reviewerAuthorized || !canApprove || !reasonValid || !row.decisionVersion) return;
+    setWriteMessage("");
+    try {
+      await revokeMapping.mutateAsync({ data: {
+        supplier: row.supplier as SkuMappingRevocationInputSupplier,
+        originalSku: row.originalSku,
+        expectedVersion: row.decisionVersion,
+        reason: reason.trim(),
+      } });
+      setWriteMessage("Approval revoked.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/sku-mappings"] }),
+        queryClient.invalidateQueries({ queryKey: getGetSkuMappingCapabilitiesQueryKey() }),
+      ]);
+      onClose();
+    } catch (error) {
+      setWriteMessage(error instanceof Error ? error.message : "Revocation failed. No automatic retry was attempted.");
+    }
+  };
   const blockers = catalogQuery.data?.blocker;
   const warnings = sourceWarnings(row);
 
@@ -111,7 +195,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
         <header className="mapping-dialog-head">
           <div>
             <p className="mapping-kicker">Relationship review</p>
-            <h2 id="mapping-dialog-title">{row.mappingStatus === "rejected" || row.mappingStatus === "ambiguous" ? "Resolve source mapping" : "Fix SKU mapping"}</h2>
+            <h2 id="mapping-dialog-title">{row.mappingStatus === "rejected" || row.mappingStatus === "ambiguous" ? "Review source mapping" : "Fix SKU mapping"}</h2>
           </div>
           <button className="icon-button" onClick={onClose} aria-label="Close mapping review" data-testid="button-close-mapping">
             <X size={18} />
@@ -123,6 +207,8 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
             <span className="mapping-overline">Supplier source</span>
             <strong>{row.originalSku}</strong>
             <span>{row.supplier} {row.supplierProductName ? `· ${row.supplierProductName}` : ""}</span>
+            <small>Source quantity: {quantityLabel(row)} · {statusName(row.quantityKind)} supplier units</small>
+            {row.costAmount !== null && row.costAmount !== undefined && <small>Exact source cost: {row.costAmount} · basis unconverted</small>}
           </div>
           <ArrowLeftRight className="mapping-arrow" size={18} />
           <div className="mapping-source-block destination">
@@ -148,7 +234,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
             setUnitConfirmed(false);
           }}>
             <option value="historical">HISTORICAL — October 5 export (preview only)</option>
-            <option value="live">LIVE — verified Shopify identities (not activated)</option>
+            <option value="live" disabled={!reviewerAuthorized || !canApprove}>LIVE — verified local catalog</option>
           </select>
           <label htmlFor="historical-product-search">Search the {catalogSource === "historical" ? "historical product export" : "verified live catalog"}</label>
           <div className="mapping-searchbox">
@@ -167,16 +253,20 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
             />
           </div>
           <p className="mapping-field-hint">{catalogSource === "historical"
-            ? "HISTORICAL · October 5. Local previews, not live Shopify identities."
-            : "LIVE · Not activated. Requires a permitted read provider and a separately authorized complete catalog import. No connection or token is requested here."}</p>
+            ? "HISTORICAL · October 5. Local diagnostic previews, not verified variant identities."
+            : "VERIFIED LOCAL CACHE · Read-only. This screen never requests Shopify data or imports a catalog."}</p>
         </div>
+
+        {catalogSource === "live" && !liveReady && (
+          <div className="mapping-blocker"><LockKeyhole size={17} /><div><strong>Verified catalog search unavailable</strong><span>Sign in as an authorized reviewer and confirm a fresh verified local catalog is ready before selecting a destination.</span>{!reviewerAuthorized && <ReviewerSignIn />}</div></div>
+        )}
 
         {canSearchHistorical && (
           <div className="catalog-results" aria-live="polite" data-testid="list-historical-catalog-results">
             {catalogQuery.isLoading && <div className="catalog-loading"><span /> Loading {catalogSource} matches</div>}
             {catalogQuery.isError && (
               <div className="catalog-inline-error">
-                <span>{catalogSource === "live" ? "Live catalog access is blocked; no approved complete snapshot is active. Historical results are never substituted." : "Historical catalog could not be loaded."}</span>
+                <span>{catalogSource === "live" ? "Verified local catalog is unavailable. Historical results are never substituted." : "Historical catalog could not be loaded."}</span>
                 <button onClick={() => void catalogQuery.refetch()} data-testid="button-retry-catalog">Retry</button>
               </div>
             )}
@@ -194,6 +284,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
                   setIdentityConfirmed(false);
                   setUnitConfirmed(false);
                 }}
+                disabled={!variant.historical && (!variant.identityFingerprint || !reviewerAuthorized || !canApprove)}
                 data-testid={`button-select-${catalogSource}-variant-${variant.key}`}
               >
                 <span className="catalog-radio">{selectedVariant?.key === variant.key ? <Check size={13} /> : null}</span>
@@ -217,7 +308,8 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
                 <span>Product ID <b>{selectedVariant.productId ?? "Unknown"}</b></span>
                 <span>Inventory item <b>{selectedVariant.inventoryItemId ?? "Unavailable"}</b></span>
                 <span>Product status <b>{selectedVariant.productStatus ?? "Unknown"}</b></span>
-                <span>Verified <b>{selectedVariant.verifiedAt ?? "Unknown"}</b></span>
+              <span>Verified <b>{selectedVariant.verifiedAt ?? "Unknown"}</b></span>
+              <span>Identity fingerprint <b>{selectedVariant.identityFingerprint ?? "Unavailable"}</b></span>
               </>}
             </div>
           </div>
@@ -242,21 +334,47 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
           <label><input type="checkbox" checked={unitConfirmed} onChange={(event) => setUnitConfirmed(event.target.checked)} data-testid="check-confirm-selling-unit" /> I verified the selling unit / pack size.</label>
         </div>
 
-        <div className="mapping-blocker" role="note" data-testid="status-mapping-write-blocked">
+        <div className="mapping-field mapping-evidence-fields">
+          <label htmlFor="mapping-review-reason">Reviewer evidence / reason <span>Required · at least 12 characters</span></label>
+          <textarea id="mapping-review-reason" value={reason} onChange={event => setReason(event.target.value)} placeholder="Describe the evidence supporting this exact supplier source and variant." rows={3} data-testid="input-mapping-review-reason" />
+          {row.costAmount !== null && row.costAmount !== undefined ? <>
+            <p className="mapping-field-hint">Exact source cost: <strong>{row.costAmount}</strong> · {row.supplier} · {row.originalSku}. The displayed value is submitted unchanged for verification.</p>
+            <label className="mapping-check-label"><input type="checkbox" checked={costConfirmed} onChange={event => setCostConfirmed(event.target.checked)} data-testid="check-confirm-source-cost" /> Explicitly verify the supplier cost basis (optional).</label>
+          </> : <p className="mapping-field-hint">No current source cost amount is reported; cost verification is unavailable for this row.</p>}
+          {costConfirmed && row.costAmount !== null && row.costAmount !== undefined && <div className="mapping-cost-evidence">
+            <label>Cost is for<select value={costBasis} onChange={event => setCostBasis(event.target.value as "piece" | "pack" | "unknown")}><option value="unknown">Unknown basis</option><option value="piece">One individual piece</option><option value="pack">One supplier pack</option></select></label>
+            {costBasis === "pack" && <label>Pack quantity<input type="number" min="1" step="1" value={packSize} onChange={event => setPackSize(event.target.value)} placeholder="Enter confirmed pack count" /></label>}
+            <label>Cost evidence<input value={costEvidence} onChange={event => setCostEvidence(event.target.value)} placeholder="Invoice, feed field, or verified note" /></label>
+          </div>}
+          <p className="mapping-field-hint">Keep source basis explicit: one piece or one supplier pack. No inferred piece/pack conversion.</p>
+        </div>
+
+          <div className="mapping-blocker" role="note" data-testid="status-mapping-write-blocked">
           <LockKeyhole size={17} />
-          <div><strong>Changes are disabled</strong>
-            <span>{blockers || "Mapping write and reviewer identity are not enabled. This preview cannot save, approve, or resolve a mapping."}</span>
-            <span>Catalog identity verification is not supplier relationship approval. Save, Approve, and Resolve &amp; Approve remain disabled for both sources.</span>
+          <div><strong>{permanentlyDisabled ? "Approval permanently disabled" : "Approval prerequisites"}</strong>
+            <span>{blockers || (permanentlyDisabled ? "Flagged and rejected sources are permanently disabled in this workflow." : "Approval requires an authorized reviewer, a fresh verified local catalog identity, confirmations, and evidence.")}</span>
+            <span>Historical matches are diagnostic only. Prefixes and suggestions never grant approval; held sources are rejected by the server.</span>
           </div>
         </div>
 
         <footer className="mapping-dialog-actions">
           <button className="button-secondary" onClick={onClose} data-testid="button-cancel-mapping">Close review</button>
-          <button className="button-primary disabled" disabled title="Saving is disabled until migration and reviewer identity approval." data-testid="button-save-mapping">
-            {row.mappingStatus === "rejected" || row.mappingStatus === "ambiguous" ? "Resolve & approve" : "Save mapping"}
-          </button>
+          {row.mappingStatus === "approved" ? (
+            <button className="button-primary disabled" onClick={() => void revokeApproval()} disabled={writePending || !reviewerAuthorized || !canApprove || !reasonValid || !row.decisionVersion} data-testid="button-revoke-mapping">
+              {revokeMapping.isPending ? "Revoking…" : "Revoke approval"}
+            </button>
+          ) : (
+            <button className="button-primary disabled" onClick={() => void saveApproval()} disabled={writePending || !approvalReady || (costBasis === "pack" && costConfirmed && (!packSize || Number(packSize) < 1))} title={permanentlyDisabled ? "Held, flagged, or rejected sources cannot be approved." : undefined} data-testid="button-save-mapping">
+              {approveMapping.isPending ? "Approving…" : "Approve mapping"}
+            </button>
+          )}
+          {writeMessage && <span className="mapping-write-message" role="status">{writeMessage}</span>}
+          {!reviewerAuthorized && <ReviewerSignIn />}
+          {row.mappingStatus === "held" || row.mappingStatus === "flagged" || row.mappingStatus === "rejected" ? <span className="mapping-disabled-caption">This source cannot be resolved or approved in this workflow.</span> : null}
+          {approveMapping.isError && <span className="mapping-write-error" role="alert">{approveMapping.error instanceof Error ? approveMapping.error.message : "Approval failed."}</span>}
+          {revokeMapping.isError && <span className="mapping-write-error" role="alert">{revokeMapping.error instanceof Error ? revokeMapping.error.message : "Revocation failed."}</span>}
         </footer>
-        <p className="mapping-disabled-caption">Confirmations are for review only. No changes are persisted.</p>
+        <p className="mapping-disabled-caption">Approval atomically saves this individual source relationship. It never updates inventory or publishes to Shopify.</p>
       </section>
     </div>
   );
@@ -274,6 +392,9 @@ export default function SkuMappings() {
   const [page, setPage] = useState(1);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [activeRow, setActiveRow] = useState<SkuMappingRow | null>(null);
+  const reviewerSession = useGetReviewerSession({
+    query: { queryKey: getGetReviewerSessionQueryKey(), staleTime: 15_000 },
+  });
 
   useEffect(() => {
     const timer = window.setTimeout(() => { setSearch(searchDraft.trim()); setPage(1); }, 300);
@@ -329,10 +450,10 @@ export default function SkuMappings() {
       <section className="capability-banner" data-testid="notice-mapping-capabilities">
         <div className="capability-icon"><ShieldAlert size={19} /></div>
         <div className="capability-content">
-          <strong>Mapping changes are not available yet</strong>
-          <p>The mapping schema is installed. Saving, approval, and hold resolution remain locked until reviewer authentication, transactional approval APIs and live variant verification are implemented and tested. Live catalog import is not activated; scopes remain unverified.</p>
+            <strong>{capabilities.data?.canApprove ? "Authenticated mapping review is available" : "Mapping approval prerequisites"}</strong>
+            <p>Only a fresh, verified local catalog identity can be approved by an allowlisted reviewer. Historical diagnostics remain read-only; holds, flagged sources, and rejected sources cannot be resolved here.</p>
           <div className="capability-chips">
-            <span><i /> Save disabled</span><span><i /> Approve disabled</span><span><i /> Live catalog unavailable</span><span><i /> Scopes unverified</span>
+            <span><i /> {capabilities.data?.canSave ? "Save enabled" : "Save disabled"}</span><span><i /> {capabilities.data?.canApprove ? "Approve enabled" : "Approve disabled"}</span><span><i /> Verified local cache</span><span><i /> Manual review only</span>
           </div>
           {capabilities.isLoading && <small className="capability-loading">Checking current capability state…</small>}
           {capabilities.isError && <small className="capability-error">Capability details could not be loaded. Writes remain disabled.</small>}
@@ -340,7 +461,7 @@ export default function SkuMappings() {
             <ul className="capability-blockers">{capabilityBlockers.map((blocker, index) => <li key={`${index}-${blocker}`}>{blocker}</li>)}</ul>
           )}
         </div>
-        <div className="capability-state"><span>WRITE ACCESS</span><strong>LOCKED</strong></div>
+          <div className="capability-state"><span>WRITE ACCESS</span><strong>{capabilities.data?.canApprove ? "REVIEW" : "LOCKED"}</strong></div>
       </section>
 
       <section className="mapping-workspace">
@@ -409,6 +530,9 @@ export default function SkuMappings() {
                         {row.diagnosticSkus.length > 0 && <small className="diagnostic-line">{row.mappingStatus === "rejected" ? "Previous destination: " : "Diagnostic: "}{row.diagnosticSkus.join(", ")}</small>}
                         {row.shopifyTitles.length > 0 && <small className="destination-title">{row.shopifyTitles.join(" · ")}</small>}
                         {row.reason && <small className="reason-line">{row.reason}</small>}
+                        {row.decisionId && <small className="diagnostic-line">Decision v{row.decisionVersion ?? "—"} · {row.approvedVariantId ?? "Approved variant unavailable"}</small>}
+                        {row.identityFingerprint && <small className="diagnostic-line">Identity {row.identityFingerprint}</small>}
+                        {row.costAmount !== null && row.costAmount !== undefined && <small className="diagnostic-line">Source cost {row.costAmount} · exact supplier basis</small>}
                       </td>
                       <td className="quantity-cell">
                         <strong className={row.quantityKind === "unknown" || row.freshness === "stale" ? "quantity-caution" : ""}>{quantityLabel(row)}</strong>
@@ -417,7 +541,7 @@ export default function SkuMappings() {
                       </td>
                       <td className="feed-cell"><span className={`freshness freshness-${row.freshness.toLowerCase()}`}>{row.freshness === "stale" ? <AlertTriangle size={12} /> : <Clock3 size={12} />}{freshnessLabel(row)}</span><small>{row.lastFeedImport ? new Date(row.lastFeedImport).toLocaleString() : "Import time unknown"}</small><span className={`availability availability-${row.availability.toLowerCase().replaceAll(" ", "-")}`}>{row.availability}</span></td>
                       <td><span className={`mapping-status status-${row.mappingStatus}`} data-testid={`status-row-mapping-${encodeURIComponent(rowKey(row))}`}>{row.mappingStatus}</span>{warnings.length > 0 && <small className="warning-count"><AlertTriangle size={12} /> {warnings.length} {warnings.length === 1 ? "review note" : "review notes"}</small>}</td>
-                      <td className="action-column"><button className="review-button" onClick={() => setActiveRow(row)} data-testid={`button-fix-mapping-${encodeURIComponent(rowKey(row))}`}>{row.mappingStatus === "rejected" || row.mappingStatus === "ambiguous" ? "Resolve" : "Fix mapping"} <ChevronRight size={14} /></button></td>
+                       <td className="action-column"><button className="review-button" onClick={() => setActiveRow(row)} data-testid={`button-fix-mapping-${encodeURIComponent(rowKey(row))}`}>{row.mappingStatus === "rejected" || row.mappingStatus === "flagged" || row.mappingStatus === "held" ? "Inspect" : row.mappingStatus === "approved" ? "Review approval" : "Review mapping"} <ChevronRight size={14} /></button></td>
                     </tr>;
                   })}
                 </tbody>
@@ -431,7 +555,12 @@ export default function SkuMappings() {
         )}
       </section>
       <div className="mapping-footnote"><LockKeyhole size={14} /><span>Preview only. This screen does not persist relationships, alter stock, or publish to Shopify.</span></div>
-      {activeRow && <MappingDialog row={activeRow} onClose={() => setActiveRow(null)} />}
+      {activeRow && <MappingDialog
+        row={activeRow}
+        onClose={() => setActiveRow(null)}
+        canApprove={capabilities.data?.canApprove === true}
+        reviewerAuthorized={reviewerSession.data?.configured === true && reviewerSession.data.authenticated && reviewerSession.data.authorized}
+      />}
     </div>
   );
 }

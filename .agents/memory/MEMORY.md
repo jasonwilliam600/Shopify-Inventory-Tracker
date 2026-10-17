@@ -16,3 +16,4 @@
 - [Supplier visibility approvals](supplier-visibility-approvals.md) — historical previews are acceptable when labeled; schema design approval never authorizes migration execution.
 - [Isolated SQL review](sql-review-safety.md) — preserve exact proposals, isolate tests from application DBs, and preserve Unicode and SQL dollar quoting.
 - [Completion scope](launch-scope.md) — finish existing four-supplier inventory and pricing sync toward one launch; separate explicit approvals for live operations.
+- [OpenAPI generation](openapi-generation.md) — mixed path/query parameters can collide in generated Zod exports; correct the contract or generator, not generated files.

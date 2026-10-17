@@ -20,8 +20,9 @@ let cached: { at: number; rows: SkuMappingRow[] } | undefined;
 let pending: Promise<SkuMappingRow[]> | undefined;
 
 /** SELECT-only projection. No importer, auth client, scheduler, or mutation is called. */
-async function buildRows(): Promise<SkuMappingRow[]> {
-  const catalog = await loadAvailabilityCatalog();
+type MappingCatalog = Pick<Awaited<ReturnType<typeof loadAvailabilityCatalog>>, "variants" | "knownSkus">;
+async function buildRows(providedCatalog?: MappingCatalog): Promise<SkuMappingRow[]> {
+  const catalog = providedCatalog ?? await loadAvailabilityCatalog();
   const sources = await db.select({
     sku: t.sku, supplier: t.supplier, productName: t.productName,
     supplierStock: t.supplierStock, supplierStatus: t.supplierStatus,
@@ -89,10 +90,12 @@ async function buildRows(): Promise<SkuMappingRow[]> {
     };
   });
 }
-export async function mappingManagerRows() {
+export async function mappingManagerRows(providedCatalog?: MappingCatalog) {
+  if (providedCatalog) return buildRows(providedCatalog);
   if (cached && Date.now() - cached.at < 30_000) return cached.rows;
   if (!pending) pending = buildRows().then(rows => {
     cached = { at: Date.now(), rows }; return rows;
   }).finally(() => { pending = undefined; });
   return pending;
 }
+export function invalidateMappingManagerRows() { cached = undefined; }

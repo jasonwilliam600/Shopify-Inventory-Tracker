@@ -26,4 +26,6 @@ export interface MappingCatalogVariant {
   productStatus?: MappingCatalogVariantProductStatus;
   /** @nullable */
   verifiedAt?: string | null;
+  /** @nullable */
+  identityFingerprint?: string | null;
 }

@@ -13,6 +13,7 @@ export const ListSkuMappingRowsStatus = {
   all: 'all',
   unmatched: 'unmatched',
   candidate: 'candidate',
+  held: 'held',
   flagged: 'flagged',
   rejected: 'rejected',
   ambiguous: 'ambiguous',

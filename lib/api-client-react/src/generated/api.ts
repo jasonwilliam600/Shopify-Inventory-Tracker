@@ -35,9 +35,18 @@ import type {
   ListSupplierAvailabilityParams,
   MappingCapabilities,
   MappingCatalogPage,
+  MappingDecisionResult,
+  MatrixifyDownloadInput,
+  MatrixifyPreview,
+  MatrixifyPreviewInput,
+  MatrixifyStatus,
   MmdRefreshStatus,
+  RetrieveMatrixifyPreviewPageParams,
+  ReviewerSession,
   SearchMappingCatalogParams,
+  SkuMappingApprovalInput,
   SkuMappingPage,
+  SkuMappingRevocationInput,
   Supplier,
   SupplierAvailabilityPage,
   SupplierUpdateInput,
@@ -70,6 +79,528 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetReviewerSessionUrl = () => {
+
+
+
+
+  return `/api/reviewer/session`
+}
+
+/**
+ * @summary Return server-verified Clerk reviewer session and allowlist status
+ */
+export const getReviewerSession = async ( options?: Parameters<typeof customFetch>[1]): Promise<ReviewerSession> => {
+
+  return customFetch<ReviewerSession>(getGetReviewerSessionUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetReviewerSessionQueryKey = () => {
+    return [
+    `/api/reviewer/session`
+    ] as const;
+    }
+
+
+export const getGetReviewerSessionQueryOptions = <TData = Awaited<ReturnType<typeof getReviewerSession>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReviewerSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReviewerSessionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReviewerSession>>> = ({ signal }) => getReviewerSession({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReviewerSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetReviewerSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getReviewerSession>>>
+export type GetReviewerSessionQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Return server-verified Clerk reviewer session and allowlist status
+ */
+
+export function useGetReviewerSession<TData = Awaited<ReturnType<typeof getReviewerSession>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReviewerSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetReviewerSessionQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getApproveSkuMappingUrl = () => {
+
+
+
+
+  return `/api/sku-mappings/approve`
+}
+
+/**
+ * @summary Atomically save and approve one supplier-to-variant identity
+ */
+export const approveSkuMapping = async (skuMappingApprovalInput: SkuMappingApprovalInput, options?: Parameters<typeof customFetch>[1]): Promise<MappingDecisionResult> => {
+
+  return customFetch<MappingDecisionResult>(getApproveSkuMappingUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(skuMappingApprovalInput)
+  }
+);}
+
+
+
+
+
+export const getApproveSkuMappingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveSkuMapping>>, TError,{data: BodyType<SkuMappingApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveSkuMapping>>, TError,{data: BodyType<SkuMappingApprovalInput>}, TContext> => {
+
+const mutationKey = ['approveSkuMapping'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveSkuMapping>>, {data: BodyType<SkuMappingApprovalInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  approveSkuMapping(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveSkuMappingMutationResult = NonNullable<Awaited<ReturnType<typeof approveSkuMapping>>>
+    export type ApproveSkuMappingMutationBody = BodyType<SkuMappingApprovalInput>
+    export type ApproveSkuMappingMutationError = ErrorType<void>
+
+    /**
+ * @summary Atomically save and approve one supplier-to-variant identity
+ */
+export const useApproveSkuMapping = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveSkuMapping>>, TError,{data: BodyType<SkuMappingApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approveSkuMapping>>,
+        TError,
+        {data: BodyType<SkuMappingApprovalInput>},
+        TContext
+      > => {
+      return useMutation(getApproveSkuMappingMutationOptions(options));
+    }
+
+export const getRevokeSkuMappingUrl = () => {
+
+
+
+
+  return `/api/sku-mappings/revoke`
+}
+
+/**
+ * @summary Revoke an approved source relationship
+ */
+export const revokeSkuMapping = async (skuMappingRevocationInput: SkuMappingRevocationInput, options?: Parameters<typeof customFetch>[1]): Promise<MappingDecisionResult> => {
+
+  return customFetch<MappingDecisionResult>(getRevokeSkuMappingUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(skuMappingRevocationInput)
+  }
+);}
+
+
+
+
+
+export const getRevokeSkuMappingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeSkuMapping>>, TError,{data: BodyType<SkuMappingRevocationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeSkuMapping>>, TError,{data: BodyType<SkuMappingRevocationInput>}, TContext> => {
+
+const mutationKey = ['revokeSkuMapping'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeSkuMapping>>, {data: BodyType<SkuMappingRevocationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  revokeSkuMapping(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeSkuMappingMutationResult = NonNullable<Awaited<ReturnType<typeof revokeSkuMapping>>>
+    export type RevokeSkuMappingMutationBody = BodyType<SkuMappingRevocationInput>
+    export type RevokeSkuMappingMutationError = ErrorType<void>
+
+    /**
+ * @summary Revoke an approved source relationship
+ */
+export const useRevokeSkuMapping = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeSkuMapping>>, TError,{data: BodyType<SkuMappingRevocationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeSkuMapping>>,
+        TError,
+        {data: BodyType<SkuMappingRevocationInput>},
+        TContext
+      > => {
+      return useMutation(getRevokeSkuMappingMutationOptions(options));
+    }
+
+export const getGetMatrixifyStatusUrl = () => {
+
+
+
+
+  return `/api/matrixify/status`
+}
+
+/**
+ * @summary Read authorized Matrixify export prerequisites
+ */
+export const getMatrixifyStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<MatrixifyStatus> => {
+
+  return customFetch<MatrixifyStatus>(getGetMatrixifyStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMatrixifyStatusQueryKey = () => {
+    return [
+    `/api/matrixify/status`
+    ] as const;
+    }
+
+
+export const getGetMatrixifyStatusQueryOptions = <TData = Awaited<ReturnType<typeof getMatrixifyStatus>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMatrixifyStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMatrixifyStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMatrixifyStatus>>> = ({ signal }) => getMatrixifyStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMatrixifyStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMatrixifyStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getMatrixifyStatus>>>
+export type GetMatrixifyStatusQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read authorized Matrixify export prerequisites
+ */
+
+export function useGetMatrixifyStatus<TData = Awaited<ReturnType<typeof getMatrixifyStatus>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMatrixifyStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMatrixifyStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRetrieveMatrixifyPreviewPageUrl = (params: RetrieveMatrixifyPreviewPageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/matrixify/preview?${stringifiedParams}` : `/api/matrixify/preview`
+}
+
+/**
+ * @summary Read a page of the existing preview
+ */
+export const retrieveMatrixifyPreviewPage = async (params: RetrieveMatrixifyPreviewPageParams, options?: Parameters<typeof customFetch>[1]): Promise<MatrixifyPreview> => {
+
+  return customFetch<MatrixifyPreview>(getRetrieveMatrixifyPreviewPageUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getRetrieveMatrixifyPreviewPageQueryKey = (params?: RetrieveMatrixifyPreviewPageParams,) => {
+    return [
+    `/api/matrixify/preview`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getRetrieveMatrixifyPreviewPageQueryOptions = <TData = Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>, TError = ErrorType<void>>(params: RetrieveMatrixifyPreviewPageParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRetrieveMatrixifyPreviewPageQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>> = ({ signal }) => retrieveMatrixifyPreviewPage(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type RetrieveMatrixifyPreviewPageQueryResult = NonNullable<Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>>
+export type RetrieveMatrixifyPreviewPageQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read a page of the existing preview
+ */
+
+export function useRetrieveMatrixifyPreviewPage<TData = Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>, TError = ErrorType<void>>(
+ params: RetrieveMatrixifyPreviewPageParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof retrieveMatrixifyPreviewPage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getRetrieveMatrixifyPreviewPageQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateMatrixifyPreviewUrl = () => {
+
+
+
+
+  return `/api/matrixify/preview`
+}
+
+/**
+ * @summary Validate a fresh owner-supplied Matrixify Products CSV without importing it
+ */
+export const createMatrixifyPreview = async (matrixifyPreviewInput: MatrixifyPreviewInput, options?: Parameters<typeof customFetch>[1]): Promise<MatrixifyPreview> => {
+
+  return customFetch<MatrixifyPreview>(getCreateMatrixifyPreviewUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(matrixifyPreviewInput)
+  }
+);}
+
+
+
+
+
+export const getCreateMatrixifyPreviewMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMatrixifyPreview>>, TError,{data: BodyType<MatrixifyPreviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMatrixifyPreview>>, TError,{data: BodyType<MatrixifyPreviewInput>}, TContext> => {
+
+const mutationKey = ['createMatrixifyPreview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMatrixifyPreview>>, {data: BodyType<MatrixifyPreviewInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMatrixifyPreview(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMatrixifyPreviewMutationResult = NonNullable<Awaited<ReturnType<typeof createMatrixifyPreview>>>
+    export type CreateMatrixifyPreviewMutationBody = BodyType<MatrixifyPreviewInput>
+    export type CreateMatrixifyPreviewMutationError = ErrorType<void>
+
+    /**
+ * @summary Validate a fresh owner-supplied Matrixify Products CSV without importing it
+ */
+export const useCreateMatrixifyPreview = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMatrixifyPreview>>, TError,{data: BodyType<MatrixifyPreviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMatrixifyPreview>>,
+        TError,
+        {data: BodyType<MatrixifyPreviewInput>},
+        TContext
+      > => {
+      return useMutation(getCreateMatrixifyPreviewMutationOptions(options));
+    }
+
+export const getDownloadMatrixifyWorkbookUrl = () => {
+
+
+
+
+  return `/api/matrixify/download`
+}
+
+/**
+ * @summary Download one profile-specific XLSX workbook for manual Matrixify import
+ */
+export const downloadMatrixifyWorkbook = async (matrixifyDownloadInput: MatrixifyDownloadInput, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadMatrixifyWorkbookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(matrixifyDownloadInput)
+  }
+);}
+
+
+
+
+
+export const getDownloadMatrixifyWorkbookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof downloadMatrixifyWorkbook>>, TError,{data: BodyType<MatrixifyDownloadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof downloadMatrixifyWorkbook>>, TError,{data: BodyType<MatrixifyDownloadInput>}, TContext> => {
+
+const mutationKey = ['downloadMatrixifyWorkbook'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof downloadMatrixifyWorkbook>>, {data: BodyType<MatrixifyDownloadInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  downloadMatrixifyWorkbook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DownloadMatrixifyWorkbookMutationResult = NonNullable<Awaited<ReturnType<typeof downloadMatrixifyWorkbook>>>
+    export type DownloadMatrixifyWorkbookMutationBody = BodyType<MatrixifyDownloadInput>
+    export type DownloadMatrixifyWorkbookMutationError = ErrorType<void>
+
+    /**
+ * @summary Download one profile-specific XLSX workbook for manual Matrixify import
+ */
+export const useDownloadMatrixifyWorkbook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof downloadMatrixifyWorkbook>>, TError,{data: BodyType<MatrixifyDownloadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof downloadMatrixifyWorkbook>>,
+        TError,
+        {data: BodyType<MatrixifyDownloadInput>},
+        TContext
+      > => {
+      return useMutation(getDownloadMatrixifyWorkbookMutationOptions(options));
+    }
 
 export const getListSkuMappingRowsUrl = (params?: ListSkuMappingRowsParams,) => {
   const normalizedParams = new URLSearchParams();

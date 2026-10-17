@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "shopDomain": "REPLACE_WITH_VERIFIED_EXISTING_SHOP.myshopify.com",
+  "currency": "USD",
+  "approvedBy": null,
+  "approvedAt": null,
+  "location": {
+    "id": null,
+    "name": null,
+    "active": true,
+    "observedAt": null,
+    "evidenceReference": null
+  },
+  "policy": {
+    "safetyStock": null,
+    "maxQuantity": null,
+    "lowerBounds": "hold",
+    "maxAgeMinutes": {
+      "Heartland Hobby Wholesale": null,
+      "HobbyTyme": null,
+      "Walthers": null,
+      "MMD/Squadron": null
+    },
+    "maxChangedVariants": null,
+    "maxZeroedVariants": null,
+    "maxQuantityDelta": null,
+    "maxPriceChangeBasisPoints": null,
+    "maxPlanAgeSeconds": 300,
+    "pricing": { "mode": "preserve" }
+  },
+  "pricingApproval": null,
+  "metafieldNamespaceApproval": null,
+  "metafieldObservation": null
+}

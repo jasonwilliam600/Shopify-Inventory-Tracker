@@ -15,3 +15,15 @@ authorized read-only verification. Live Shopify writes, production database
 changes, real catalog import and automatic synchronization activation each
 require the exact proposed operation and explicit owner approval. Report actual
 milestones, genuine blockers and decisions requiring owner participation.
+
+The immediate usable workflow is authenticated SKU mapping review followed by
+previewed, downloadable Matrixify XLSX exports using the existing planner.
+Do not replace that delivery route with another direct-API integration project.
+
+**Why:** The owner explicitly made Matrixify exports the next priority after the
+combined-inventory and individual-supplier metafield calculations were accepted.
+
+**How to apply:** Complete this workflow in the existing dashboard, preserving
+all source holds. File generation is not authorization to import into Shopify;
+real catalog imports, metafield/access changes and live updates remain separately
+approved operations.

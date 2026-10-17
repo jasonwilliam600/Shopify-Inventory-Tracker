@@ -14,7 +14,130 @@ tags:
     description: Inventory and supplier availability
   - name: dashboard
     description: Inventory overview
+  - name: mapping-review
+    description: Authenticated supplier relationship approval
+  - name: matrixify
+    description: Owner-reviewed, read-only Matrixify workbook preparation
 paths:
+  /reviewer/session:
+    get:
+      operationId: getReviewerSession
+      tags: [mapping-review]
+      summary: Return server-verified Clerk reviewer session and allowlist status
+      responses:
+        "200":
+          description: Session state (including anonymous or unauthorized sessions)
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ReviewerSession"}
+  /sku-mappings/approve:
+    post:
+      operationId: approveSkuMapping
+      tags: [mapping-review]
+      summary: Atomically save and approve one supplier-to-variant identity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SkuMappingApprovalInput"}
+      responses:
+        "200":
+          description: Approved mapping decision
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MappingDecisionResult"}
+        "400": {description: Invalid or permanently held source}
+        "401": {description: Authentication required}
+        "403": {description: Reviewer is not allowlisted}
+        "409": {description: Version or identity changed; review again}
+  /sku-mappings/revoke:
+    post:
+      operationId: revokeSkuMapping
+      tags: [mapping-review]
+      summary: Revoke an approved source relationship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SkuMappingRevocationInput"}
+      responses:
+        "200":
+          description: Revoked mapping decision
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MappingDecisionResult"}
+        "401": {description: Authentication required}
+        "403": {description: Reviewer is not allowlisted}
+        "409": {description: Version changed; review again}
+  /matrixify/status:
+    get:
+      operationId: getMatrixifyStatus
+      tags: [matrixify]
+      summary: Read authorized Matrixify export prerequisites
+      responses:
+        "200":
+          description: Actual server configuration and catalog readiness
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MatrixifyStatus"}
+        "401": {description: Authentication required}
+        "403": {description: Reviewer is not allowlisted}
+  /matrixify/preview:
+    get:
+      operationId: retrieveMatrixifyPreviewPage
+      tags: [matrixify]
+      summary: Read a page of the existing preview
+      parameters:
+        - {name: previewId, in: query, required: true, schema: {type: string}}
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+        - {name: view, in: query, schema: {type: string, enum: [changes, exceptions], default: changes}}
+      responses:
+        "200":
+          description: The same preview DTO with the requested 100-row page
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MatrixifyPreview"}
+        "401": {description: Authentication required}
+        "403": {description: Reviewer is not allowlisted}
+        "404": {description: Preview not found}
+        "409": {description: Preview expired; create a fresh preview}
+    post:
+      operationId: createMatrixifyPreview
+      tags: [matrixify]
+      summary: Validate a fresh owner-supplied Matrixify Products CSV without importing it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MatrixifyPreviewInput"}
+      responses:
+        "200":
+          description: Paginated first page of a read-only preview
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MatrixifyPreview"}
+        "400": {description: "Invalid CSV, provenance, or confirmation"}
+        "401": {description: Authentication required}
+        "403": {description: Reviewer is not allowlisted}
+  /matrixify/download:
+    post:
+      operationId: downloadMatrixifyWorkbook
+      tags: [matrixify]
+      summary: Download one profile-specific XLSX workbook for manual Matrixify import
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MatrixifyDownloadInput"}
+      responses:
+        "200":
+          description: XLSX workbook; this endpoint never writes to Shopify
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: {type: string, format: binary}
+        "401": {description: Authentication required}
+        "403": {description: Reviewer is not allowlisted}
+        "409": {description: "Preview expired, stale, blocked, or has no changed rows"}
   /sku-mappings:
     get:
       operationId: listSkuMappingRows
@@ -22,7 +145,7 @@ paths:
       parameters:
         - {name: search, in: query, schema: {type: string}}
         - {name: supplier, in: query, schema: {type: string}}
-        - {name: status, in: query, schema: {type: string, enum: [all, unmatched, candidate, flagged, rejected, ambiguous, approved]}}
+        - {name: status, in: query, schema: {type: string, enum: [all, unmatched, candidate, held, flagged, rejected, ambiguous, approved]}}
         - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
         - {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
       responses:
@@ -384,7 +507,7 @@ components:
         availability: {type: string}
         freshness: {type: string}
         lastFeedImport: {type: [string, "null"]}
-        mappingStatus: {type: string, enum: [unmatched, candidate, flagged, rejected, ambiguous, approved]}
+        mappingStatus: {type: string, enum: [unmatched, candidate, held, flagged, rejected, ambiguous, approved]}
         reason: {type: string}
         supplierProductName: {type: [string, "null"]}
         shopifyTitles: {type: array, items: {type: string}}
@@ -392,6 +515,12 @@ components:
         publishable: {type: boolean}
         ruleDecision: {type: [string, "null"]}
         warnings: {type: array, items: {type: string}}
+        decisionId: {type: [string, "null"]}
+        decisionVersion: {type: [integer, "null"]}
+        approvedVariantId: {type: [string, "null"]}
+        identityFingerprint: {type: [string, "null"]}
+        costAmount: {type: [string, "null"]}
+        sourceIdentityFingerprint: {type: [string, "null"]}
     SkuMappingPage:
       type: object
       required: [items, total, page, pageSize, totalPages, catalogLabel, counts]
@@ -421,6 +550,7 @@ components:
         variantTitle: {type: string}
         productStatus: {type: string, enum: [ACTIVE, DRAFT, ARCHIVED]}
         verifiedAt: {type: [string, "null"]}
+        identityFingerprint: {type: [string, "null"]}
     MappingCatalogPage:
       type: object
       required: [items, total, source, verified, blocker]
@@ -440,6 +570,138 @@ components:
         scopesVerified: {type: boolean}
         grantedScopes: {type: array, items: {type: string}}
         blockers: {type: array, items: {type: string}}
+    ReviewerSession:
+      type: object
+      required: [configured, authenticated, authorized, subject, issuer, message]
+      properties:
+        configured: {type: boolean}
+        authenticated: {type: boolean}
+        authorized: {type: boolean}
+        subject: {type: [string, "null"]}
+        issuer: {type: [string, "null"]}
+        message: {type: string}
+    MappingDecisionResult:
+      type: object
+      required: [id, version, state]
+      properties:
+        id: {type: string}
+        version: {type: integer}
+        state: {type: string}
+    SkuMappingApprovalInput:
+      type: object
+      additionalProperties: false
+      required: [supplier, originalSku, variantId, expectedVersion, identityFingerprint, sourceIdentityFingerprint, identityConfirmed, unitConfirmed, reason, costConfirmed, costBasis, packSize, costEvidence]
+      properties:
+        supplier: {type: string, enum: ["Heartland Hobby Wholesale", HobbyTyme, Walthers, "MMD/Squadron"]}
+        originalSku: {type: string, minLength: 1, maxLength: 300}
+        variantId: {type: string, pattern: "^gid://shopify/ProductVariant/[1-9][0-9]*$"}
+        expectedVersion: {type: [integer, "null"], minimum: 1}
+        expectedCostAmount:
+          type: [string, "null"]
+          default: null
+          description: Exact supplier cost string displayed in the review; send unchanged to reject a changed source cost.
+        identityFingerprint: {type: string, pattern: "^[a-f0-9]{64}$"}
+        identityConfirmed: {type: boolean, const: true}
+        sourceIdentityFingerprint: {type: string, pattern: "^[a-f0-9]{64}$"}
+        unitConfirmed: {type: boolean, const: true}
+        reason: {type: string, minLength: 12, maxLength: 2000}
+        costConfirmed: {type: boolean, default: false}
+        costBasis: {type: string, enum: [piece, pack, unknown], default: unknown}
+        packSize: {type: [integer, "null"], minimum: 1, maximum: 100000, default: null}
+        costEvidence: {type: string, maxLength: 2000, default: ""}
+    SkuMappingRevocationInput:
+      type: object
+      additionalProperties: false
+      required: [supplier, originalSku, expectedVersion, reason]
+      properties:
+        supplier: {type: string, enum: ["Heartland Hobby Wholesale", HobbyTyme, Walthers, "MMD/Squadron"]}
+        originalSku: {type: string, minLength: 1, maxLength: 300}
+        expectedVersion: {type: integer, minimum: 1}
+        reason: {type: string, minLength: 12, maxLength: 2000}
+    MatrixifyStatus:
+      type: object
+      required: [catalogCount, catalogReady, policyReady, pricingApproved, metafieldsReady, locationName, blockers, shopDomain, policySummary]
+      properties:
+        catalogCount: {type: integer}
+        catalogReady: {type: boolean}
+        policyReady: {type: boolean}
+        pricingApproved: {type: boolean}
+        metafieldsReady: {type: boolean}
+        locationName: {type: [string, "null"]}
+        blockers: {type: array, items: {type: string}}
+        shopDomain: {type: string}
+        policySummary: {type: string}
+    MatrixifyPreviewInput:
+      type: object
+      additionalProperties: false
+      required: [baselineCsv, baselineObservedAt, baselineConfirmed]
+      properties:
+        baselineCsv: {type: string, minLength: 1, maxLength: 20000000}
+        baselineObservedAt: {type: string, format: date-time}
+        baselineConfirmed: {type: boolean, const: true}
+        variantIds:
+          type: array
+          minItems: 1
+          maxItems: 10000
+          uniqueItems: true
+          description: Optional owner-selected subset of full ProductVariant GIDs; baseline validation remains full-catalog.
+          items:
+            type: string
+            pattern: "^gid://shopify/ProductVariant/[1-9][0-9]*$"
+    MatrixifyDownloadInput:
+      type: object
+      additionalProperties: false
+      required: [previewId, digest, profile]
+      properties:
+        previewId: {type: string, format: uuid}
+        digest: {type: string, pattern: "^[a-f0-9]{64}$"}
+        profile: {type: string, enum: [inventory, supplier_metafields, prices]}
+    MatrixifyPreviewRow:
+      type: object
+      required: [variantId, sku, title, beforeQuantity, afterQuantity, beforePrice, afterPrice, supplierSummary]
+      properties:
+        variantId: {type: string}
+        sku: {type: string}
+        title: {type: string}
+        beforeQuantity: {type: [number, "null"], description: Null means unknown and must never be represented as zero.}
+        afterQuantity: {type: [number, "null"]}
+        beforePrice: {type: [string, "null"]}
+        afterPrice: {type: [string, "null"]}
+        supplierSummary: {type: array, items: {type: string}}
+    MatrixifyPreviewException:
+      type: object
+      required: [variantId, code, supplier, originalSku]
+      properties:
+        variantId: {type: string}
+        code: {type: string}
+        supplier: {type: [string, "null"]}
+        originalSku: {type: [string, "null"]}
+    MatrixifyPreviewCounts:
+      type: object
+      required: [variants, inventoryRows, metafieldRows, priceRows, exceptions]
+      properties:
+        variants: {type: integer}
+        inventoryRows: {type: integer}
+        metafieldRows: {type: integer}
+        priceRows: {type: integer}
+        exceptions: {type: integer}
+    MatrixifyPreview:
+      type: object
+      required: [id, digest, expiresAt, shopDomain, locationName, blockers, counts, page, totalPages, totalRows, rows, exceptions, warnings]
+      properties:
+        id: {type: string}
+        digest: {type: string}
+        expiresAt: {type: string, format: date-time}
+        shopDomain: {type: string}
+        locationName: {type: [string, "null"]}
+        blockers: {type: array, items: {type: string}}
+        counts: {$ref: "#/components/schemas/MatrixifyPreviewCounts"}
+        page: {type: integer}
+        totalPages: {type: integer}
+        totalRows: {type: integer}
+        rows: {type: array, items: {$ref: "#/components/schemas/MatrixifyPreviewRow"}}
+        exceptions: {type: array, items: {$ref: "#/components/schemas/MatrixifyPreviewException"}}
+        warnings: {type: array, items: {type: string}}
     SupplierAvailabilityOffer:
       type: object
       required: [sourceSku, mappingStatus, mappingReason, matchMethod, reportedQuantity, quantityKind, quantityText, availability, freshness, lastFeedImport, freshnessLimitMinutes, stockReason, trusted, publishable]
