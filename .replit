@@ -30,6 +30,7 @@ HOBBYTYME_AUTO_REFRESH = "true"
 [userenv.development]
 MAPPING_OWNER_EMAIL = "jasonwilliam600@gmail.com"
 MAPPING_REVIEWER_SUBJECTS = "user_3KqL6keku5Umwrb0Xgkkb1frniB"
+SHOPIFY_SHOP = "top-speed-hobbies.myshopify.com"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-138b4423-f556-444d-8137-05974ce37e33"
