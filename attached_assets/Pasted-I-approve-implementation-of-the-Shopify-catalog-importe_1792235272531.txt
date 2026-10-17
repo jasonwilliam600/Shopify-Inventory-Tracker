@@ -1,0 +1,17 @@
+I approve implementation of the Shopify catalog importer in the DEVELOPMENT environment only, subject to the following restrictions.
+
+1. Build a transactional, insert-only importer targeting the existing shopify_variant_catalog table. Do not execute it against the real development database yet.
+2. Validate the actual Shopify JSONL format before trusting the parser. I will provide the export separately.
+3. Preserve all 42,308 variant identities, including ACTIVE, ARCHIVED and DRAFT products. Do not treat catalog membership as Shopify product availability.
+4. Reject duplicate variant IDs, invalid IDs, broken parent relationships, unexpected counts, and incomplete or mismatched provenance.
+5. Preserve blank and duplicate SKU values; flag them for review rather than inventing or automatically approving mappings.
+6. Require independent catalog identity reconciliation before import. The independently queried Shopify count of 42,308 is supporting evidence, not proof of identity equivalence.
+7. Check that the destination catalog and relevant mapping tables are empty inside the import transaction. Abort if the guard fails.
+8. Use parameterized database writes, a single transaction, explicit locking/concurrency protection, and all-or-nothing rollback.
+9. Do not disable triggers or modify supplier inventory, mapping decisions, hold resolutions, or audit evidence.
+10. Do not run Drizzle schema push, migrations, live Shopify calls, supplier syncs, or inventory/price updates.
+11. Any schema changes needed for provenance, product statuses or SKU flags must be proposed separately and approved before execution.
+12. Build automated tests against disposable PostgreSQL, including mid-import failure, duplicates, concurrent changes, and trigger behavior.
+13. Report the implementation, test results, remaining blockers, and exact proposed first-import procedure. STOP before running the importer or changing the real database.
+
+This approval covers importer code and isolated tests only. It does NOT authorize inserting the Shopify catalog into the actual database.

@@ -42,8 +42,12 @@ Authorization to install reviewed mapping storage does not authorize live catalo
 imports, permanent approval APIs, reviewer-authentication changes, or activation
 of Save/Approve.
 
+Approval of importer implementation and disposable PostgreSQL tests likewise does
+not authorize running the importer against the actual development database.
+
 **Why:** The merchant explicitly separated schema installation from those later
-capabilities and required approval controls to remain disabled after installation.
+capabilities, required approval controls to remain disabled, and separately limited
+importer implementation approval to code and isolated tests.
 
 **How to apply:** Keep each capability behind its own approval and verified
 prerequisites; database object existence alone must never unlock mapping actions.
