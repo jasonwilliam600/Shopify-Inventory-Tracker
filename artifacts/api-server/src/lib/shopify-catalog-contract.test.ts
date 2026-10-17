@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { catalogIdentityDigest } from "./catalog-reconciliation";
 import { prepareCatalogRows, projectLiveCatalog, validateCompleteCatalog, type CompleteCatalogEvidence, type LiveCatalogIdentity } from "./shopify-catalog-contract";
 
 const identity = (id: number, sku: string | null = " A1 "): LiveCatalogIdentity => ({
@@ -70,7 +71,14 @@ test("malformed verification time and options fail before projection", () => {
 });
 test("installed-table projection preserves original identities and fingerprints status changes without SQL", () => {
   const e = evidence();
-  const rows = prepareCatalogRows(e);
+  const policy = { nowMs: Date.parse("2026-10-17T10:05:00Z"), maxAgeMs: 3600_000 };
+  e.querySha256 = "a".repeat(64);
+  e.reconciliation = {
+    source: "independent_live_observation", observationReference: "offline-fixture-observation",
+    shopDomain: e.shopDomain, querySha256: e.querySha256, observedAt: "2026-10-17T10:01:00Z",
+    variantCount: 3, identityDigestSha256: catalogIdentityDigest(validateCompleteCatalog(e)),
+  };
+  const rows = prepareCatalogRows(e, policy);
   assert.equal(rows.length, 3);
   assert.equal(rows[0].sku, " A1 ");
   assert.match(rows[0].identity_fingerprint, /^[0-9a-f]{64}$/);
@@ -78,5 +86,18 @@ test("installed-table projection preserves original identities and fingerprints 
   assert.deepEqual(rows[0].selected_options, identity(1).options);
   assert.equal(rows[0].live_verified_at, e.verifiedAt);
   e.pages[0].identities[0].productStatus = "DRAFT";
-  assert.notEqual(prepareCatalogRows(e)[0].identity_fingerprint, rows[0].identity_fingerprint);
+  assert.throws(() => prepareCatalogRows(e, policy), /CATALOG_IDENTITY_RECONCILIATION_MISMATCH/);
+  e.reconciliation.identityDigestSha256 = catalogIdentityDigest(validateCompleteCatalog(e));
+  assert.notEqual(prepareCatalogRows(e, policy)[0].identity_fingerprint, rows[0].identity_fingerprint);
+});
+test("cursor evidence cannot prepare rows without independent reconciliation and freshness policy", () => {
+  assert.throws(() => prepareCatalogRows(evidence()), /CATALOG_RECONCILIATION_REQUIRED/);
+  assert.throws(() => prepareCatalogRows(evidence(), { nowMs: Date.now(), maxAgeMs: 3600_000 }), /CATALOG_RECONCILIATION_REQUIRED/);
+});
+test("terminal pagination values require an actual boolean", () => {
+  for (const value of [undefined, null, "false", 0]) {
+    const e = evidence();
+    (e.pages[1].pageInfo as unknown as { hasNextPage: unknown }).hasNextPage = value;
+    assert.throws(() => validateCompleteCatalog(e), /INCOMPLETE_PAGINATION/);
+  }
 });

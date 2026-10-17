@@ -1,6 +1,7 @@
 - [App name](app-name.md) — the correct name is TSH Inventory Sync, not THS Inventory Sync.
 - [HobbyTyme export behavior](hobbytyme-export.md) — the protected feed has duplicate SKUs and bounded-text stock values that must be normalized before bulk import.
 - [Existing Shopify store](shopify-existing-store.md) — store provisioning creates a new shop; verify connector purpose and shop identity before syncing.
+- [Shopify catalog strategy](shopify-catalog-strategy.md) — bulk queries are the selected full-catalog strategy; offline preparation does not authorize live operations or imports.
 - [SKU matching and wholesale units](sku-units.md) — retail paints sell individually; supplier packs need verified unit semantics and full-identifier mappings.
 - [SKU prefix mappings](sku-prefix-mappings.md) — merchant-provided prefix pairs; confirm direction and separators before applying.
 - [Store dashboard metrics](dashboard-metrics.md) — Total SKUs means the store catalog, never supplier totals or historical import records.

@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto";
+import { catalogIdentityDigest, requireCatalogReconciliation, type CatalogReconciliation } from "./catalog-reconciliation";
+export type { BulkCatalogEvidence, BulkValidationPolicy, ParsedBulkCatalog } from "./shopify-bulk-catalog-contract";
 
 /**
  * Transport-free catalog boundary. No auth, network, SQL writer, scheduler or
@@ -14,7 +15,7 @@ export interface LiveCatalogIdentity {
   variantTitle: string;
   vendor: string | null;
   options: { name: string; value: string }[];
-  productStatus: "ACTIVE" | "DRAFT" | "ARCHIVED";
+  productStatus: "ACTIVE" | "DRAFT" | "ARCHIVED" | "UNLISTED" | null;
   verifiedAt: string;
 }
 
@@ -32,6 +33,9 @@ export interface ShopifyCatalogReadPort {
 
 export interface CompleteCatalogEvidence {
   source: "live_shopify";
+  retrievalMode?: "cursor";
+  querySha256?: string;
+  reconciliation?: CatalogReconciliation;
   shopDomain: string;
   verifiedAt: string;
   scopes: readonly string[];
@@ -59,7 +63,8 @@ export function validateCompleteCatalog(evidence: CompleteCatalogEvidence) {
   const identities: LiveCatalogIdentity[] = [];
   evidence.pages.forEach((page, pageIndex) => {
     const last = pageIndex === evidence.pages.length - 1;
-    if (page.pageInfo.hasNextPage === last) throw new Error("INCOMPLETE_PAGINATION");
+    if (typeof page.pageInfo?.hasNextPage !== "boolean" || page.pageInfo.hasNextPage === last) throw new Error("INCOMPLETE_PAGINATION");
+    if (page.pageInfo.endCursor !== null && typeof page.pageInfo.endCursor !== "string") throw new Error("INVALID_CURSOR");
     if (!last && (!page.pageInfo.endCursor || cursors.has(page.pageInfo.endCursor))) throw new Error("NON_ADVANCING_CURSOR");
     if (page.pageInfo.endCursor) cursors.add(page.pageInfo.endCursor);
     for (const identity of page.identities) {
@@ -71,7 +76,7 @@ export function validateCompleteCatalog(evidence: CompleteCatalogEvidence) {
       if (identity.sku !== null && typeof identity.sku !== "string") throw new Error("INVALID_SKU");
       if (typeof identity.productTitle !== "string" || typeof identity.variantTitle !== "string"
         || (identity.vendor !== null && typeof identity.vendor !== "string")
-        || !["ACTIVE", "DRAFT", "ARCHIVED"].includes(identity.productStatus)
+        || (identity.productStatus !== null && !["ACTIVE", "DRAFT", "ARCHIVED", "UNLISTED"].includes(identity.productStatus))
         || !Array.isArray(identity.options) || identity.options.some(o => typeof o.name !== "string" || typeof o.value !== "string")) throw new Error("INVALID_CATALOG_FIELDS");
       variants.add(identity.variantId);
       identities.push(identity);
@@ -113,8 +118,12 @@ export function projectLiveCatalog(evidence: CompleteCatalogEvidence, search: st
  * importer must persist every row and retire absent variants in ONE transaction.
  * Do not persist an empty snapshot without explicit confirmation.
  */
-export function prepareCatalogRows(evidence: CompleteCatalogEvidence) {
-  return validateCompleteCatalog(evidence).map(v => ({
+export function prepareCatalogRows(evidence: CompleteCatalogEvidence, policy?: { nowMs: number; maxAgeMs: number }) {
+  const identities = validateCompleteCatalog(evidence);
+  if (!policy) throw new Error("CATALOG_RECONCILIATION_REQUIRED");
+  requireCatalogReconciliation({ ...evidence, identities, ...policy });
+  if (identities.length === 0) throw new Error("EMPTY_CATALOG_REQUIRES_EXPLICIT_REVIEW");
+  return identities.map(v => ({
     shop_domain: v.shopDomain,
     variant_gid: v.variantId,
     product_gid: v.productId,
@@ -123,10 +132,7 @@ export function prepareCatalogRows(evidence: CompleteCatalogEvidence) {
     title: `${v.productTitle} · ${v.variantTitle}`,
     vendor: v.vendor,
     selected_options: v.options.map(o => ({ name: o.name, value: o.value })),
-    identity_fingerprint: createHash("sha256").update(JSON.stringify([
-      v.shopDomain, v.variantId, v.productId, v.inventoryItemId, v.sku,
-      v.productTitle, v.variantTitle, v.vendor, v.options, v.productStatus,
-    ])).digest("hex"),
+    identity_fingerprint: catalogIdentityDigest([v]),
     live_verified_at: v.verifiedAt,
     active: true,
   }));

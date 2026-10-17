@@ -1,0 +1,38 @@
+TOP SPEED INVENTORY SYNC — PHASE 3B: BULK CATALOG PREPARATION
+
+I accept the V2 offline review findings.
+
+Our current historical catalog contains over 42,000 variants. Stop pursuing ordinary cursor pagination as the primary full-catalog retrieval method.
+
+Use Shopify's read-only Bulk Operations query approach as the proposed full-catalog strategy.
+
+Authorized development:
+
+1. Build a transport-independent Shopify bulk-catalog JSONL parser and evidence validator.
+2. Support a catalog larger than 42,000 variants without loading the entire raw download into memory.
+3. Validate Shopify product IDs, variant IDs, inventory-item IDs, original SKUs, titles, vendor, options, and available product status.
+4. Reject malformed records, duplicate variant IDs, incomplete downloads, failed operations, and mismatched expected counts.
+5. Treat bulk operation IDs, completion metadata, and result provenance as required evidence.
+6. Keep historical catalog records completely separate from verified live catalog records.
+7. Preserve missing and duplicate SKUs without automatically resolving them.
+8. Ensure all 209 existing mapping holds remain unaffected.
+9. Extend the existing catalog contract with a distinct bulk-evidence type instead of fabricating cursor pages.
+10. Add mock tests using more than 42,000 synthetic variants, including truncation, same-count identity replacement, failures, and duplicate records.
+
+Also correct the remaining V2 provider issues:
+
+- Make proactive throttle waits respect the overall deadline.
+- Preserve throttle metadata on retryable GraphQL error responses.
+- Prevent catalog activation when same-count identity changes have not been reconciled.
+
+STRICT LIMITS:
+
+Do not authenticate with Shopify, use credentials, make Admin API requests, start bulk operations, download live Shopify data, execute database imports, or enable inventory publishing.
+
+Do not modify the existing working Shopify authentication helper.
+
+Do not run database migrations or change supplier integrations.
+
+Implement and test only the offline parser, contract, validation logic, and permitted V2 corrections.
+
+Report test results and the exact remaining steps required for an authorized live catalog import.
