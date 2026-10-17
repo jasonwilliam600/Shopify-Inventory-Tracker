@@ -2,6 +2,7 @@
 - [HobbyTyme export behavior](hobbytyme-export.md) — the protected feed has duplicate SKUs and bounded-text stock values that must be normalized before bulk import.
 - [Existing Shopify store](shopify-existing-store.md) — store provisioning creates a new shop; verify connector purpose and shop identity before syncing.
 - [Shopify catalog strategy](shopify-catalog-strategy.md) — bulk-first strategy, closed original evidence collection, and separate live-operation/import approvals.
+- [Catalog storage boundaries](catalog-storage-boundaries.md) — managed object access can exclude bucket metadata; require real policy verification and SDK type checks.
 - [SKU matching and wholesale units](sku-units.md) — retail paints sell individually; supplier packs need verified unit semantics and full-identifier mappings.
 - [SKU prefix mappings](sku-prefix-mappings.md) — merchant-provided prefix pairs; confirm direction and separators before applying.
 - [Store dashboard metrics](dashboard-metrics.md) — Total SKUs means the store catalog, never supplier totals or historical import records.

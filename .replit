@@ -26,3 +26,6 @@ channel = "stable-25_05"
 
 [userenv.shared]
 HOBBYTYME_AUTO_REFRESH = "true"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-138b4423-f556-444d-8137-05974ce37e33"
