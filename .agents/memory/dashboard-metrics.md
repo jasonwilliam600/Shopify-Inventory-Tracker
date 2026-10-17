@@ -8,3 +8,9 @@ The dashboard's Total SKUs metric must be the user's store SKU total. Supplier-c
 **Why:** The user stated, "Thats irrelevent infpormation for my store. It should be my stores total SKUs" when shown the accumulated tracker count.
 
 **How to apply:** Use verified store-catalog data for the main SKU metric. While Shopify data is unavailable, show an unavailable or awaiting-connection state, not supplier totals, a fabricated count, or zero. Keep any separately useful supplier metrics clearly labeled and distinct from the store catalog.
+
+The merchant describes the Shopify catalog as containing **42,000+ variants**.
+
+**Why:** The user supplied this scale when requesting offline evaluation of complete catalog retrieval.
+
+**How to apply:** Design retrieval for that scale, but label it merchant-reported rather than a freshly measured Shopify count. Do not substitute it for a verified dashboard total.
