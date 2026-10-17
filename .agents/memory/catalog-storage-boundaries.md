@@ -1,6 +1,6 @@
 ---
 name: Managed catalog archive storage boundaries
-description: Owner-selected archive bucket name, managed object-versus-bucket permissions, and real SDK compatibility checks.
+description: Owner-selected archive storage choices, managed permission limits, and real SDK compatibility checks.
 ---
 
 The owner selected the App Storage display name
@@ -37,3 +37,16 @@ settings.
 **How to apply:** Review a narrow typed SDK wrapper before connecting the archive.
 Keep checksum, generation and privacy validation intact; do not silence the
 mismatch with an unchecked cast.
+
+The owner selected a development-only filesystem archive with an independently
+retained encrypted Windows backup to avoid adding another paid account. It is not
+a replacement for production storage or permission to relax the Google adapter.
+
+**Why:** The owner prioritized simplicity, reliability, security and minimizing
+expenses, then explicitly approved development and isolated testing of this
+approach. Workspace survival alone is not sufficient recovery assurance.
+
+**How to apply:** Keep archive data outside Git repositories, served paths and
+deployment artifacts. Real activation and catalog import remain separate
+approvals. Do not assume Linux fixture results establish native Windows ACLs,
+off-workspace backup possession or a physical independent restore.

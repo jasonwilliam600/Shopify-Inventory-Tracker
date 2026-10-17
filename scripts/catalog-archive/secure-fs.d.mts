@@ -1,0 +1,13 @@
+export const MAX_FILE_BYTES: number;
+export function fail(code: string): never;
+export function requireDevelopmentRuntime(): void;
+export function sha256(bytes: Uint8Array | string): string;
+export function within(root: string, value: string): boolean;
+export function checkAncestors(value: string): Promise<void>;
+export function checkPrivateRoot(root: string, forbiddenRoots?: string[]): Promise<{dev: number; ino: number}>;
+export function createPrivateRoot(root: string, forbiddenRoots?: string[]): Promise<{dev: number; ino: number}>;
+export function readPrivate(root: string, name: string): Promise<Buffer>;
+export function writeImmutable(root: string, name: string, bytes: Uint8Array): Promise<void>;
+export function createRestoreDirectory(root: string): Promise<void>;
+export function writeRestoreFile(root: string, name: string, bytes: Uint8Array): Promise<void>;
+export function readPortableInput(filename: string): Promise<Buffer>;
