@@ -1,5 +1,10 @@
 # TSH Inventory Sync — implementation checkpoint
 
+Current delivery order and deferred phases: [BACKLOG.md](BACKLOG.md).
+Matrixify launch prerequisites and owner steps:
+[Phase 1 operator steps](../matrixify/PHASE1-OPERATOR-STEPS.md).
+Matrixify is temporary; authorized permanent automation remains the final goal.
+
 ## Implemented and isolated-tested
 
 The existing API constructs an inert synchronization application service. It

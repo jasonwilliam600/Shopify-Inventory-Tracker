@@ -1,0 +1,150 @@
+# TOP SPEED HOBBIES — FINAL DEVELOPMENT DIRECTIVE
+
+We are continuing development of the EXISTING Top Speed Hobbies supplier inventory and pricing synchronization application.
+
+I have invested substantial time and money in this project. I want to finish it, not rebuild it or switch applications.
+
+Our ultimate objective is a fully automated, scalable supplier synchronization system connected to my existing Shopify store. Until a permitted direct Shopify connection is available, we will use Matrixify exports as our temporary publishing method.
+
+**Do not restart completed work, reopen settled business decisions, or introduce unrelated features.**
+
+## PHASE 1 — COMPLETE THE CURRENT MATRIXIFY WORKFLOW
+
+The Matrixify exporter has been implemented and passed isolated tests. The immediate priority is making it operational with my actual store.
+
+Proceed in this order:
+
+1. Configure secure owner/reviewer authentication using the existing infrastructure. Explicitly allowlist my account and give me clear sign-in instructions. Do not request passwords or secrets through chat.
+2. Complete the remaining catalog identity reconciliation and independent archive verification.
+3. Present the exact guarded real catalog import for my separate approval.
+4. Provide clear instructions for obtaining the required fresh Matrixify Shopify baseline containing product/variant IDs, current inventory, prices, and exact inventory location names.
+5. Complete the configuration and verification of Shopify inventory locations, export safety settings, and authorized SKU mappings.
+6. Present the proposed merchant-owned supplier metafield definitions and their access/privacy implications for my approval.
+7. Prepare a controlled 10-product real-world Matrixify test with inventory, supplier information, and separately approved pricing changes.
+8. Verify actual results before proceeding to full-catalog exports.
+
+Preserve the three separate Matrixify XLSX exports: inventory, supplier metafields, and pricing.
+
+Maintain preview, exception reporting, export expiration, revision checks, and all existing safeguards.
+
+**Do not perform real catalog imports, production database changes, Shopify writes, metafield creation, or automatic synchronization without my explicit approval.**
+
+## PHASE 2 — SCALABLE SUPPLIER ARCHITECTURE
+
+The application currently integrates four suppliers:
+
+- Heartland Hobby Wholesale
+- HobbyTyme
+- Emery Distributors
+- Squadron/MMD
+
+I intend to add many more suppliers.
+
+The architecture must support an arbitrary number of suppliers without redesigning the core application.
+
+Requirements:
+
+- Dynamically combine eligible inventory across all active suppliers correctly mapped to each Shopify variant.
+- Apply inventory buffers and caps once to the combined quantity.
+- Dynamically determine the lowest verified eligible per-piece wholesale cost.
+- Preserve supplier-specific SKUs, inventory quantities, costs, availability status, and last successful update timestamps.
+- Support additional suppliers through integration and configuration, not hardcoded supplier-count logic.
+- Ensure SKU mapping, inventory calculations, pricing, reporting, availability history, and supplier visibility scale as suppliers are added.
+- Use scalable structured Shopify variant metafields and a practical Admin presentation that does not depend on exactly four suppliers.
+- Preserve all 209 source holds, including the 12 terminal rejections, and all mapping, pricing, inventory, and collision protections.
+- Preserve the existing four supplier integrations without regressions.
+
+Combined supplier inventory and lowest verified eligible supplier cost are ESTABLISHED requirements, not open decisions.
+
+## PHASE 3 — 180-DAY OUT-OF-STOCK MONITORING
+
+Implement an Out-of-Stock Monitoring feature within the EXISTING application.
+
+A Shopify variant must be flagged for manual review after **180 consecutive days of verified zero combined supplier inventory** across all active, eligible suppliers associated with that variant.
+
+Requirements:
+
+- Track verified supplier availability over time.
+- Track last verified in-stock date and consecutive verified out-of-stock days.
+- Never treat missing, stale, failed, or unknown supplier feeds as confirmed zero inventory.
+- Do not backdate stockout history without reliable historical evidence.
+- Reset the stockout counter when verified eligible supplier inventory becomes available.
+- Handle supplier additions, removals, disabled suppliers, and new mappings without corrupting historical tracking.
+- Track Top Speed Hobbies' physically owned inventory separately.
+- Preserve historical availability records even after flags are reviewed or dismissed.
+- Never automatically archive, delete, unpublish, or modify Shopify products.
+
+### MAIN DASHBOARD INTEGRATION — MANDATORY
+
+This feature must be prominently visible on the application's EXISTING MAIN DASHBOARD.
+
+Add an **Out-of-Stock Monitoring** section showing:
+
+- Total products currently unavailable from eligible suppliers.
+- Products unavailable for 30+ days.
+- Products unavailable for 60+ days.
+- Products unavailable for 90+ days.
+- Products unavailable for 180+ days.
+- Products flagged and awaiting my review.
+- Products with incomplete or unverified availability history.
+
+The 180+ day review count must be clearly visible and clickable.
+
+Include a dashboard preview table displaying product name, Shopify SKU, days unavailable, last verified in-stock date, supplier availability status, and review status.
+
+Provide a **View All** action opening a dedicated Out-of-Stock Watchlist page.
+
+The dedicated page must include:
+
+- Search by product, SKU, manufacturer, and supplier.
+- Filters for 30, 60, 90, and 180+ days.
+- Sorting by longest unavailable period.
+- Individual supplier availability history.
+- Links to the corresponding Shopify products.
+- Manual review, dismissal, and reviewer notes.
+
+All dashboard counts must be based on actual verified historical records, not assumed or fabricated availability dates.
+
+## PHASE 4 — PERMANENT SHOPIFY AUTOMATION
+
+The Matrixify exporter is a temporary workaround, not the final objective.
+
+Preserve the existing synchronization planner and audit safeguards so they can support direct Shopify publishing when an authorized connection becomes available.
+
+Investigate supported Shopify connection and deployment options without bypassing platform restrictions or exposing credentials.
+
+The final application must support:
+
+- Automatic supplier inventory refreshes.
+- Combined supplier inventory calculations.
+- Automatic selling-price recalculation using an approved pricing formula.
+- Individual supplier visibility inside Shopify.
+- Approved mapping management.
+- Scheduled Shopify inventory and pricing synchronization.
+- Audit logging, error reporting, reconciliation, and protection against destructive changes.
+- Future expansion to additional suppliers.
+
+No direct Shopify publishing or automatic synchronization may be activated without explicit approval.
+
+## DEVELOPMENT AND COST CONTROL
+
+Reuse existing code, integrations, infrastructure, and tests wherever possible.
+
+Do not introduce new paid services or unnecessary infrastructure.
+
+Avoid repeated research, speculative redesigns, duplicate implementations, or lengthy reports that do not advance the application.
+
+Complete Phase 1 before implementing Phases 2 and 3. Record later phases in the existing project backlog so they are not forgotten.
+
+You may continue authorized development and isolated testing, but request approval before any real catalog import, production database migration, Shopify modification, or live synchronization.
+
+Provide concise milestone reports containing:
+
+1. What was actually completed.
+2. What passed testing.
+3. What remains blocked.
+4. The exact next action requiring my participation.
+
+**The goal is one finished, reliable, expandable Top Speed Hobbies application—not another endless development project.**
+
+Begin with owner/reviewer sign-in and the remaining Phase 1 launch prerequisites.

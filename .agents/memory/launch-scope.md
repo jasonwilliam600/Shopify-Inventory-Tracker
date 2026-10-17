@@ -18,7 +18,8 @@ milestones, genuine blockers and decisions requiring owner participation.
 
 The immediate usable workflow is authenticated SKU mapping review followed by
 previewed, downloadable Matrixify XLSX exports using the existing planner.
-Do not replace that delivery route with another direct-API integration project.
+Matrixify is temporary, not the final publishing architecture. Complete its
+Phase 1 before implementing scalable suppliers or out-of-stock monitoring.
 
 **Why:** The owner explicitly made Matrixify exports the next priority after the
 combined-inventory and individual-supplier metafield calculations were accepted.
@@ -27,3 +28,16 @@ combined-inventory and individual-supplier metafield calculations were accepted.
 all source holds. File generation is not authorization to import into Shopify;
 real catalog imports, metafield/access changes and live updates remain separately
 approved operations.
+
+The final development directive requires later phases to remain in the existing
+project backlog: arbitrary supplier expansion; 180 consecutive days of verified
+zero supplier availability with prominent main-dashboard monitoring and a
+reviewable watchlist; permanent authorized Shopify automation.
+
+**Why:** The owner explicitly required one finished expandable application,
+Matrixify as an interim method, and Phase 1 completion before Phases 2 and 3.
+
+**How to apply:** Follow `docs/launch/BACKLOG.md` for the full deferred requirements.
+Never treat unknown/stale/missing feeds as zero or fabricate historical stockout
+dates. Keep physically owned stock separate; stockout review never authorizes
+automatic product archiving, deletion or unpublishing.

@@ -69,7 +69,9 @@ function ClerkQueryClientCacheInvalidator() {
   useEffect(() => addListener(({ user }) => {
     const nextUserId = user?.id ?? null;
     if (previousUserId.current !== undefined && previousUserId.current !== nextUserId) {
-      queryClient.clear();
+      // Reset (rather than remove) mounted queries so the reviewer session
+      // refetches after sign-in and no prior user's private data is retained.
+      void queryClient.resetQueries();
     }
     previousUserId.current = nextUserId;
   }), [addListener, queryClient]);

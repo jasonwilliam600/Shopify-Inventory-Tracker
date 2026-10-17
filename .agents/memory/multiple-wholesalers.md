@@ -15,7 +15,7 @@ Use the Walthers dealer portal at `https://dealers.walthers.com/` when investiga
 
 **How to apply:** Verify the inventory export or read-only dealer data interface behind that portal before choosing a feed format, quantity interpretation, or manufacturer mapping.
 
-COMBINE available inventory from all four eligible suppliers for each correctly
+COMBINE available inventory from all active, eligible suppliers for each correctly
 matched Shopify variant. Apply the approved safety buffer/cap before publishing.
 This is an established requirement; do not ask the user to reconsider it or
 offer single-supplier selection instead.
@@ -36,8 +36,19 @@ where supported.
 **Why:** The user explicitly required this information in Shopify, not only the
 Replit dashboard.
 
-**How to apply:** Keep all four offers separate in the detail display even
+**How to apply:** Keep every supplier's offer separate in the detail display even
 though eligible quantities are combined for sellable-stock calculations.
+
+Supplier count must be expandable, not permanently limited to four.
+
+**Why:** The owner's final directive explicitly plans many additional suppliers
+and preserves COMBINE plus the lowest verified eligible per-piece cost as settled
+business requirements.
+
+**How to apply:** Preserve the current integrations during Phase 1. In the
+backlogged scalability phase, drive eligibility, combination, minimum cost and
+structured supplier visibility from active supplier configuration, applying
+buffers/caps once to the total rather than per supplier.
 Metafield definitions/values are live Shopify writes and require explicit
 approval. Do not expose supplier costs to storefront/customer APIs.
 
