@@ -1,6 +1,6 @@
 import type { SupplierAvailabilityOffer, SupplierAvailabilityVariant } from "@workspace/api-zod";
-import { APPROVED_CATALOG_MAPPINGS, mapSupplierSkuToStore } from "./sku-mapping";
-import { mappingHold } from "./supplier-mapping-policy";
+import { APPROVED_CATALOG_MAPPINGS, mapSupplierSkuToStore, candidateRule } from "./sku-mapping";
+import { mappingHold, COLLISION_HISTORY_SOURCES } from "./supplier-mapping-policy";
 
 export const AVAILABILITY_SUPPLIERS = [
   "Heartland Hobby Wholesale", "HobbyTyme", "Walthers", "MMD/Squadron",
@@ -9,7 +9,7 @@ export const AVAILABILITY_SUPPLIERS = [
 export const DISPLAY_FRESHNESS_MINUTES: Readonly<Record<string, number>> = {
   "Heartland Hobby Wholesale": 90, HobbyTyme: 1440, Walthers: 180, "MMD/Squadron": 180,
 };
-export type CatalogVariant = Omit<SupplierAvailabilityVariant, "suppliers">;
+export type CatalogVariant = Omit<SupplierAvailabilityVariant, "suppliers"> & { vendor?: string };
 export interface AvailabilitySource {
   supplier: string;
   sku: string;
@@ -74,9 +74,10 @@ export function quantityObservation(source: AvailabilitySource): Observation {
 }
 
 export function sourceCandidates(source: AvailabilitySource, knownSkus: ReadonlySet<string>) {
+  if (mappingHold(source.supplier, source.sku)) return [];
   const sku = source.sku.trim();
   const exact = APPROVED_CATALOG_MAPPINGS[source.supplier];
-  const mapped = mapSupplierSkuToStore(sku, source.supplier);
+  const mapped = mapSupplierSkuToStore(sku, source.supplier, { includeReview: true });
   // Explicit item entries, including null blocks, cannot be bypassed by a
   // source SKU that happens to resemble a second store SKU.
   const candidates = exact && Object.hasOwn(exact, sku)
@@ -114,13 +115,17 @@ export function evaluateSupplierAvailability(
         offers: entries.map(({ source, method, ambiguous }): SupplierAvailabilityOffer => {
           const hold = mappingHold(supplier, source.sku);
           const collision = entries.length > 1;
+          const reviewRule = method === "prefix" && candidateRule(source.sku, supplier)?.decision === "REVIEW";
+          const collisionHistory = supplier === "MMD/Squadron" && COLLISION_HISTORY_SOURCES.has(source.sku.trim().toUpperCase());
           const mappingStatus = hold?.status ?? (collision ? "collision"
-            : variant.skuStatus === "duplicate" || ambiguous ? "held" : "candidate");
+            : variant.skuStatus === "duplicate" || ambiguous || reviewRule || collisionHistory ? "held" : "candidate");
           const mappingReason = [
             hold?.reason,
             collision ? "Multiple source SKUs from this supplier map to this SKU; no quantities are combined." : null,
             variant.skuStatus === "duplicate" ? "Duplicate Shopify SKU in historical export; variant identity is ambiguous." : null,
             ambiguous ? "Source has multiple plausible catalog identifiers; product identity needs review." : null,
+            reviewRule ? "Prefix rule requires individual review; diagnostic candidate only." : null,
+            collisionHistory ? "Known collision history requires review even after rejected competitors are blocked." : null,
             "Historical catalog only. Current Shopify variant identity and selling units are not verified.",
           ].filter(Boolean).join(" ");
           const date = source.supplierUpdatedAt ? new Date(source.supplierUpdatedAt) : null;

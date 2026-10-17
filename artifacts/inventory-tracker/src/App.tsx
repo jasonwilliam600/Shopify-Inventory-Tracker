@@ -15,6 +15,7 @@ import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/store-dashboard";
 import Inventory from "@/pages/inventory";
 import Suppliers from "@/pages/suppliers";
+import SkuMappings from "@/pages/sku-mappings";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/inventory" component={Inventory} />
           <Route path="/suppliers" component={Suppliers} />
+          <Route path="/sku-mappings" component={SkuMappings} />
           <Route component={NotFound} />
         </Switch>
       </RoutedErrorBoundary>

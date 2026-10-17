@@ -5,6 +5,86 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+export type SkuMappingRowMappingStatus = typeof SkuMappingRowMappingStatus[keyof typeof SkuMappingRowMappingStatus];
+
+
+export const SkuMappingRowMappingStatus = {
+  unmatched: 'unmatched',
+  candidate: 'candidate',
+  flagged: 'flagged',
+  rejected: 'rejected',
+  ambiguous: 'ambiguous',
+  approved: 'approved',
+} as const;
+
+export interface SkuMappingRow {
+  supplier: string;
+  originalSku: string;
+  suggestedSkus: string[];
+  diagnosticSkus: string[];
+  /** @nullable */
+  supplierQuantity: number | null;
+  /** @nullable */
+  quantityText: string | null;
+  quantityKind: string;
+  availability: string;
+  freshness: string;
+  /** @nullable */
+  lastFeedImport: string | null;
+  mappingStatus: SkuMappingRowMappingStatus;
+  reason: string;
+  /** @nullable */
+  supplierProductName: string | null;
+  shopifyTitles: string[];
+  trusted: boolean;
+  publishable: boolean;
+  /** @nullable */
+  ruleDecision: string | null;
+  warnings: string[];
+}
+
+export type SkuMappingPageCounts = {[key: string]: number};
+
+export interface SkuMappingPage {
+  items: SkuMappingRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  catalogLabel: string;
+  counts: SkuMappingPageCounts;
+}
+
+export interface MappingCatalogVariant {
+  key: string;
+  /** @nullable */
+  variantId: string | null;
+  sku: string;
+  title: string;
+  vendor: string;
+  options: string[];
+  skuStatus: string;
+  historical: boolean;
+}
+
+export interface MappingCatalogPage {
+  items: MappingCatalogVariant[];
+  total: number;
+  source: string;
+  verified: boolean;
+  /** @nullable */
+  blocker: string | null;
+}
+
+export interface MappingCapabilities {
+  canSave: boolean;
+  canApprove: boolean;
+  liveCatalogAvailable: boolean;
+  scopesVerified: boolean;
+  grantedScopes: string[];
+  blockers: string[];
+}
+
 export type SupplierAvailabilityOfferMappingStatus = typeof SupplierAvailabilityOfferMappingStatus[keyof typeof SupplierAvailabilityOfferMappingStatus];
 
 
@@ -428,6 +508,51 @@ export interface Activity {
   description: string;
   createdAt: string;
 }
+
+export type ListSkuMappingRowsParams = {
+search?: string;
+supplier?: string;
+status?: ListSkuMappingRowsStatus;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
+};
+
+export type ListSkuMappingRowsStatus = typeof ListSkuMappingRowsStatus[keyof typeof ListSkuMappingRowsStatus];
+
+
+export const ListSkuMappingRowsStatus = {
+  all: 'all',
+  unmatched: 'unmatched',
+  candidate: 'candidate',
+  flagged: 'flagged',
+  rejected: 'rejected',
+  ambiguous: 'ambiguous',
+  approved: 'approved',
+} as const;
+
+export type SearchMappingCatalogParams = {
+/**
+ * @minLength 2
+ * @maxLength 200
+ */
+search?: string;
+source?: SearchMappingCatalogSource;
+};
+
+export type SearchMappingCatalogSource = typeof SearchMappingCatalogSource[keyof typeof SearchMappingCatalogSource];
+
+
+export const SearchMappingCatalogSource = {
+  historical: 'historical',
+  live: 'live',
+} as const;
 
 export type ListSupplierAvailabilityParams = {
 /**

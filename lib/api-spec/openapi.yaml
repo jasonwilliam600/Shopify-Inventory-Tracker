@@ -15,6 +15,47 @@ tags:
   - name: dashboard
     description: Inventory overview
 paths:
+  /sku-mappings:
+    get:
+      operationId: listSkuMappingRows
+      tags: [SkuMappings]
+      parameters:
+        - {name: search, in: query, schema: {type: string}}
+        - {name: supplier, in: query, schema: {type: string}}
+        - {name: status, in: query, schema: {type: string, enum: [all, unmatched, candidate, flagged, rejected, ambiguous, approved]}}
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+        - {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+      responses:
+        "200":
+          description: Read-only supplier mapping review
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SkuMappingPage"}
+  /sku-mappings/catalog:
+    get:
+      operationId: searchMappingCatalog
+      tags: [SkuMappings]
+      parameters:
+        - {name: search, in: query, schema: {type: string, minLength: 2, maxLength: 200}}
+        - {name: source, in: query, schema: {type: string, enum: [historical, live], default: historical}}
+      responses:
+        "503":
+          description: Live scopes/catalog are not available; no authentication or catalog request executed
+        "200":
+          description: Catalog preview; historical identifiers are never live variant IDs
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MappingCatalogPage"}
+  /sku-mappings/capabilities:
+    get:
+      operationId: getSkuMappingCapabilities
+      tags: [SkuMappings]
+      responses:
+        "200":
+          description: Explicit approval and live-catalog blockers
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MappingCapabilities"}
   /supplier-availability:
     get:
       operationId: listSupplierAvailability
@@ -329,6 +370,70 @@ paths:
                   $ref: "#/components/schemas/Activity"
 components:
   schemas:
+    SkuMappingRow:
+      type: object
+      required: [supplier, originalSku, suggestedSkus, diagnosticSkus, supplierQuantity, quantityText, quantityKind, availability, freshness, lastFeedImport, mappingStatus, reason, supplierProductName, shopifyTitles, trusted, publishable, ruleDecision, warnings]
+      properties:
+        supplier: {type: string}
+        originalSku: {type: string}
+        suggestedSkus: {type: array, items: {type: string}}
+        diagnosticSkus: {type: array, items: {type: string}}
+        supplierQuantity: {type: [number, "null"]}
+        quantityText: {type: [string, "null"]}
+        quantityKind: {type: string}
+        availability: {type: string}
+        freshness: {type: string}
+        lastFeedImport: {type: [string, "null"]}
+        mappingStatus: {type: string, enum: [unmatched, candidate, flagged, rejected, ambiguous, approved]}
+        reason: {type: string}
+        supplierProductName: {type: [string, "null"]}
+        shopifyTitles: {type: array, items: {type: string}}
+        trusted: {type: boolean}
+        publishable: {type: boolean}
+        ruleDecision: {type: [string, "null"]}
+        warnings: {type: array, items: {type: string}}
+    SkuMappingPage:
+      type: object
+      required: [items, total, page, pageSize, totalPages, catalogLabel, counts]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/SkuMappingRow"}}
+        total: {type: integer}
+        page: {type: integer}
+        pageSize: {type: integer}
+        totalPages: {type: integer}
+        catalogLabel: {type: string}
+        counts: {type: object, additionalProperties: {type: integer}}
+    MappingCatalogVariant:
+      type: object
+      required: [key, variantId, sku, title, vendor, options, skuStatus, historical]
+      properties:
+        key: {type: string}
+        variantId: {type: [string, "null"]}
+        sku: {type: string}
+        title: {type: string}
+        vendor: {type: string}
+        options: {type: array, items: {type: string}}
+        skuStatus: {type: string}
+        historical: {type: boolean}
+    MappingCatalogPage:
+      type: object
+      required: [items, total, source, verified, blocker]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/MappingCatalogVariant"}}
+        total: {type: integer}
+        source: {type: string}
+        verified: {type: boolean}
+        blocker: {type: [string, "null"]}
+    MappingCapabilities:
+      type: object
+      required: [canSave, canApprove, liveCatalogAvailable, scopesVerified, grantedScopes, blockers]
+      properties:
+        canSave: {type: boolean}
+        canApprove: {type: boolean}
+        liveCatalogAvailable: {type: boolean}
+        scopesVerified: {type: boolean}
+        grantedScopes: {type: array, items: {type: string}}
+        blockers: {type: array, items: {type: string}}
     SupplierAvailabilityOffer:
       type: object
       required: [sourceSku, mappingStatus, mappingReason, matchMethod, reportedQuantity, quantityKind, quantityText, availability, freshness, lastFeedImport, freshnessLimitMinutes, stockReason, trusted, publishable]

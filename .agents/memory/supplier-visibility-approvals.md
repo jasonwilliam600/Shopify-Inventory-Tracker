@@ -24,3 +24,16 @@ two-table design, repeating the execution boundary.
 holds, duplicate-SKU handling, rollback and supplier-data impact. Wait for explicit
 approval of the final SQL before any schema execution. Keep this additive
 migration's write set outside existing supplier tables and records.
+
+Held source relationships must be correctable through explicit individual
+review, without deleting the original rejection/flag evidence or clearing
+unrelated holds.
+
+**Why:** The merchant approved a Fix Mapping / Resolve & Approve workflow, not
+permanently unresolvable exclusions or broad prefix-based clearance.
+
+**How to apply:** Preserve default source holds. Future verified, source-specific
+approvals may supersede only the explicitly reviewed hold/cause, with reviewer
+identity and audit evidence retained. Other, new or changed holds still block.
+An old exact-item null must not veto a separately authorized permanent decision
+after its applicable holds have been resolved.

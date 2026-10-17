@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter"
-import { PackageSearch, LayoutDashboard, FileSpreadsheet, Settings } from "lucide-react"
+import { PackageSearch, LayoutDashboard, FileSpreadsheet, Settings, GitBranch } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface LayoutProps {
@@ -13,6 +13,7 @@ export function Layout({ children }: LayoutProps) {
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/inventory", label: "Inventory", icon: PackageSearch },
     { href: "/suppliers", label: "Suppliers", icon: FileSpreadsheet },
+    { href: "/sku-mappings", label: "SKU Mapping Manager", icon: GitBranch },
   ]
 
   return (
@@ -69,7 +70,7 @@ export function Layout({ children }: LayoutProps) {
           </h1>
           
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs border border-primary/20">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs border border-primary/20" aria-label="Store manager workspace">
               SM
             </div>
           </div>

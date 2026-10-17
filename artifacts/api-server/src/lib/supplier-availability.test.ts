@@ -6,6 +6,7 @@ import approvedCatalog from "./approved-catalog-sku-mappings.json";
 import { MAPPING_POLICY_COUNTS, mappingHold, REJECTED_MAPPINGS } from "./supplier-mapping-policy";
 import { evaluateSupplierAvailability, quantityObservation, type AvailabilitySource, type CatalogVariant } from "./supplier-availability";
 import { parseAvailabilityCatalog, loadAvailabilityCatalog } from "./supplier-availability-catalog";
+import { mappingDiagnostics } from "./sku-mapping";
 
 const now = new Date("2026-10-16T22:00:00Z");
 function source(overrides: Partial<AvailabilitySource> = {}): AvailabilitySource {
@@ -36,10 +37,9 @@ test("all 12 rejected CSV relationships are hard exclusions, including case/whit
     }
     const result = evaluate([source({ supplier: row.Supplier, sku: row["Supplier SKU"] })], [variant(row["Proposed store SKU"])]);
     const excluded = result[0].suppliers.flatMap(supplier => supplier.offers);
-    assert.equal(excluded.length, 1);
-    assert.equal(excluded[0].mappingStatus, "rejected");
-    assert.equal(excluded[0].trusted, false);
-    assert.equal(excluded[0].publishable, false);
+    assert.equal(excluded.length, 0);
+    assert.equal(mappingDiagnostics(row["Supplier SKU"], row.Supplier).legacyTarget, row["Proposed store SKU"]);
+    assert.equal(mappingDiagnostics(row["Supplier SKU"], row.Supplier).trusted, false);
   }
 });
 
@@ -51,10 +51,9 @@ test("all 200 flagged CSV candidates and exact identifiers remain held or reject
     assert.ok(mappingHold(row.Supplier, row["Supplier SKU"]));
     const result = evaluate([source({ supplier: row.Supplier, sku: row["Supplier SKU"] })], [variant(row["Proposed store SKU"])]);
     const held = result[0].suppliers.flatMap(supplier => supplier.offers);
-    assert.equal(held.length, 1, row["Supplier SKU"]);
-    assert.ok(["held", "rejected"].includes(held[0].mappingStatus));
-    assert.equal(held[0].trusted, false);
-    assert.equal(held[0].publishable, false);
+    assert.equal(held.length, 0, row["Supplier SKU"]);
+    assert.ok(mappingDiagnostics(row["Supplier SKU"], row.Supplier).hold);
+    assert.equal(mappingDiagnostics(row["Supplier SKU"], row.Supplier).publishable, false);
   }
   assert.deepEqual(MAPPING_POLICY_COUNTS, { rejectedMappings: 12, flaggedCandidates: 200, uniqueHeldSources: 209 });
   assert.equal(Object.values(approvedCatalog.reviewFlags).reduce((n, rows) => n + Object.keys(rows).length, 0), 200);
@@ -95,11 +94,27 @@ test("all seven known same-supplier collisions retain every source and are block
   for (const [target, skus] of Object.entries(groups)) {
     const row = evaluate(skus.map(sku => source({ supplier: "MMD/Squadron", sku, raw: { "Stock Level": "12" } })), [variant(target)])[0];
     const offers = row.suppliers[3].offers;
-    assert.equal(offers.length, skus.length);
+    assert.equal(offers.length, skus.filter(sku => !mappingHold("MMD/Squadron", sku)).length);
     for (const o of offers) {
-      assert.match(o.mappingReason, /Multiple source SKUs/);
+      assert.match(o.mappingReason, /collision history/);
       assert.ok(["collision", "rejected", "held"].includes(o.mappingStatus));
       assert.equal(o.trusted, false);
+    }
+  }
+});
+
+test("new HobbyTyme BWL compact matches remain ambiguous for both duplicate Shopify SKUs", () => {
+  for (const part of ["7826", "7931"]) {
+    const rows = evaluate([source({ sku: `BWL/${part}` })], [
+      variant(`BLI${part}`, { key: "a", skuStatus: "duplicate" }),
+      variant(`BLI${part}`, { key: "b", skuStatus: "duplicate" }),
+    ]);
+    for (const row of rows) {
+      const o = row.suppliers[1].offers[0];
+      assert.equal(o.sourceSku, `BWL/${part}`);
+      assert.equal(o.mappingStatus, "held");
+      assert.equal(o.trusted, false);
+      assert.equal(o.publishable, false);
     }
   }
 });

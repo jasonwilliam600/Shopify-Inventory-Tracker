@@ -35,7 +35,7 @@ export function parseAvailabilityCatalog(csv: string, comparedAt: string, expect
     return {
       // A local locator, explicitly NOT a Shopify ID.
       key: `historical:${createHash("sha256").update(JSON.stringify([comparedAt, index, row.Handle, options, sku])).digest("hex").slice(0, 24)}`,
-      variantId: null, sku, title: row.Title, handle: row.Handle, options,
+      variantId: null, sku, title: row.Title, handle: row.Handle, options, vendor: row.Vendor ?? "",
       skuStatus: !sku ? "missing" : counts.get(sku)! > 1 ? "duplicate" : "unique",
     };
   });

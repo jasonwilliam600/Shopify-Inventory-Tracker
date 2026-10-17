@@ -38,7 +38,7 @@ router.get("/supplier-availability", async (req, res): Promise<void> => {
       )`,
     }).from(t).where(and(
       inArray(t.supplier, [...AVAILABILITY_SUPPLIERS]),
-      or(inArray(mappedStoreSkuExpression(t.sku, t.supplier), skus), inArray(sql<string>`trim(${t.sku})`, skus)),
+      or(inArray(mappedStoreSkuExpression(t.sku, t.supplier, { includeReview: true }), skus), inArray(sql<string>`trim(${t.sku})`, skus)),
     )).limit(2001) : [];
     if (sources.length > 2000) throw new Error("AVAILABILITY_TOO_MANY_COLLISIONS");
     res.setHeader("Cache-Control", "no-store");

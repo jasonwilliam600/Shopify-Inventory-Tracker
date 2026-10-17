@@ -31,8 +31,13 @@ import type {
   InventoryReviewInput,
   ListInventoryGroupsParams,
   ListInventoryParams,
+  ListSkuMappingRowsParams,
   ListSupplierAvailabilityParams,
+  MappingCapabilities,
+  MappingCatalogPage,
   MmdRefreshStatus,
+  SearchMappingCatalogParams,
+  SkuMappingPage,
   Supplier,
   SupplierAvailabilityPage,
   SupplierUpdateInput,
@@ -65,6 +70,233 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListSkuMappingRowsUrl = (params?: ListSkuMappingRowsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/sku-mappings?${stringifiedParams}` : `/api/sku-mappings`
+}
+
+export const listSkuMappingRows = async (params?: ListSkuMappingRowsParams, options?: Parameters<typeof customFetch>[1]): Promise<SkuMappingPage> => {
+
+  return customFetch<SkuMappingPage>(getListSkuMappingRowsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSkuMappingRowsQueryKey = (params?: ListSkuMappingRowsParams,) => {
+    return [
+    `/api/sku-mappings`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSkuMappingRowsQueryOptions = <TData = Awaited<ReturnType<typeof listSkuMappingRows>>, TError = ErrorType<unknown>>(params?: ListSkuMappingRowsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSkuMappingRows>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSkuMappingRowsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSkuMappingRows>>> = ({ signal }) => listSkuMappingRows(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSkuMappingRows>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSkuMappingRowsQueryResult = NonNullable<Awaited<ReturnType<typeof listSkuMappingRows>>>
+export type ListSkuMappingRowsQueryError = ErrorType<unknown>
+
+
+
+export function useListSkuMappingRows<TData = Awaited<ReturnType<typeof listSkuMappingRows>>, TError = ErrorType<unknown>>(
+ params?: ListSkuMappingRowsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSkuMappingRows>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSkuMappingRowsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSearchMappingCatalogUrl = (params?: SearchMappingCatalogParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/sku-mappings/catalog?${stringifiedParams}` : `/api/sku-mappings/catalog`
+}
+
+export const searchMappingCatalog = async (params?: SearchMappingCatalogParams, options?: Parameters<typeof customFetch>[1]): Promise<MappingCatalogPage> => {
+
+  return customFetch<MappingCatalogPage>(getSearchMappingCatalogUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchMappingCatalogQueryKey = (params?: SearchMappingCatalogParams,) => {
+    return [
+    `/api/sku-mappings/catalog`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchMappingCatalogQueryOptions = <TData = Awaited<ReturnType<typeof searchMappingCatalog>>, TError = ErrorType<void>>(params?: SearchMappingCatalogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchMappingCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchMappingCatalogQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchMappingCatalog>>> = ({ signal }) => searchMappingCatalog(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchMappingCatalog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchMappingCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof searchMappingCatalog>>>
+export type SearchMappingCatalogQueryError = ErrorType<void>
+
+
+
+export function useSearchMappingCatalog<TData = Awaited<ReturnType<typeof searchMappingCatalog>>, TError = ErrorType<void>>(
+ params?: SearchMappingCatalogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchMappingCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchMappingCatalogQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetSkuMappingCapabilitiesUrl = () => {
+
+
+
+
+  return `/api/sku-mappings/capabilities`
+}
+
+export const getSkuMappingCapabilities = async ( options?: Parameters<typeof customFetch>[1]): Promise<MappingCapabilities> => {
+
+  return customFetch<MappingCapabilities>(getGetSkuMappingCapabilitiesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSkuMappingCapabilitiesQueryKey = () => {
+    return [
+    `/api/sku-mappings/capabilities`
+    ] as const;
+    }
+
+
+export const getGetSkuMappingCapabilitiesQueryOptions = <TData = Awaited<ReturnType<typeof getSkuMappingCapabilities>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSkuMappingCapabilities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSkuMappingCapabilitiesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSkuMappingCapabilities>>> = ({ signal }) => getSkuMappingCapabilities({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSkuMappingCapabilities>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSkuMappingCapabilitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getSkuMappingCapabilities>>>
+export type GetSkuMappingCapabilitiesQueryError = ErrorType<unknown>
+
+
+
+export function useGetSkuMappingCapabilities<TData = Awaited<ReturnType<typeof getSkuMappingCapabilities>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSkuMappingCapabilities>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSkuMappingCapabilitiesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListSupplierAvailabilityUrl = (params?: ListSupplierAvailabilityParams,) => {
   const normalizedParams = new URLSearchParams();

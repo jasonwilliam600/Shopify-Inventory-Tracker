@@ -1,0 +1,197 @@
+# TOP SPEED INVENTORY SYNC
+## APPROVAL: 72-RULE SKU CORRECTION PLAN + SKU MAPPING MANAGER
+
+I approve implementation of the previously submitted **Complete 72-Rule SKU Correction Plan**, and I am authorizing development of a new **SKU Mapping Manager** within my EXISTING Top Speed Inventory Tracker application.
+
+These are two connected projects. Implement them together without replacing the existing app, supplier integrations, or Shopify connection.
+
+### PART 1 — APPROVED SKU CORRECTIONS
+
+Implement the 72-rule plan exactly as reviewed:
+
+- **KEEP:** 15 rules.
+- **MODIFY:** 10 rules, correcting their separator formats.
+- **REMOVE:** 24 unsupported generated aliases from active candidate generation; retain their diagnostic history.
+- **REVIEW:** 23 rules, preserving candidate discovery but requiring review.
+
+Additional mandatory requirements:
+
+1. Centralize all rejected/flagged mapping checks BEFORE exact-item lookup, raw-SKU matching, or prefix fallback.
+2. Replace the 12 rejected exact-item mappings with terminal null rejections.
+3. Preserve all 209 distinct rejected/flagged source holds and their evidence.
+4. Preserve all six documented legitimate exact-item format exceptions.
+5. Replace automatic alias generation with explicit, supplier-specific rules.
+6. Keep the two ambiguous HobbyTyme BWL matches blocked from trusted availability.
+7. Maintain separate supplier quantities.
+8. Preserve HobbyTyme On Hand as individual pieces.
+9. Keep all prefix-generated relationships classified as candidates, never automatically verified.
+10. Ensure JavaScript and SQL matching implementations enforce the same policy.
+
+Back up the affected files before changing them. Run all existing mapping, safety, and regression tests afterward.
+
+Historical candidate coverage should match the modeled 24,003 supplier records, subject to clearly explained data changes.
+
+### PART 2 — BUILD THE SKU MAPPING MANAGER
+
+Add a section to the existing dashboard named **SKU Mapping Manager**.
+
+This will be my control center for correcting and managing supplier-to-Shopify SKU relationships.
+
+#### A. Main screen
+
+Show a searchable, filterable table containing:
+
+- Supplier name.
+- Original supplier SKU.
+- Suggested Shopify SKU.
+- Supplier quantity.
+- Last supplier inventory update.
+- Mapping status.
+- Block/rejection reason.
+- Shopify product information when available.
+
+Support Heartland, HobbyTyme, Walthers, and MMD/Squadron.
+
+Provide filters for:
+
+- Unmatched
+- Candidate
+- Flagged
+- Rejected
+- Ambiguous
+- Approved
+
+#### B. Fix Mapping
+
+Add a **Fix Mapping** action for individual records.
+
+When selected:
+
+1. Display the supplier's original SKU and product information.
+2. Display the currently proposed or previously rejected Shopify SKU.
+3. Allow me to search the CURRENT Shopify product and variant catalog.
+4. Display matching Shopify product titles, SKUs, vendor/manufacturer, variant options, and identifying information.
+5. Allow me to select the correct Shopify variant.
+6. Warn about duplicate SKUs, incompatible products, selling-unit differences, and existing conflicting relationships.
+7. Require explicit confirmation before approval.
+8. Store the approved relationship permanently using the Shopify variant ID—not just a text SKU.
+
+Use historical Shopify data only for preview. Never approve a historical-only candidate as a verified live relationship.
+
+#### C. Correcting previously rejected SKUs
+
+I must be able to correct any of the 12 rejected mappings or other held relationships.
+
+Provide a controlled **Resolve & Approve** process that:
+
+- Requires explicit confirmation of the correct product and retail selling unit.
+- Preserves the original rejected relationship and its reason in an audit history.
+- Supersedes only the specific hold being resolved.
+- Does not remove unrelated safety blocks.
+- Prevents legacy prefix or exact-item rules from overriding an active hold.
+
+A corrected SKU must not remain permanently blocked after a properly authorized resolution.
+
+#### D. Permanent translation
+
+Use:
+
+**Supplier ID + Original Supplier SKU → Approved Shopify Variant ID**
+
+Requirements:
+
+- Original supplier SKU must be preserved.
+- Multiple wholesalers may map to one Shopify variant.
+- Same-supplier duplicate mappings must trigger collision review.
+- Never automatically add quantities from potentially overlapping supplier offers.
+- Approved mappings must survive supplier inventory updates.
+- Changes to Shopify product identity must trigger review rather than silently moving mappings.
+- SKU-and-quantity-only supplier updates must remain supported.
+- Do not require UPCs, titles, descriptions, or prices in every inventory update.
+
+#### E. Bulk mapping review
+
+Add the ability to review and approve multiple mapping candidates efficiently.
+
+Show each supplier/Shopify relationship and associated warnings before confirmation.
+
+Never bulk-approve rejected mappings, product-identity conflicts, duplicate Shopify SKU ambiguities, or selling-unit conflicts without their required individual verification.
+
+Keep an audit trail of mapping approvals and corrections.
+
+### PART 3 — DATABASE AND LIVE CATALOG REQUIREMENTS
+
+Reuse the existing PostgreSQL database.
+
+The previously proposed `shopify_variant_catalog` and `supplier_mapping_decisions` tables may be used as the foundation, subject to final schema review.
+
+IMPORTANT:
+
+**I approve the overall architecture, but I do NOT authorize execution of any SQL migration yet.**
+
+Before applying a migration:
+
+1. Show the exact final schema and SQL.
+2. Explain how mapping approvals and overrides of historical holds are stored safely.
+3. Explain how reviewer identity and audit history are preserved.
+4. Show the rollback plan.
+5. Confirm no existing supplier inventory records will be changed.
+6. Wait for my explicit approval.
+
+Prepare the live Shopify catalog reader using our existing working authentication. Preserve our current connection and do not depend on Replit's broken Shopify connector.
+
+Verify the installed app's actual granted scopes before catalog retrieval.
+
+If Shopify access or Agent restrictions prevent live catalog retrieval, report the blocker rather than bypassing it.
+
+### PART 4 — DEVELOPMENT AUTHORIZATION
+
+You ARE authorized to:
+
+- Modify the existing SKU mapping code according to the approved 72-rule plan.
+- Update associated safety and matching tests.
+- Build the SKU Mapping Manager user interface.
+- Build read-only supporting API endpoints.
+- Implement preview and candidate-review functionality that does not require new database tables.
+- Test the changes in the existing development environment.
+
+You are NOT authorized to:
+
+- Execute database migrations.
+- Modify or delete existing supplier inventory records.
+- Change supplier inventory importers or refresh schedules.
+- Change Shopify products or quantities.
+- Enable automatic Shopify inventory publishing.
+- Create Shopify locations.
+- Change Shopify permissions or authentication.
+- Deploy a Shopify Admin extension.
+- Republish the application.
+
+Where permanent approval functionality requires the new database tables, build the interface but keep Save/Approve unavailable until the approved migration is installed. Clearly explain that limitation to the user.
+
+### PART 5 — TESTING AND REPORTING
+
+After implementation:
+
+1. Verify all 209 rejected/held source relationships remain blocked by default.
+2. Confirm the 12 terminal null rejections cannot fall back.
+3. Confirm the six legitimate exceptions remain candidate-discoverable.
+4. Verify the two ambiguous HobbyTyme BWL matches remain unresolved.
+5. Confirm JavaScript and SQL mapping parity.
+6. Check the historical before/after candidate coverage.
+7. Run all safety and regression tests.
+8. Run TypeScript and application builds.
+9. Verify the existing supplier integrations and Shopify connectivity have not been broken.
+
+Report:
+
+- Files changed.
+- Implemented features.
+- Test results.
+- Remaining limitations.
+- Any migration awaiting my approval.
+- What must happen before I can permanently save corrected SKU mappings.
+
+**My primary goal is to fix incorrect supplier SKU relationships ONCE and have the system remember them permanently, so future supplier SKU-and-quantity inventory updates work automatically.**
+
+Proceed with the authorized development work. Stop at all approval boundaries.

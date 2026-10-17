@@ -12,6 +12,21 @@ export const REJECTED_MAPPINGS: Readonly<Record<string, string>> = {
 };
 const reviewFlags: Readonly<Record<string, Readonly<Record<string, string>>>> = approvedCatalog.reviewFlags;
 
+// One normalized source registry shared by JS and the SQL-expression builder.
+export const BLOCKED_SOURCE_PAIRS: Readonly<Record<string, Readonly<Record<string, boolean>>>> =
+  Object.fromEntries(Object.entries(reviewFlags).map(([supplier, flags]) => [
+    supplier, Object.fromEntries(Object.keys(flags).map(sku => [sku.trim().toUpperCase(), true])),
+  ]));
+Object.assign(BLOCKED_SOURCE_PAIRS["MMD/Squadron"], Object.fromEntries(
+  Object.keys(REJECTED_MAPPINGS).map(sku => [sku, true]),
+));
+
+// These surviving candidates must not become trusted just because their rejected
+// competitors disappeared. They are review evidence, not six new source holds.
+export const COLLISION_HISTORY_SOURCES = new Set([
+  "CP144001", "CP72002", "CP72007", "CP72009", "CP72011", "CP72016",
+]);
+
 export function mappingHold(supplier: string, sourceSku: string): { status: "rejected" | "held"; reason: string } | null {
   const identifier = sourceSku.trim().toUpperCase();
   if (supplier === "MMD/Squadron" && Object.hasOwn(REJECTED_MAPPINGS, identifier)) {

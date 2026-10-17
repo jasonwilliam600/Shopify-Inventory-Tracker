@@ -8,6 +8,89 @@
 import * as zod from 'zod';
 
 
+export const listSkuMappingRowsQueryPageDefault = 1;
+
+export const listSkuMappingRowsQueryPageSizeDefault = 25;
+export const listSkuMappingRowsQueryPageSizeMax = 100;
+
+
+
+export const ListSkuMappingRowsQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "supplier": zod.coerce.string().optional(),
+  "status": zod.enum(['all', 'unmatched', 'candidate', 'flagged', 'rejected', 'ambiguous', 'approved']).optional(),
+  "page": zod.coerce.number().int().min(1).default(listSkuMappingRowsQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listSkuMappingRowsQueryPageSizeMax).default(listSkuMappingRowsQueryPageSizeDefault)
+})
+
+export const ListSkuMappingRowsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "supplier": zod.string(),
+  "originalSku": zod.string(),
+  "suggestedSkus": zod.array(zod.string()),
+  "diagnosticSkus": zod.array(zod.string()),
+  "supplierQuantity": zod.number().nullable(),
+  "quantityText": zod.string().nullable(),
+  "quantityKind": zod.string(),
+  "availability": zod.string(),
+  "freshness": zod.string(),
+  "lastFeedImport": zod.string().nullable(),
+  "mappingStatus": zod.enum(['unmatched', 'candidate', 'flagged', 'rejected', 'ambiguous', 'approved']),
+  "reason": zod.string(),
+  "supplierProductName": zod.string().nullable(),
+  "shopifyTitles": zod.array(zod.string()),
+  "trusted": zod.boolean(),
+  "publishable": zod.boolean(),
+  "ruleDecision": zod.string().nullable(),
+  "warnings": zod.array(zod.string())
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "totalPages": zod.number().int(),
+  "catalogLabel": zod.string(),
+  "counts": zod.record(zod.string(), zod.number().int())
+})
+
+
+export const searchMappingCatalogQuerySearchMin = 2;
+export const searchMappingCatalogQuerySearchMax = 200;
+
+export const searchMappingCatalogQuerySourceDefault = `historical`;
+
+export const SearchMappingCatalogQueryParams = zod.object({
+  "search": zod.coerce.string().min(searchMappingCatalogQuerySearchMin).max(searchMappingCatalogQuerySearchMax).optional(),
+  "source": zod.enum(['historical', 'live']).default(searchMappingCatalogQuerySourceDefault)
+})
+
+export const SearchMappingCatalogResponse = zod.object({
+  "items": zod.array(zod.object({
+  "key": zod.string(),
+  "variantId": zod.string().nullable(),
+  "sku": zod.string(),
+  "title": zod.string(),
+  "vendor": zod.string(),
+  "options": zod.array(zod.string()),
+  "skuStatus": zod.string(),
+  "historical": zod.boolean()
+})),
+  "total": zod.number().int(),
+  "source": zod.string(),
+  "verified": zod.boolean(),
+  "blocker": zod.string().nullable()
+})
+
+
+export const GetSkuMappingCapabilitiesResponse = zod.object({
+  "canSave": zod.boolean(),
+  "canApprove": zod.boolean(),
+  "liveCatalogAvailable": zod.boolean(),
+  "scopesVerified": zod.boolean(),
+  "grantedScopes": zod.array(zod.string()),
+  "blockers": zod.array(zod.string())
+})
+
+
 /**
  * @summary Read-only historical Shopify variant supplier availability; never inventory publishing
  */
