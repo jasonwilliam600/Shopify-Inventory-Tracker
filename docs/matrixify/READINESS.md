@@ -91,9 +91,12 @@ plan; never overwrite newer orders with a stale reverse file.
    not production authorization. `MAPPING_AUTHORIZED_ORIGINS` contains exact
    approved origins; the existing development domain is the development fallback.
    Clerk keys use the supported managed setup, including automatic frontend/proxy
-   configuration. Development authentication and managed keys are now provisioned;
-   the owner's verified account still needs explicit allowlisting. No production
-   identities or reviewer grants have been established.
+   configuration. Development authentication and managed keys are provisioned.
+   The owner's verified, active primary-email account is explicitly allowlisted
+   in development. Refresh the signed-in browser to reload authorization.
+   Account lookup and runtime allowlist configuration have been verified; the
+   owner's actual browser session is not impersonated by these checks.
+   No production identities or reviewer grants have been established.
 2. **Catalog:** separately authorize the existing guarded catalog import after its
    archive/reconciliation requirements are satisfied. Historical October 5 candidates
    cannot approve mappings. The original export evidence collection stays closed.
