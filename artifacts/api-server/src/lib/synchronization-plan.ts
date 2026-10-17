@@ -2,8 +2,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import { quantityObservation } from "./supplier-availability";
 import { mappingHold } from "./supplier-mapping-policy";
+import { moneyCents } from "./synchronization-money";
+export { moneyCents } from "./synchronization-money";
+import { verifiedUnitCost } from "./supplier-verified-cost";
+import { prepareSupplierMetafields } from "./supplier-variant-metafields";
 import { SYNC_SUPPLIERS, type SyncPolicy, type SyncSnapshot, type SyncMapping, type SupplierSyncOffer,
-  type SyncPlan, type SyncOperation } from "./synchronization-types";
+  type SyncPlan, type SyncOperation, type VariantSupplierVisibility, type SupplierVisibilityRow } from "./synchronization-types";
 // Canonical object ordering survives JSONB round trips; arrays remain ordered.
 export const digest = (v: unknown) => createHash("sha256").update(JSON.stringify(v, (_key, value) =>
   value && typeof value === "object" && !Array.isArray(value)
@@ -15,19 +19,15 @@ export function assertGeneratedSyncPlan(plan: SyncPlan): void {
   if (!generatedPlans.has(plan) || actual !== digest(body)) fail("UNVALIDATED_SYNC_PLAN");
 }
 const integer = (v: number, min = 0) => Number.isSafeInteger(v) && v >= min;
-export function moneyCents(value: string): number {
-  if (typeof value !== "string" || !/^(0|[1-9]\d{0,7})(?:\.\d{1,2})?$/.test(value)) return fail("INVALID_MONEY_AMOUNT");
-  const [whole, fraction = ""] = value.split(".");
-  return Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
-}
+const inventoryTimestamp = (value: Date | string | null): number =>
+  value instanceof Date ? value.getTime() : typeof value === "string" ? Date.parse(value) : NaN;
 const ceilDivide = (n: bigint, d: bigint) => Number((n + d - 1n) / d);
 const priceString = (cents: number) => `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
 function validatePolicy(p: SyncPolicy): void {
   if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(p.shopDomain)
     || !/^gid:\/\/shopify\/Location\/[1-9]\d*$/.test(p.locationId) || p.currency !== "USD"
-    || !["priority", "maximum_available"].includes(p.selection)
-    || p.supplierPriority.length !== 4 || new Set(p.supplierPriority).size !== 4
-    || !SYNC_SUPPLIERS.every(s => p.supplierPriority.includes(s) && integer(p.maxAgeMinutes[s], 1))
+    || p.selection !== "combine" || typeof p.supplierMetafields !== "boolean"
+    || !SYNC_SUPPLIERS.every(s => integer(p.maxAgeMinutes[s], 1))
     || !integer(p.safetyStock) || !integer(p.maxQuantity, 1)
     || !integer(p.maxChangedVariants, 1) || !integer(p.maxZeroedVariants)
     || !integer(p.maxQuantityDelta) || !integer(p.maxPriceChangeBasisPoints)
@@ -42,11 +42,12 @@ export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapsho
   validatePolicy(p);
   if (!Number.isFinite(now)) fail("INVALID_SYNC_TIME");
   const blockers: string[] = [], holds: SyncPlan["holds"][number][] = [], operations: SyncOperation[] = [];
+  const supplierVisibility: VariantSupplierVisibility[] = [];
   const verification = Date.parse(s.verifiedAt);
   if (!s.complete || s.shopDomain !== p.shopDomain || s.currency !== p.currency
     || !Number.isFinite(verification) || verification > now || now - verification > p.maxPlanAgeSeconds * 1000) blockers.push("CURRENT_COMPLETE_SHOP_SNAPSHOT_REQUIRED");
   const required = ["read_products", "read_inventory", "read_locations", "write_inventory"];
-  if (p.pricing.mode !== "preserve") required.push("write_products");
+  if (p.pricing.mode !== "preserve" || p.supplierMetafields) required.push("write_products");
   if (required.some(scope => !s.scopes.includes(scope))) blockers.push("SHOPIFY_SCOPES_MISSING");
   if (!s.variants.length || new Set(s.variants.map(v => v.variantId)).size !== s.variants.length
     || new Set(s.variants.map(v => v.inventoryItemId)).size !== s.variants.length) blockers.push("INVALID_CATALOG_IDENTITIES");
@@ -70,61 +71,122 @@ export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapsho
       || !/^[a-f0-9]{64}$/.test(v.identityFingerprint)) { hold("INVALID_VARIANT_IDENTITY"); continue; }
     if (!v.sku.trim()) { hold("MISSING_SHOPIFY_SKU"); continue; }
     if (skuCounts.get(v.sku.trim().toUpperCase()) !== 1) { hold("DUPLICATE_SHOPIFY_SKU"); continue; }
-    if (!v.active) { hold("INACTIVE_PRODUCT"); continue; }
-    if (!v.tracked || !v.locationActive || v.locationId !== p.locationId || !integer(v.quantity)) { hold("INVENTORY_LOCATION_OR_TRACKING_UNVERIFIED"); continue; }
-    if (v.committedQuantity === null || !integer(v.committedQuantity)) { hold("SHOPIFY_COMMITTED_QUANTITY_REQUIRED"); continue; }
-    const related = mappings.filter(m => m.variantId === v.variantId && m.state === "approved");
-    if (!related.length) { hold("APPROVED_MAPPING_REQUIRED"); continue; }
-    if (new Set(related.map(m => m.supplier)).size !== related.length) { hold("SAME_SUPPLIER_COLLISION"); continue; }
+    if (!v.active) hold("INACTIVE_PRODUCT");
+    const locationReady = v.tracked && v.locationActive && v.locationId === p.locationId && integer(v.quantity);
+    if (!locationReady) hold("INVENTORY_LOCATION_OR_TRACKING_UNVERIFIED");
+    const commitmentReady = v.committedQuantity !== null && integer(v.committedQuantity);
+    if (!commitmentReady) hold("SHOPIFY_COMMITTED_QUANTITY_REQUIRED");
+    const inventoryReady = v.active && locationReady && commitmentReady;
+    const allRelated = mappings.filter(m => m.variantId === v.variantId);
+    const related = allRelated.filter(m => m.state === "approved");
+    if (!related.length) hold("APPROVED_MAPPING_REQUIRED");
+    const collision = new Set(related.map(m => m.supplier)).size !== related.length;
+    if (collision) hold("SAME_SUPPLIER_COLLISION");
+    const rows: SupplierVisibilityRow[] = SYNC_SUPPLIERS.map(supplier => ({
+      supplier, originalSku: null, mappingStatus: "unmatched", quantity: null, quantityKind: "unknown",
+      quantityStatus: "unknown", eligible: false, pricingEligible: false, lastSuccessfulInventoryUpdate: null, verifiedCost: null,
+    }));
     const eligible: { m: SyncMapping; offer: SupplierSyncOffer; quantity: number }[] = [];
     for (const m of related) {
+      const row = rows.find(r => r.supplier === m.supplier);
+      if (!row) { hold("MAPPING_IDENTITY_OR_UNITS_UNVERIFIED", m); continue; }
+      if (related.filter(x => x.supplier === m.supplier).length !== 1) {
+        row.mappingStatus = "collision"; row.quantityStatus = "blocked"; continue;
+      }
       // CENTRAL first check. No exact-item or prefix fallback can bypass it.
-      if (mappingHold(m.supplier, m.originalSku)) { hold("BLOCKED_SOURCE_HOLD", m); continue; }
+      if (mappingHold(m.supplier, m.originalSku)) {
+        row.mappingStatus = "held"; row.quantityStatus = "blocked"; hold("BLOCKED_SOURCE_HOLD", m); continue;
+      }
       if (!SYNC_SUPPLIERS.includes(m.supplier) || !m.id || !integer(m.revision, 1)
-        || !m.sellingUnitsVerified || m.identityFingerprint !== v.identityFingerprint) { hold("MAPPING_IDENTITY_OR_UNITS_UNVERIFIED", m); continue; }
-      const key = sourceKey(m.supplier, m.originalSku), rows = offerIndex.get(key) ?? [];
-      if (sourceMappings.get(key) !== 1 || rows.length !== 1) { hold("MISSING_OR_COLLIDING_SUPPLIER_RECORD", m); continue; }
-      const o = rows[0], observed = Date.parse(String(o.source.supplierUpdatedAt ?? ""));
-      if (!Number.isFinite(observed) || observed > now || now - observed > p.maxAgeMinutes[m.supplier] * 60000) { hold("STALE_OR_UNKNOWN_SUPPLIER_QUANTITY", m); continue; }
+        || !m.sellingUnitsVerified || m.identityFingerprint !== v.identityFingerprint) {
+        row.mappingStatus = "unverified"; row.quantityStatus = "blocked"; hold("MAPPING_IDENTITY_OR_UNITS_UNVERIFIED", m); continue;
+      }
+      row.mappingStatus = "approved"; row.originalSku = m.originalSku;
+      const key = sourceKey(m.supplier, m.originalSku), sourceRows = offerIndex.get(key) ?? [];
+      if (sourceMappings.get(key) !== 1 || sourceRows.length !== 1) {
+        if (sourceMappings.get(key) !== 1 || sourceRows.length > 1) {
+          row.mappingStatus = "collision"; row.quantityStatus = "blocked";
+        }
+        hold("MISSING_OR_COLLIDING_SUPPLIER_RECORD", m); continue;
+      }
+      const o = sourceRows[0], observed = inventoryTimestamp(o.source.supplierUpdatedAt);
       const q = quantityObservation(o.source);
+      row.quantity = q.reportedQuantity; row.quantityKind = q.quantityKind;
+      row.verifiedCost = verifiedUnitCost(o, p.currency, now, p.maxAgeMinutes[m.supplier]);
+      if (row.verifiedCost?.fresh) expires = Math.min(expires,
+        Date.parse(row.verifiedCost.observedAt) + p.maxAgeMinutes[m.supplier] * 60000);
+      if (Number.isFinite(observed) && observed <= now) row.lastSuccessfulInventoryUpdate = new Date(observed).toISOString();
+      if (!Number.isFinite(observed) || observed > now || now - observed > p.maxAgeMinutes[m.supplier] * 60000) {
+        row.quantityStatus = Number.isFinite(observed) && observed <= now ? "stale" : "unknown";
+        hold("STALE_OR_UNKNOWN_SUPPLIER_QUANTITY", m); continue;
+      }
+      expires = Math.min(expires, observed + p.maxAgeMinutes[m.supplier] * 60000);
+      row.quantityStatus = q.quantityKind === "lower_bound" ? "lower_bound"
+        : q.quantityKind === "exact" ? q.reportedQuantity === 0 ? "out_of_stock" : "exact" : "unknown";
       if (q.reportedQuantity === null || q.quantityKind === "unknown" || q.quantityKind === "upper_bound"
         || q.quantityKind === "lower_bound" && p.lowerBounds !== "use_floor") { hold("UNPUBLISHABLE_QUANTITY_OBSERVATION", m); continue; }
       // HobbyTyme On Hand is already individual pieces: NEVER multiply packs.
-      eligible.push({ m, offer: o, quantity: Math.min(p.maxQuantity, Math.max(0, q.reportedQuantity - p.safetyStock - v.committedQuantity)) });
+      row.eligible = !collision;
+      row.pricingEligible = row.eligible && q.reportedQuantity > 0 && row.verifiedCost?.fresh === true;
+      if (!collision) eligible.push({ m, offer: o, quantity: q.reportedQuantity });
     }
-    eligible.sort((a, b) => p.selection === "maximum_available" && a.quantity !== b.quantity ? b.quantity - a.quantity
-      : p.supplierPriority.indexOf(a.m.supplier) - p.supplierPriority.indexOf(b.m.supplier));
-    const selected = eligible.find(x => x.quantity > 0) ?? eligible[0];
-    if (!selected) continue;
-    const { m, offer, quantity } = selected;
-    expires = Math.min(expires, Date.parse(String(offer.source.supplierUpdatedAt)) + p.maxAgeMinutes[m.supplier] * 60000);
+    const visibility = { variantId: v.variantId, sku: v.sku, suppliers: rows };
+    supplierVisibility.push(visibility);
+    eligible.sort((a, b) => SYNC_SUPPLIERS.indexOf(a.m.supplier) - SYNC_SUPPLIERS.indexOf(b.m.supplier));
+    const contributors = eligible.map(({ m, offer }) => ({ supplier: m.supplier, originalSku: m.originalSku,
+      mappingId: m.id, mappingRevision: m.revision, sourceFingerprint: digest(offer) }));
+    const applicable = new Set(allRelated.map(m => sourceKey(m.supplier, m.originalSku)));
+    const relationshipFingerprint = digest({
+      mappings: [...allRelated].sort((a, b) => digest(a).localeCompare(digest(b))),
+      offers: offers.filter(o => applicable.has(sourceKey(o.source.supplier, o.source.sku))).sort((a, b) => digest(a).localeCompare(digest(b))),
+    });
     const base = { variantId: v.variantId, productId: v.productId, inventoryItemId: v.inventoryItemId,
       locationId: p.locationId, identityFingerprint: v.identityFingerprint, sku: v.sku,
-      supplier: m.supplier, originalSku: m.originalSku, mappingId: m.id, mappingRevision: m.revision,
-      sourceFingerprint: digest(offer), committedQuantity: v.committedQuantity };
+      contributors, relationshipFingerprint, committedQuantity: v.committedQuantity };
+    if (p.supplierMetafields) {
+      try {
+        const meta = prepareSupplierMetafields(v, visibility);
+        // Compare values, not different JSON representations of the same object.
+        if (meta.before !== meta.after) operations.push({ ...base, field: "supplier_metafields",
+          before: meta.before, after: meta.after, metafieldWrites: meta.writes });
+      } catch (error) { hold(error instanceof Error ? error.message : "SUPPLIER_METAFIELD_BASELINE_INVALID"); }
+    }
+    if (!eligible.length || !inventoryReady) continue;
+    for (const { m, offer } of eligible) expires = Math.min(expires,
+      inventoryTimestamp(offer.source.supplierUpdatedAt) + p.maxAgeMinutes[m.supplier] * 60000);
+    const total = eligible.reduce((n, e) => n + BigInt(e.quantity), 0n);
+    const net = total - BigInt(p.safetyStock) - BigInt(v.committedQuantity!);
+    const quantity = Number(net < 0n ? 0n : net > BigInt(p.maxQuantity) ? BigInt(p.maxQuantity) : net);
     if (quantity !== v.quantity) {
       if (quantity === 0 && eligible.length !== related.length) hold("ZERO_BLOCKED_BY_INCOMPLETE_SUPPLIER_COVERAGE");
       else operations.push({ ...base, field: "inventory", before: v.quantity, after: quantity });
     }
     if (p.pricing.mode === "preserve") continue;
-    const c = offer.cost, costAt = c ? Date.parse(c.observedAt) : NaN;
-    if (!c || !c.basisVerified || c.currency !== p.currency || !["piece", "pack"].includes(c.basis)
-      || c.basis === "pack" && (!integer(c.packSize ?? 0, 1))
-      || !Number.isFinite(costAt) || costAt > now || now - costAt > p.maxAgeMinutes[m.supplier] * 60000) { hold("VERIFIED_FRESH_UNIT_COST_REQUIRED", m); continue; }
-    let cost: number, before: number;
-    try { cost = moneyCents(c.amount); before = moneyCents(v.price); } catch { hold("INVALID_PRICE_OR_COST", m); continue; }
-    if (cost <= 0) { hold("ZERO_OR_UNKNOWN_COST", m); continue; }
-    if (c.basis === "pack") cost = ceilDivide(BigInt(cost), BigInt(c.packSize!));
+    const priced = eligible.filter(e => e.quantity > 0).map(e => ({
+      ...e, cost: rows.find(r => r.supplier === e.m.supplier)!.verifiedCost,
+    })).filter(e => e.cost?.fresh);
+    priced.sort((a, b) => {
+      const diff = BigInt(a.cost!.numeratorCents) * BigInt(b.cost!.denominator) - BigInt(b.cost!.numeratorCents) * BigInt(a.cost!.denominator);
+      return diff < 0n ? -1 : diff > 0n ? 1 : 0;
+    });
+    const lowest = priced[0];
+    if (!lowest) { hold("VERIFIED_FRESH_UNIT_COST_REQUIRED"); continue; }
+    const c = lowest.cost!, costAt = Date.parse(c.observedAt);
+    const cost = BigInt(c.numeratorCents), units = BigInt(c.denominator);
+    let before: number;
+    try { before = moneyCents(v.price); } catch { hold("INVALID_PRICE_OR_COST", lowest.m); continue; }
     const after = p.pricing.mode === "markup"
-      ? ceilDivide(BigInt(cost) * BigInt(10000 + p.pricing.basisPoints), 10000n)
-      : ceilDivide(BigInt(cost) * 10000n, BigInt(10000 - p.pricing.basisPoints));
-    if (!Number.isSafeInteger(after) || after > 9999999999) { hold("PRICE_OUT_OF_RANGE", m); continue; }
+      ? ceilDivide(cost * BigInt(10000 + p.pricing.basisPoints), units * 10000n)
+      : ceilDivide(cost * 10000n, units * BigInt(10000 - p.pricing.basisPoints));
+    if (!Number.isSafeInteger(after) || after > 9999999999) { hold("PRICE_OUT_OF_RANGE", lowest.m); continue; }
     if (after === before) continue;
     if (before === 0 || BigInt(Math.abs(after - before)) * 10000n > BigInt(before) * BigInt(p.maxPriceChangeBasisPoints)) {
-      hold("PRICE_CHANGE_LIMIT", m); continue;
+      hold("PRICE_CHANGE_LIMIT", lowest.m); continue;
     }
-    expires = Math.min(expires, costAt + p.maxAgeMinutes[m.supplier] * 60000);
-    operations.push({ ...base, field: "price", before: priceString(before), after: priceString(after) });
+    expires = Math.min(expires, costAt + p.maxAgeMinutes[lowest.m.supplier] * 60000);
+    operations.push({ ...base, field: "price", before: priceString(before), after: priceString(after),
+      priceBasis: { supplier: lowest.m.supplier, originalSku: lowest.m.originalSku,
+        numeratorCents: c.numeratorCents, denominator: c.denominator } });
   }
   const changed = new Set(operations.map(o => o.variantId)).size;
   const zeroed = operations.filter(o => o.field === "inventory" && o.after === 0 && o.before !== 0).length;
@@ -134,12 +196,15 @@ export function buildSyncPlan(input: { policy: SyncPolicy; snapshot: SyncSnapsho
   const body = { runId: randomUUID(), createdAt: new Date(now).toISOString(),
     expiresAt: new Date(expires).toISOString(),
     shopDomain: p.shopDomain, policyDigest: digest(p), inputDigest: digest({ snapshot: s, mappings, offers }),
-    operations, holds, blockers, summary: { variants: s.variants.length, changedVariants: changed, zeroedVariants: zeroed,
-      inventory: operations.filter(o => o.field === "inventory").length, prices: operations.filter(o => o.field === "price").length },
+    operations, holds, blockers, supplierVisibility, summary: { variants: s.variants.length, changedVariants: changed, zeroedVariants: zeroed,
+      inventory: operations.filter(o => o.field === "inventory").length, prices: operations.filter(o => o.field === "price").length,
+      supplierMetafields: operations.filter(o => o.field === "supplier_metafields").length },
     publishingEnabled: false as const };
-  const plan = Object.freeze({ ...body, operations: Object.freeze(operations.map(o => Object.freeze(o))),
-    holds: Object.freeze(holds.map(h => Object.freeze(h))), summary: Object.freeze(body.summary),
-    blockers: Object.freeze(blockers), digest: digest(body) });
+  const deepFreeze = <T>(value: T): T => {
+    if (value && typeof value === "object") { Object.values(value).forEach(deepFreeze); Object.freeze(value); }
+    return value;
+  };
+  const plan = deepFreeze({ ...body, digest: digest(body) });
   generatedPlans.add(plan);
   return plan;
 }

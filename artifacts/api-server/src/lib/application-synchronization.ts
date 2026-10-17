@@ -6,10 +6,15 @@ import { buildSyncPlan } from "./synchronization-plan";
 import { SynchronizationExecutor, type SyncExecutionGrant } from "./synchronization-executor";
 import { SYNC_SUPPLIERS, type SyncSupplier, type SyncPlan } from "./synchronization-types";
 import { SupplierSyncSchedule } from "./supplier-sync-schedule";
+import { SUPPLIER_METAFIELD_DEFINITIONS, SUPPLIER_METAFIELD_KEYS } from "./supplier-variant-metafields";
 
 type PlanInput = Parameters<typeof buildSyncPlan>[0];
 type ExecutionPorts = ConstructorParameters<typeof SynchronizationExecutor>[0];
 export class ApplicationSynchronization {
+  supplierMetafieldConfigurationPlan() {
+    return { definitions: SUPPLIER_METAFIELD_DEFINITIONS, pinKeys: SUPPLIER_METAFIELD_KEYS.slice(1),
+      requiresOwnerApproval: true as const, writesEnabled: false as const };
+  }
   readonly catalog = new CatalogLifecycle();
   #loader: (() => Promise<PlanInput>) | null = null;
   #executor: SynchronizationExecutor | null = null;

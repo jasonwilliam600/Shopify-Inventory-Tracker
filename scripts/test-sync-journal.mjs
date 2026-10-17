@@ -37,7 +37,7 @@ export { PostgresSyncJournal } from ${JSON.stringify(path.resolve("artifacts/api
   const suppliers = ["Heartland Hobby Wholesale", "HobbyTyme", "Walthers", "MMD/Squadron"];
   const input = {
     policy: { shopDomain: "fixture.myshopify.com", currency: "USD", locationId: "gid://shopify/Location/1",
-      supplierPriority: suppliers, selection: "priority", maxAgeMinutes: Object.fromEntries(suppliers.map(s => [s, 60])),
+      selection: "combine", supplierMetafields: false, maxAgeMinutes: Object.fromEntries(suppliers.map(s => [s, 60])),
       safetyStock: 1, maxQuantity: 50, lowerBounds: "hold", pricing: { mode: "preserve" },
       maxChangedVariants: 10, maxZeroedVariants: 1, maxQuantityDelta: 50, maxPriceChangeBasisPoints: 10000, maxPlanAgeSeconds: 120 },
     snapshot: { shopDomain: "fixture.myshopify.com", currency: "USD", verifiedAt: at, complete: true,

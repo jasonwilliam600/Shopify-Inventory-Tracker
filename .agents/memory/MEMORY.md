@@ -7,7 +7,7 @@
 - [SKU prefix mappings](sku-prefix-mappings.md) — merchant-provided prefix pairs; confirm direction and separators before applying.
 - [Store dashboard metrics](dashboard-metrics.md) — Total SKUs means the store catalog, never supplier totals or historical import records.
 - [Dashboard visual direction](dashboard-visual-direction.md) — preserve the refined theme; the racing-themed alternative was rejected.
-- [Independent wholesalers](multiple-wholesalers.md) — preserve each wholesaler's stock and pricing, including overlapping SKUs; do not overwrite another supplier.
+- [Independent wholesalers](multiple-wholesalers.md) — COMBINE eligible stock, lowest verified cost basis; separate per-supplier Shopify metafields. Do not reopen these rules.
 - [Manufacturer names](manufacturer-names.md) — show Heartland manufacturer names across inventory views; keep manufacturers distinct from distributors.
 - [Walthers dealer data](walthers-dealer-data.md) — revalidate bulk exports; authenticated catalog searches have a 5,000-result window and need complete facet coverage.
 - [MMD/Squadron dealer data](mmd-dealer-data.md) — stock exports contain MSRP, not cost; use authenticated catalog pricing and report coverage gaps.

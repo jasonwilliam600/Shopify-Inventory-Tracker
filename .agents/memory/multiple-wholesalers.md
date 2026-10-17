@@ -15,11 +15,41 @@ Use the Walthers dealer portal at `https://dealers.walthers.com/` when investiga
 
 **How to apply:** Verify the inventory export or read-only dealer data interface behind that portal before choosing a feed format, quantity interpretation, or manufacturer mapping.
 
-The user wants combined actual Shopify sellable stock with distributor quantities represented by locations, not just a display-only supplier total. They clarified: "i need it to be total sellable stock with locations for quanity".
+COMBINE available inventory from all four eligible suppliers for each correctly
+matched Shopify variant. Apply the approved safety buffer/cap before publishing.
+This is an established requirement; do not ask the user to reconsider it or
+offer single-supplier selection instead.
 
-**Why:** The merchant needs customers to buy against combined eligible stock while still seeing which distributor holds each quantity.
+**Why:** The user reiterated that combined stock is already decided, after an
+implementation incorrectly selected a single supplier.
 
-**How to apply:** Aggregate only verified full variant matches across approved distributor locations. Preserve physical-store quantities at their own locations. Until store identity, variant membership, location eligibility, and reservation handling are verified, label feed totals as proposals rather than published Shopify sellable stock.
+**How to apply:** Combine only eligible verified relationships; keep supplier
+records individually visible and do not double-count records or confuse packs
+with individual pieces. Preserve all 209 source holds and existing mapping
+safeguards. Do not add physical-store stock to supplier availability.
+
+The user requires INDIVIDUAL SUPPLIER VISIBILITY INSIDE SHOPIFY: supplier,
+quantity, original supplier SKU, verified cost and last successful inventory
+update, using appropriate variant metafields with readable Admin presentation
+where supported.
+
+**Why:** The user explicitly required this information in Shopify, not only the
+Replit dashboard.
+
+**How to apply:** Keep all four offers separate in the detail display even
+though eligible quantities are combined for sellable-stock calculations.
+Metafield definitions/values are live Shopify writes and require explicit
+approval. Do not expose supplier costs to storefront/customer APIs.
+
+Use the LOWEST verified eligible supplier cost as the pricing basis. Final
+selling-price calculations require the user's approval.
+
+**Why:** The user explicitly established this pricing-basis rule.
+
+**How to apply:** Normalize only verified pack costs to individual units before
+comparison; do not use MSRP, unknown pack units or held/ineligible offers. Do not
+activate automatic synchronization or execute live Shopify writes without
+explicit approval.
 
 The user requested automatic Heartland inventory pulls every 30 minutes.
 

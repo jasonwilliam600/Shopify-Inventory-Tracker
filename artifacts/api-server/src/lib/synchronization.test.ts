@@ -7,11 +7,14 @@ import { CatalogLifecycle } from "./catalog-lifecycle";
 import { SupplierSyncSchedule } from "./supplier-sync-schedule";
 import { BLOCKED_SOURCE_PAIRS, MAPPING_POLICY_COUNTS } from "./supplier-mapping-policy";
 import { SYNC_SUPPLIERS, type SyncPolicy, type SyncSnapshot, type SyncMapping, type SupplierSyncOffer } from "./synchronization-types";
+import { SUPPLIER_METAFIELD_DEFINITIONS, SUPPLIER_METAFIELD_KEYS, SUPPLIER_METAFIELD_NAMESPACE,
+  supplierVisibilityValues, verifySupplierDefinitionPrivacy, validateSupplierMetafieldResponse,
+  SUPPLIER_METAFIELDS_SET, SUPPLIER_BASELINE_READ } from "./supplier-variant-metafields";
 
 const now = Date.now(), at = new Date(now - 1000).toISOString();
 function fixture() {
   const policy: SyncPolicy = { shopDomain: "fixture.myshopify.com", currency: "USD", locationId: "gid://shopify/Location/1",
-    supplierPriority: [...SYNC_SUPPLIERS], selection: "priority",
+    selection: "combine", supplierMetafields: false,
     maxAgeMinutes: Object.fromEntries(SYNC_SUPPLIERS.map(s => [s, 60])) as SyncPolicy["maxAgeMinutes"],
     safetyStock: 1, maxQuantity: 50, lowerBounds: "hold", pricing: { mode: "markup", basisPoints: 5000 },
     maxChangedVariants: 10, maxZeroedVariants: 1, maxQuantityDelta: 50, maxPriceChangeBasisPoints: 10000, maxPlanAgeSeconds: 120 };
@@ -34,20 +37,160 @@ test("individual HobbyTyme pieces, commitments, safety stock and verified pack C
   assert.equal(p.publishingEnabled, false);
   assert.equal(p.blockers.length, 0);
 });
-test("all four suppliers supported; selection never sums quantities and keeps original SKUs", () => {
+test("all four suppliers supported; combines pieces and preserves original SKUs", () => {
   for (const supplier of SYNC_SUPPLIERS) {
     const f = fixture(); f.mappings[0].supplier = supplier; f.offers[0].source.supplier = supplier;
     f.offers[0].source.raw = { ZCMQOH: "12", "On Hand": "12", quantityavailable: "12", "Stock Level": "12" };
     const p = buildSyncPlan(f);
     assert.equal(p.operations.find(o => o.field === "inventory")?.after, 9);
-    assert.equal(p.operations[0].originalSku, "FIXTURE-1");
+    assert.equal(p.operations[0].contributors[0].originalSku, "FIXTURE-1");
   }
   const f = fixture();
   f.mappings.push({ ...f.mappings[0], id: "mapping-2", supplier: "Walthers", originalSku: "W-1" });
   f.offers.push({ source: { ...f.offers[0].source, supplier: "Walthers", sku: "W-1", supplierStock: 20,
     raw: { quantityavailable: "20" } }, cost: f.offers[0].cost });
-  f.policy.selection = "maximum_available";
-  assert.equal(buildSyncPlan(f).operations.find(o => o.field === "inventory")?.after, 17); // NOT 29
+  assert.equal(buildSyncPlan(f).operations.find(o => o.field === "inventory")?.after, 29); // (12 + 20) - 1 buffer - 2 committed
+});
+function fourSupplierFixture() {
+  const f = fixture();
+  f.mappings = SYNC_SUPPLIERS.map((supplier, i) => ({ ...f.mappings[0], id: `mapping-${i}`,
+    supplier, originalSku: `ORIGINAL-${i}` }));
+  f.offers = SYNC_SUPPLIERS.map((supplier, i) => ({ source: {
+    ...f.offers[0].source, supplier, sku: `ORIGINAL-${i}`, supplierStock: 10,
+    raw: { ZCMQOH: "10", "On Hand": "10", quantityavailable: "10", "Stock Level": "10" },
+  }, cost: { amount: String(12 - i * 2) + ".00", currency: "USD", basis: "piece", basisVerified: true,
+    packSize: null, observedAt: at } }));
+  return f;
+}
+test("combines ALL FOUR eligible suppliers; safety buffer/commitments/cap apply once to the total", () => {
+  const f = fourSupplierFixture();
+  const plan = buildSyncPlan(f), stock = plan.operations.find(o => o.field === "inventory")!;
+  assert.equal(stock.after, 37); // 40 - ONE buffer - TWO committed
+  assert.equal(stock.contributors.length, 4);
+  assert.deepEqual(stock.contributors.map(c => c.originalSku), ["ORIGINAL-0", "ORIGINAL-1", "ORIGINAL-2", "ORIGINAL-3"]);
+  assert.equal(plan.operations.find(o => o.field === "price")?.after, "9.00"); // lowest cost $6, not first supplier's $12
+  assert.equal(plan.operations.find(o => o.field === "price")?.priceBasis?.supplier, "MMD/Squadron");
+  f.policy.maxQuantity = 20;
+  assert.equal(buildSyncPlan(f).operations.find(o => o.field === "inventory")?.after, 20);
+  f.policy.safetyStock = 50;
+  assert.equal(buildSyncPlan(f).operations.find(o => o.field === "inventory")?.after, 0);
+});
+test("lowest verified eligible piece cost excludes out-of-stock, stale and unverified offers", () => {
+  const f = fourSupplierFixture();
+  f.offers[3].source.supplierStock = 0;
+  f.offers[3].source.supplierStatus = "unavailable"; f.offers[3].source.raw = { "Stock Level": "0" };
+  f.offers[2].source.supplierUpdatedAt = new Date(now - 7200000);
+  f.offers[1].cost!.basisVerified = false;
+  const p = buildSyncPlan(f);
+  assert.equal(p.operations.find(o => o.field === "inventory")?.after, 17);
+  assert.equal(p.operations.find(o => o.field === "price")?.after, "18.00"); // Heartland only verified eligible cost
+  assert.equal(p.supplierVisibility[0].suppliers[2].quantityStatus, "stale");
+  assert.equal(p.supplierVisibility[0].suppliers[3].quantityStatus, "out_of_stock");
+  assert.equal(p.supplierVisibility[0].suppliers[1].verifiedCost, null);
+});
+test("pack-cost comparison and selling-price rounding use exact fractions; stock stays pieces", () => {
+  const f = fourSupplierFixture();
+  f.snapshot.variants[0].price = "1.00";
+  f.offers[0].cost = { ...f.offers[0].cost!, amount: "1.00", basis: "pack", packSize: 3 };
+  f.offers[1].cost!.amount = "0.34";
+  const p = buildSyncPlan(f), price = p.operations.find(o => o.field === "price")!;
+  assert.equal(price.after, "0.50"); // (100 cents / 3) * 1.5, not rounded 34 cents * 1.5
+  assert.equal(price.priceBasis?.denominator, "3");
+  assert.equal(p.operations.find(o => o.field === "inventory")?.after, 37);
+});
+test("duplicate feed rows and cross-variant source reuse cannot inflate combined inventory", () => {
+  const f = fourSupplierFixture(); f.offers.push(structuredClone(f.offers[1]));
+  const p = buildSyncPlan(f);
+  assert.equal(p.operations.find(o => o.field === "inventory")?.after, 27); // 3 sources, not duplicate counted
+  assert.equal(p.supplierVisibility[0].suppliers[1].mappingStatus, "collision");
+  f.mappings.push({ ...f.mappings[0], id: "cross-variant", variantId: "gid://shopify/ProductVariant/222" });
+  assert.equal(buildSyncPlan(f).operations.find(o => o.field === "inventory")?.after, 17);
+});
+test("only COMBINE is accepted; obsolete single-supplier selection cannot silently return", () => {
+  const f = fixture(); (f.policy as unknown as { selection: string }).selection = "priority";
+  assert.throws(() => buildSyncPlan(f), /INVALID_SYNC_POLICY/);
+});
+test("variant metafields preserve separate suppliers, original SKUs, unit costs and real feed timestamps", () => {
+  const f = fourSupplierFixture(); f.policy.supplierMetafields = true;
+  f.snapshot.variants[0].supplierMetafields = Object.fromEntries(SUPPLIER_METAFIELD_KEYS.map(key => [key, null]));
+  const p = buildSyncPlan(f), meta = p.operations.find(o => o.field === "supplier_metafields")!;
+  assert.equal(meta.metafieldWrites?.length, 5);
+  assert.ok(meta.metafieldWrites!.every(w => w.compareDigest === null && w.namespace === SUPPLIER_METAFIELD_NAMESPACE));
+  const raw = JSON.parse(meta.metafieldWrites![0].value);
+  assert.equal(raw.suppliers.length, 4);
+  assert.deepEqual(raw.suppliers.map((r: { quantity: number }) => r.quantity), [10, 10, 10, 10]);
+  assert.equal(raw.suppliers[1].originalSku, "ORIGINAL-1");
+  assert.equal(raw.suppliers[1].lastSuccessfulInventoryUpdate, new Date(at).toISOString());
+  assert.match(meta.metafieldWrites![2].value, /Verified cost: USD 10\.000000 \/ piece/);
+  assert.ok(SUPPLIER_METAFIELD_DEFINITIONS.every(d => d.ownerType === "PRODUCTVARIANT"
+    && d.access.admin === "MERCHANT_READ" && d.access.storefront === "NONE" && d.access.customerAccount === "NONE"));
+  // Every key is read before writing; matching values produce no unnecessary write.
+  f.snapshot.variants[0].supplierMetafields = Object.fromEntries(meta.metafieldWrites!.map(w => [w.key, {
+    value: w.value, compareDigest: "b".repeat(64),
+  }]));
+  assert.equal(buildSyncPlan(f).operations.filter(o => o.field === "supplier_metafields").length, 0);
+});
+test("missing metafield baselines fail closed; stale, lower-bound and unknown rows remain distinct", () => {
+  const f = fourSupplierFixture(); f.policy.supplierMetafields = true;
+  f.offers[0].source.supplierUpdatedAt = new Date(now - 7200000);
+  f.offers[1].source.raw = { "On Hand": "10+" };
+  f.offers[2].source.raw = { quantityavailable: "unknown" };
+  const p = buildSyncPlan(f), rows = p.supplierVisibility[0].suppliers;
+  assert.ok(p.holds.some(h => h.code === "SUPPLIER_METAFIELD_BASELINE_REQUIRED"));
+  assert.equal(p.operations.filter(o => o.field === "supplier_metafields").length, 0);
+  assert.deepEqual(rows.map(r => r.quantityStatus), ["stale", "lower_bound", "unknown", "exact"]);
+  assert.deepEqual(rows.map(r => r.eligible), [false, false, false, true]);
+  assert.match(supplierVisibilityValues(p.supplierVisibility[0]).hobbytyme, /At least 10/);
+  assert.throws(() => { (rows[3] as { quantity: number }).quantity = 999; }, TypeError);
+});
+test("held mappings never expose trusted quantity, supplier SKU or cost via Shopify metafields", () => {
+  const [supplier, skus] = Object.entries(BLOCKED_SOURCE_PAIRS)[0], sku = Object.keys(skus)[0];
+  const f = fixture(); f.policy.supplierMetafields = true;
+  f.snapshot.variants[0].supplierMetafields = Object.fromEntries(SUPPLIER_METAFIELD_KEYS.map(key => [key, null]));
+  f.mappings[0].supplier = supplier as SyncMapping["supplier"]; f.mappings[0].originalSku = sku;
+  const p = buildSyncPlan(f), row = p.supplierVisibility[0].suppliers.find(r => r.supplier === supplier)!;
+  assert.equal(row.mappingStatus, "held");
+  assert.equal(row.quantity, null); assert.equal(row.originalSku, null); assert.equal(row.verifiedCost, null);
+  assert.ok(p.operations.every(o => o.field === "supplier_metafields"));
+  assert.equal(p.operations[0].contributors.length, 0); // clearing unsafe/old display still requires relationship + access verification
+});
+test("Admin visibility remains available for correctly mapped inactive or untracked variants without inventory writes", () => {
+  const f = fourSupplierFixture(); f.policy.supplierMetafields = true;
+  f.snapshot.variants[0].supplierMetafields = Object.fromEntries(SUPPLIER_METAFIELD_KEYS.map(key => [key, null]));
+  f.snapshot.variants[0].active = false; f.snapshot.variants[0].tracked = false;
+  f.snapshot.variants[0].committedQuantity = null;
+  const p = buildSyncPlan(f);
+  assert.equal(p.operations.length, 1);
+  assert.equal(p.operations[0].field, "supplier_metafields");
+  assert.equal(p.supplierVisibility[0].suppliers[0].quantity, 10);
+});
+test("definition access/type/namespace verification fails closed; metafield errors and wrong owners cannot confirm writes", () => {
+  const namespace = "app--123--tsh_inventory_sync";
+  const definitions = SUPPLIER_METAFIELD_DEFINITIONS.map(d => ({ ...d, namespace, type: { name: d.type }, access: { ...d.access } }));
+  verifySupplierDefinitionPrivacy(definitions, namespace);
+  for (const access of [
+    { admin: "MERCHANT_READ", storefront: "PUBLIC_READ", customerAccount: "NONE" },
+    { admin: "MERCHANT_READ_WRITE", storefront: "NONE", customerAccount: "NONE" },
+    { admin: "MERCHANT_READ", storefront: "NONE", customerAccount: "READ" },
+  ]) assert.throws(() => verifySupplierDefinitionPrivacy([{ ...definitions[0], access }, ...definitions.slice(1)], namespace));
+  assert.throws(() => verifySupplierDefinitionPrivacy(definitions.slice(1), namespace));
+  assert.throws(() => verifySupplierDefinitionPrivacy(definitions, "app--456--tsh_inventory_sync"));
+  const f = fourSupplierFixture(); f.policy.supplierMetafields = true;
+  f.snapshot.variants[0].supplierMetafields = Object.fromEntries(SUPPLIER_METAFIELD_KEYS.map(key => [key, null]));
+  const writes = buildSyncPlan(f).operations.find(o => o.field === "supplier_metafields")!.metafieldWrites!;
+  const payload = { data: { metafieldsSet: { userErrors: [], metafields: writes.map(w => ({
+    ...w, owner: { id: w.ownerId }, namespace, compareDigest: "b".repeat(64),
+  })) } } };
+  validateSupplierMetafieldResponse(payload, writes, namespace);
+  assert.throws(() => validateSupplierMetafieldResponse({ data: { metafieldsSet: {
+    ...payload.data.metafieldsSet, userErrors: [{ code: "COMPARE_DIGEST_MISMATCH" }],
+  } } }, writes, namespace));
+  const wrong = structuredClone(payload);
+  wrong.data.metafieldsSet.metafields[2].owner.id = "gid://shopify/ProductVariant/222";
+  assert.throws(() => validateSupplierMetafieldResponse(wrong, writes, namespace));
+  assert.throws(() => validateSupplierMetafieldResponse({ errors: [{}] }, writes, namespace));
+  assert.match(SUPPLIER_METAFIELDS_SET, /userErrors/);
+  assert.equal((SUPPLIER_BASELINE_READ.match(/compareDigest/g) ?? []).length, 5);
 });
 test("all 209 held source pairs remain centrally blocked even with an apparently approved mapping", () => {
   let checked = 0;
@@ -123,11 +266,11 @@ test("destructive-change circuit breakers and incomplete-coverage zero protectio
   zero.mappings.push({ ...zero.mappings[0], id: "missing", supplier: "Walthers", originalSku: "MISSING" });
   assert.equal(buildSyncPlan(zero).operations.filter(o => o.field === "inventory").length, 0);
 });
-function executionFixture() {
-  const f = fixture(), plan = buildSyncPlan(f), values = new Map(plan.operations.map(op => [op.field, op.before]));
+function executionFixture(f = fixture()) {
+  const plan = buildSyncPlan(f), values = new Map(plan.operations.map(op => [op.field, op.before]));
   const events: string[] = [];
   let applies = 0, reserves = 0, releases = 0, reads = 0, failWrite = false, failJournal = false;
-  let changed = false, failures = 0;
+  let changed = false, failures = 0, invalidContributor = -1, privacyVerified = true;
   const executor = new SynchronizationExecutor({
     now: () => now,
     authorization: { verify: async () => ({ reviewerId: "isolated-reviewer" }) },
@@ -141,7 +284,9 @@ function executionFixture() {
       readPrecondition: async op => {
         reads++; if (failures-- > 0) throw new Error("synthetic-read-failure");
         const p: SyncPrecondition = { shopDomain: plan.shopDomain, currency: "USD", identityFingerprint: op.identityFingerprint,
-          mappingStillApproved: !changed, mappingRevision: op.mappingRevision, sourceFingerprint: op.sourceFingerprint,
+          relationshipFingerprint: op.relationshipFingerprint,
+          sourceChecks: op.contributors.map((c, i) => ({ ...c, mappingStillApproved: !changed && i !== invalidContributor })),
+          metafieldAccessVerified: privacyVerified,
           scopesVerified: true, locationId: op.locationId, locationActive: true, tracked: true,
           committedQuantity: op.committedQuantity, value: values.get(op.field)! };
         return p;
@@ -157,6 +302,8 @@ function executionFixture() {
   });
   return { plan, executor, events, counts: () => ({ applies, reserves, releases, reads }),
     change: () => { changed = true; }, failWrite: () => { failWrite = true; },
+    changeContributor: (index: number) => { invalidContributor = index; },
+    invalidatePrivacy: () => { privacyVerified = false; },
     failJournal: () => { failJournal = true; }, failReads: () => { failures = 2; } };
 }
 test("exact owner grants, durable intent, CAS requirement, readback, completion and replay protection", async () => {
@@ -170,6 +317,24 @@ test("exact owner grants, durable intent, CAS requirement, readback, completion 
   assert.equal(f.counts().releases, 1);
   await assert.rejects(f.executor.executeExactPlan(f.plan, grant));
   await assert.rejects(f.executor.authorizeExactPlan({ ...f.plan }, {}), /UNVALIDATED_SYNC_PLAN/);
+});
+test("a change to ANY of four contributors prevents publishing the aggregate", async () => {
+  const f = executionFixture(fourSupplierFixture());
+  const grant = await f.executor.authorizeExactPlan(f.plan, {});
+  f.changeContributor(3); // not just a legacy single-source anchor
+  await assert.rejects(f.executor.executeExactPlan(f.plan, grant));
+  assert.equal(f.counts().applies, 0);
+});
+test("metafield plan cannot execute without reverified private definitions", async () => {
+  const input = fourSupplierFixture(); input.policy.supplierMetafields = true;
+  input.snapshot.variants[0].supplierMetafields = Object.fromEntries(SUPPLIER_METAFIELD_KEYS.map(key => [key, null]));
+  const f = executionFixture(input), grant = await f.executor.authorizeExactPlan(f.plan, {});
+  f.invalidatePrivacy();
+  await assert.rejects(f.executor.executeExactPlan(f.plan, grant));
+  assert.equal(f.counts().applies, 0);
+  const good = executionFixture(input);
+  const result = await good.executor.executeExactPlan(good.plan, await good.executor.authorizeExactPlan(good.plan, {}));
+  assert.equal(result.confirmed, 3); // one atomic five-metafield operation, one aggregate quantity, one price
 });
 test("changed mappings and failed journals stop before any Shopify mutation", async () => {
   const f = executionFixture(), grant = await f.executor.authorizeExactPlan(f.plan, {});

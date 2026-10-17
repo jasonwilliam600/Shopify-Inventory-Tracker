@@ -4,20 +4,25 @@
  */
 import { assertGeneratedSyncPlan, digest } from "./synchronization-plan";
 import { mappingHold } from "./supplier-mapping-policy";
-import type { SyncPlan, SyncOperation } from "./synchronization-types";
+import type { SyncPlan, SyncOperation, SyncContributor } from "./synchronization-types";
 
 export interface SyncPrecondition {
   shopDomain: string; currency: string; identityFingerprint: string;
-  mappingStillApproved: boolean; mappingRevision: number; sourceFingerprint: string;
+  relationshipFingerprint: string;
+  sourceChecks: readonly (SyncContributor & { mappingStillApproved: boolean })[];
+  metafieldAccessVerified?: boolean;
   scopesVerified: boolean; locationId: string; locationActive: boolean; tracked: boolean;
-  committedQuantity: number;
+  committedQuantity: number | null;
   value: number | string;
 }
 export interface SyncTransport {
   /** Must freshly verify shop, scopes, location, source + mapping, and Shopify baseline. */
   readPrecondition(operation: SyncOperation): Promise<SyncPrecondition>;
   /** Inventory uses compareQuantity, not ignoreCompareQuantity. One target per call.
-   * Price requests must refuse partial updates. No product creation or activation. */
+   * Price requests must refuse partial updates. supplier_metafields uses atomic
+   * metafieldsSet with every attached compareDigest (null means create-only),
+   * verified private definitions, userErrors checks and exact value readback.
+   * Never create/change definitions inside this writer. No product creation or activation. */
   apply(operation: SyncOperation, context: { operationId: string; requireCompareQuantity: true }): Promise<{ accepted: boolean }>;
   readValue(operation: SyncOperation): Promise<number | string>;
 }
@@ -118,12 +123,19 @@ export class SynchronizationExecutor {
   }
   async #precondition(plan: SyncPlan, op: SyncOperation): Promise<void> {
     this.#check(plan);
-    if (mappingHold(op.supplier, op.originalSku)) fail("SYNC_SOURCE_HOLD_ACTIVE");
+    if (op.contributors.some(c => mappingHold(c.supplier, c.originalSku))) fail("SYNC_SOURCE_HOLD_ACTIVE");
+    if (!op.contributors.length && op.field !== "supplier_metafields") fail("SYNC_SOURCES_REQUIRED");
     const p = await this.#read(() => this.ports.transport.readPrecondition(op), plan);
-    if (p.shopDomain !== plan.shopDomain || p.currency !== "USD" || !p.mappingStillApproved
-      || p.mappingRevision !== op.mappingRevision || p.sourceFingerprint !== op.sourceFingerprint
-      || p.identityFingerprint !== op.identityFingerprint || !p.scopesVerified || !p.locationActive
-      || !p.tracked || p.locationId !== op.locationId || p.value !== op.before
-      || op.field === "inventory" && p.committedQuantity !== op.committedQuantity) fail("SYNC_PRECONDITION_CHANGED");
+    if (p.shopDomain !== plan.shopDomain || p.currency !== "USD"
+      || p.relationshipFingerprint !== op.relationshipFingerprint
+      || !Array.isArray(p.sourceChecks) || p.sourceChecks.length !== op.contributors.length
+      || op.contributors.some(c => p.sourceChecks.filter(check => check.mappingId === c.mappingId
+        && check.supplier === c.supplier && check.originalSku === c.originalSku
+        && check.mappingRevision === c.mappingRevision && check.sourceFingerprint === c.sourceFingerprint
+        && check.mappingStillApproved).length !== 1)
+      || p.identityFingerprint !== op.identityFingerprint || !p.scopesVerified || p.value !== op.before
+      || op.field !== "supplier_metafields" && (!p.locationActive || !p.tracked || p.locationId !== op.locationId)
+      || op.field === "inventory" && p.committedQuantity !== op.committedQuantity
+      || op.field === "supplier_metafields" && p.metafieldAccessVerified !== true) fail("SYNC_PRECONDITION_CHANGED");
   }
 }
