@@ -1,0 +1,104 @@
+# TOP SPEED INVENTORY SYNC — PHASE 3
+## LIVE SHOPIFY CATALOG INTEGRATION
+
+The revised SKU Mapping Manager database schema has been successfully installed and verified. All four tables exist.
+
+Our next priority is retrieving the CURRENT Shopify catalog so we can establish permanent supplier SKU → Shopify variant relationships.
+
+**IMPORTANT:** Our existing Shopify connection works. Do not replace it, recreate the Shopify app, or attempt to use Replit's broken Shopify connector.
+
+### STEP 1 — VERIFY THE EXISTING CONNECTION
+
+Inspect the existing `shopify-readonly.ts` helper and current Shopify configuration.
+
+Determine whether the installed app can retrieve product and variant information using its already authorized scopes.
+
+Identify the supported integration method available under Replit's Shopify security restrictions.
+
+Do not mint new tokens, expose credentials, bypass the Agent's Shopify restrictions, or change app permissions.
+
+If Replit cannot perform direct Shopify authentication or catalog requests, STOP that portion and clearly explain the blocker.
+
+Continue only with independently permitted development work.
+
+### STEP 2 — BUILD THE READ-ONLY CATALOG ADAPTER
+
+Implement a reusable Shopify catalog adapter that supports:
+
+- Shopify product IDs.
+- Variant IDs.
+- Inventory item IDs when available.
+- Original Shopify SKUs.
+- Product and variant titles.
+- Vendor/manufacturer information.
+- Variant options.
+- Product status.
+- Catalog verification timestamps.
+
+Requirements:
+
+- Handle complete pagination for our large catalog.
+- Handle rate limits, GraphQL errors, and retries.
+- Detect missing and duplicate Shopify SKUs.
+- Never assume SKU uniqueness.
+- Never automatically verify supplier-to-Shopify relationships based only on matching SKU strings.
+- Never alter Shopify products or quantities.
+
+If Shopify authentication restrictions prevent the adapter's implementation, provide the exact integration interface and blocker rather than attempting a workaround.
+
+### STEP 3 — USE THE INSTALLED DATABASE
+
+Prepare the existing `shopify_variant_catalog` table to receive current Shopify variant identities.
+
+Requirements:
+
+- Use the existing installed schema.
+- Do not create additional tables or execute migrations.
+- Do not populate it with historical Shopify export data.
+- Validate complete catalog retrieval before activating a new snapshot.
+- Preserve existing mapping holds, review history, and supplier inventory.
+- Do not import partial catalog snapshots as current data.
+
+Do not execute a live catalog import without separate authorization.
+
+### STEP 4 — CONNECT THE SKU MAPPING MANAGER
+
+Prepare the SKU Mapping Manager to search and display verified current Shopify variant identities when they become available.
+
+- Preserve existing historical preview functionality.
+- Clearly distinguish LIVE catalog records from HISTORICAL candidates.
+- Continue blocking all 209 held/rejected source relationships by default.
+- Keep Save, Approve, and Resolve & Approve disabled until reviewer authentication and transactional approval APIs are fully implemented and tested.
+- Correct the outdated dashboard wording that says the database migration is missing. The schema is installed, but approvals are not yet enabled.
+
+### STEP 5 — VALIDATION
+
+Run relevant TypeScript, mapping safety, and regression tests.
+
+Confirm:
+
+1. Supplier integrations remain unchanged.
+2. Shopify connectivity remains functional.
+3. The mapping database schema remains intact.
+4. The 209 holds remain protected.
+5. Historical and live catalog data cannot be confused.
+6. No Shopify inventory writes are possible through this new feature.
+
+### STEP 6 — REPORT BACK
+
+Tell me:
+
+- Whether live Shopify catalog access is supported with our existing installation.
+- What code was implemented.
+- What remains blocked by Replit's Shopify restrictions.
+- Whether the current catalog can be imported safely.
+- Which tests passed.
+- The exact next step required to activate live catalog access.
+
+**AUTHORIZED:** Read-only code development, interface preparation, and testing.
+
+**NOT AUTHORIZED:** New Shopify authentication methods, credential changes, Shopify inventory writes, database migrations, live catalog imports, production deployment, or changes to supplier refresh schedules.
+
+Do not change our existing working connection.
+
+Proceed with permitted work and stop at any authorization boundary.

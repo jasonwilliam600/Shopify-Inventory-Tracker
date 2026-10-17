@@ -36,6 +36,7 @@ export * from './listSupplierAvailabilityParams';
 export * from './mappingCapabilities';
 export * from './mappingCatalogPage';
 export * from './mappingCatalogVariant';
+export * from './mappingCatalogVariantProductStatus';
 export * from './mmdRefreshStatus';
 export * from './mmdRefreshStatusState';
 export * from './searchMappingCatalogParams';

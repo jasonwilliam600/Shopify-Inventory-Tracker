@@ -5,19 +5,23 @@ import {
 } from "@workspace/api-zod";
 import { MAPPING_CAPABILITIES, mappingManagerRows } from "../lib/mapping-manager";
 import { loadAvailabilityCatalog } from "../lib/supplier-availability-catalog";
+import { mappingStorageBlocker } from "../lib/mapping-storage-status";
 
 const router: IRouter = Router();
 // Fail closed even if a client bypasses disabled controls. No approval writer exists.
 router.use("/sku-mappings", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "GET" && req.method !== "HEAD") {
-    res.status(405).json({ code: "MAPPING_APPROVAL_DISABLED", error: "Read-only preview. Final migration, reviewer authorization and live variant verification require approval." });
+    res.status(405).json({ code: "MAPPING_APPROVAL_DISABLED", error: "Read-only preview. Reviewer authorization, transactional approvals and live variant verification are not enabled." });
     return;
   }
   next();
 });
-router.get("/sku-mappings/capabilities", (_req, res) => {
-  res.json(GetSkuMappingCapabilitiesResponse.parse(MAPPING_CAPABILITIES));
+router.get("/sku-mappings/capabilities", async (_req, res) => {
+  const storageBlocker = await mappingStorageBlocker();
+  res.json(GetSkuMappingCapabilitiesResponse.parse({
+    ...MAPPING_CAPABILITIES, blockers: [storageBlocker, ...MAPPING_CAPABILITIES.blockers.slice(1)],
+  }));
 });
 router.get("/sku-mappings/catalog", async (req, res): Promise<void> => {
   const p = SearchMappingCatalogQueryParams.safeParse(req.query);

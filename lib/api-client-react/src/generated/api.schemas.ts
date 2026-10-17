@@ -55,6 +55,15 @@ export interface SkuMappingPage {
   counts: SkuMappingPageCounts;
 }
 
+export type MappingCatalogVariantProductStatus = typeof MappingCatalogVariantProductStatus[keyof typeof MappingCatalogVariantProductStatus];
+
+
+export const MappingCatalogVariantProductStatus = {
+  ACTIVE: 'ACTIVE',
+  DRAFT: 'DRAFT',
+  ARCHIVED: 'ARCHIVED',
+} as const;
+
 export interface MappingCatalogVariant {
   key: string;
   /** @nullable */
@@ -65,6 +74,15 @@ export interface MappingCatalogVariant {
   options: string[];
   skuStatus: string;
   historical: boolean;
+  /** @nullable */
+  productId?: string | null;
+  /** @nullable */
+  inventoryItemId?: string | null;
+  productTitle?: string;
+  variantTitle?: string;
+  productStatus?: MappingCatalogVariantProductStatus;
+  /** @nullable */
+  verifiedAt?: string | null;
 }
 
 export interface MappingCatalogPage {

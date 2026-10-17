@@ -11,7 +11,7 @@ export interface AvailabilityCatalog {
   knownSkus: Set<string>;
   metadata: SupplierAvailabilityCatalog;
 }
-const blocker = "Historical export only: no live Shopify variant IDs, current catalog verification, or product/selling-unit approvals. Persistent variant cache and review-decision migrations require approval. Publishing is disabled.";
+const blocker = "Historical export only: no live Shopify variant IDs, current catalog verification, or product/selling-unit approvals. Mapping schema is installed; live catalog import and approval activation require separate authorization. Publishing is disabled.";
 const base = {
   verified: false, containsVariantIds: false, publishingEnabled: false,
   physicalStockExists: false, ...MAPPING_POLICY_COUNTS,

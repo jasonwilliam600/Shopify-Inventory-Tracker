@@ -5,6 +5,7 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+import type { MappingCatalogVariantProductStatus } from './mappingCatalogVariantProductStatus';
 
 export interface MappingCatalogVariant {
   key: string;
@@ -16,4 +17,13 @@ export interface MappingCatalogVariant {
   options: string[];
   skuStatus: string;
   historical: boolean;
+  /** @nullable */
+  productId?: string | null;
+  /** @nullable */
+  inventoryItemId?: string | null;
+  productTitle?: string;
+  variantTitle?: string;
+  productStatus?: MappingCatalogVariantProductStatus;
+  /** @nullable */
+  verifiedAt?: string | null;
 }

@@ -73,14 +73,15 @@ function sourceWarnings(row: SkuMappingRow) {
 
 function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => void }) {
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogSource, setCatalogSource] = useState<"historical" | "live">("historical");
   const [selectedVariant, setSelectedVariant] = useState<MappingCatalogVariant | null>(null);
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
   const [unitConfirmed, setUnitConfirmed] = useState(false);
   const trimmedSearch = catalogSearch.trim();
   const canSearchHistorical = trimmedSearch.length >= 2;
   const catalogParams = useMemo(
-    () => ({ search: canSearchHistorical ? trimmedSearch : undefined, source: "historical" as const }),
-    [canSearchHistorical, trimmedSearch],
+    () => ({ search: canSearchHistorical ? trimmedSearch : undefined, source: catalogSource }),
+    [canSearchHistorical, trimmedSearch, catalogSource],
   );
   const catalogQuery = useSearchMappingCatalog(catalogParams, {
     query: {
@@ -91,6 +92,14 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
   });
 
   const historicalOnly = catalogQuery.data?.source === "historical";
+  const provenanceValid = catalogQuery.data?.source === catalogSource && (
+    catalogSource === "historical"
+      ? catalogQuery.data.verified === false && catalogQuery.data.items.every(v => v.historical && v.variantId === null)
+      : catalogQuery.data.verified === true && catalogQuery.data.items.every(v =>
+        !v.historical && /^gid:\/\/shopify\/ProductVariant\/\d+$/.test(v.variantId ?? "")
+        && Boolean(v.verifiedAt) && Number.isFinite(Date.parse(v.verifiedAt ?? "")))
+  );
+  const visibleVariants = provenanceValid ? catalogQuery.data?.items ?? [] : [];
   const blockers = catalogQuery.data?.blocker;
   const warnings = sourceWarnings(row);
 
@@ -118,7 +127,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
           <ArrowLeftRight className="mapping-arrow" size={18} />
           <div className="mapping-source-block destination">
             <span className="mapping-overline">Destination preview</span>
-            <strong>{selectedVariant?.sku ?? "Choose a historical product"}</strong>
+            <strong>{selectedVariant?.sku ?? `Choose a ${catalogSource} product`}</strong>
             <span>{selectedVariant?.title ?? "No live Shopify match is available"}</span>
           </div>
         </div>
@@ -131,7 +140,17 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
         )}
 
         <div className="mapping-field">
-          <label htmlFor="historical-product-search">Search the historical product export</label>
+          <label htmlFor="catalog-source">Catalog source</label>
+          <select id="catalog-source" value={catalogSource} data-testid="select-catalog-source" onChange={event => {
+            setCatalogSource(event.target.value as "historical" | "live");
+            setSelectedVariant(null);
+            setIdentityConfirmed(false);
+            setUnitConfirmed(false);
+          }}>
+            <option value="historical">HISTORICAL — October 5 export (preview only)</option>
+            <option value="live">LIVE — verified Shopify identities (not activated)</option>
+          </select>
+          <label htmlFor="historical-product-search">Search the {catalogSource === "historical" ? "historical product export" : "verified live catalog"}</label>
           <div className="mapping-searchbox">
             <Search size={17} />
             <input
@@ -147,22 +166,25 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
               data-testid="input-historical-product-search"
             />
           </div>
-          <p className="mapping-field-hint">Historical catalog · October 5. Results are local previews, not live Shopify products.</p>
+          <p className="mapping-field-hint">{catalogSource === "historical"
+            ? "HISTORICAL · October 5. Local previews, not live Shopify identities."
+            : "LIVE · Not activated. Requires a permitted read provider and a separately authorized complete catalog import. No connection or token is requested here."}</p>
         </div>
 
         {canSearchHistorical && (
           <div className="catalog-results" aria-live="polite" data-testid="list-historical-catalog-results">
-            {catalogQuery.isLoading && <div className="catalog-loading"><span /> Loading historical matches</div>}
+            {catalogQuery.isLoading && <div className="catalog-loading"><span /> Loading {catalogSource} matches</div>}
             {catalogQuery.isError && (
               <div className="catalog-inline-error">
-                <span>Historical catalog could not be loaded.</span>
+                <span>{catalogSource === "live" ? "Live catalog access is blocked; no approved complete snapshot is active. Historical results are never substituted." : "Historical catalog could not be loaded."}</span>
                 <button onClick={() => void catalogQuery.refetch()} data-testid="button-retry-catalog">Retry</button>
               </div>
             )}
-            {!catalogQuery.isLoading && !catalogQuery.isError && catalogQuery.data?.items.length === 0 && (
-              <p className="catalog-empty">No historical products match this search.</p>
+            {catalogQuery.data && !provenanceValid && <p className="catalog-empty">Catalog provenance mismatch. Results are hidden; no mapping can be approved.</p>}
+            {!catalogQuery.isLoading && !catalogQuery.isError && provenanceValid && visibleVariants.length === 0 && (
+              <p className="catalog-empty">No {catalogSource} products match this search.</p>
             )}
-            {catalogQuery.data?.items.map((variant) => (
+            {visibleVariants.map((variant) => (
               <button
                 type="button"
                 key={variant.key}
@@ -172,7 +194,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
                   setIdentityConfirmed(false);
                   setUnitConfirmed(false);
                 }}
-                data-testid={`button-select-historical-variant-${variant.key}`}
+                data-testid={`button-select-${catalogSource}-variant-${variant.key}`}
               >
                 <span className="catalog-radio">{selectedVariant?.key === variant.key ? <Check size={13} /> : null}</span>
                 <span className="catalog-result-main"><strong>{variant.title}</strong><small>{variant.sku} · {variant.vendor}</small></span>
@@ -181,16 +203,22 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
             ))}
           </div>
         )}
-        {!canSearchHistorical && <div className="catalog-prompt">Enter at least 2 characters to search the historical catalog.</div>}
+        {!canSearchHistorical && <div className="catalog-prompt">Enter at least 2 characters to search the {catalogSource} catalog.</div>}
 
         {selectedVariant && (
           <div className="variant-preview">
-            <div className="variant-preview-head"><span>Selected variant preview</span><span className="historic-tag">Historical</span></div>
+            <div className="variant-preview-head"><span>Selected variant preview</span><span className="historic-tag">{selectedVariant.historical ? "HISTORICAL" : "LIVE identity — relationship unapproved"}</span></div>
             <div><strong>{selectedVariant.title}</strong><span>{selectedVariant.sku} · {selectedVariant.vendor}</span></div>
             <div className="variant-facts">
               <span>Options <b>{selectedVariant.options.join(" / ") || "None listed"}</b></span>
               <span>SKU status <b>{selectedVariant.skuStatus}</b></span>
-              <span>Variant ID <b>Unavailable in historical export</b></span>
+              <span>Variant ID <b>{selectedVariant.variantId ?? "Unavailable in historical export"}</b></span>
+              {!selectedVariant.historical && <>
+                <span>Product ID <b>{selectedVariant.productId ?? "Unknown"}</b></span>
+                <span>Inventory item <b>{selectedVariant.inventoryItemId ?? "Unavailable"}</b></span>
+                <span>Product status <b>{selectedVariant.productStatus ?? "Unknown"}</b></span>
+                <span>Verified <b>{selectedVariant.verifiedAt ?? "Unknown"}</b></span>
+              </>}
             </div>
           </div>
         )}
@@ -200,7 +228,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
             <div className="warning-heading"><AlertTriangle size={16} /> Verify before any future change</div>
             <ul>
               {warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}
-              {selectedVariant?.skuStatus === "duplicate" && <li>This product SKU is duplicated in the historical export; destination collision needs review.</li>}
+              {selectedVariant?.skuStatus === "duplicate" && <li>This product SKU is duplicated in the selected catalog; destination collision needs review.</li>}
               {selectedVariant?.skuStatus === "missing" && <li>The selected historical variant has no SKU.</li>}
               {selectedVariant && (row.quantityKind !== "exact" || /pack|piece|unit/i.test(row.quantityText ?? "")) && (
                 <li>Confirm the supplier selling unit matches the selected Shopify variant; no pack or piece conversion is inferred.</li>
@@ -218,7 +246,7 @@ function MappingDialog({ row, onClose }: { row: SkuMappingRow; onClose: () => vo
           <LockKeyhole size={17} />
           <div><strong>Changes are disabled</strong>
             <span>{blockers || "Mapping write and reviewer identity are not enabled. This preview cannot save, approve, or resolve a mapping."}</span>
-            {catalogQuery.data && catalogQuery.data.source !== "historical" && <span>Only historical catalog previews are enabled; live search is unavailable.</span>}
+            <span>Catalog identity verification is not supplier relationship approval. Save, Approve, and Resolve &amp; Approve remain disabled for both sources.</span>
           </div>
         </div>
 
@@ -302,7 +330,7 @@ export default function SkuMappings() {
         <div className="capability-icon"><ShieldAlert size={19} /></div>
         <div className="capability-content">
           <strong>Mapping changes are not available yet</strong>
-          <p>Saving and approval are locked until the required migration and reviewer identity are approved. Live catalog access and scopes are also unverified.</p>
+          <p>The mapping schema is installed. Saving, approval, and hold resolution remain locked until reviewer authentication, transactional approval APIs and live variant verification are implemented and tested. Live catalog import is not activated; scopes remain unverified.</p>
           <div className="capability-chips">
             <span><i /> Save disabled</span><span><i /> Approve disabled</span><span><i /> Live catalog unavailable</span><span><i /> Scopes unverified</span>
           </div>

@@ -415,6 +415,12 @@ components:
         options: {type: array, items: {type: string}}
         skuStatus: {type: string}
         historical: {type: boolean}
+        productId: {type: [string, "null"]}
+        inventoryItemId: {type: [string, "null"]}
+        productTitle: {type: string}
+        variantTitle: {type: string}
+        productStatus: {type: string, enum: [ACTIVE, DRAFT, ARCHIVED]}
+        verifiedAt: {type: [string, "null"]}
     MappingCatalogPage:
       type: object
       required: [items, total, source, verified, blocker]

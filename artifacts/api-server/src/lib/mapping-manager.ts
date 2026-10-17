@@ -10,7 +10,7 @@ export const MAPPING_CAPABILITIES: MappingCapabilities = {
   canSave: false, canApprove: false, liveCatalogAvailable: false,
   scopesVerified: false, grantedScopes: [],
   blockers: [
-    "Permanent Save/Approve is disabled: the final mapping schema has not been approved or migrated.",
+    "Mapping schema is installed. Permanent Save/Approve remain disabled pending reviewer authentication and transactional approval APIs.",
     "Verified reviewer identity and authorized, audited approval endpoints are not installed.",
     "Live catalog blocked: the existing connection exposes connectivity only. Agent integration policy prevents extending its direct Admin authentication path; installed scopes have not been verified. The connection and permissions were not changed.",
     "October 5 historical results are preview only: no live Shopify variant IDs or selling-unit verification.",

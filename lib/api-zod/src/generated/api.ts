@@ -72,7 +72,13 @@ export const SearchMappingCatalogResponse = zod.object({
   "vendor": zod.string(),
   "options": zod.array(zod.string()),
   "skuStatus": zod.string(),
-  "historical": zod.boolean()
+  "historical": zod.boolean(),
+  "productId": zod.string().nullish(),
+  "inventoryItemId": zod.string().nullish(),
+  "productTitle": zod.string().optional(),
+  "variantTitle": zod.string().optional(),
+  "productStatus": zod.enum(['ACTIVE', 'DRAFT', 'ARCHIVED']).optional(),
+  "verifiedAt": zod.string().nullish()
 })),
   "total": zod.number().int(),
   "source": zod.string(),
