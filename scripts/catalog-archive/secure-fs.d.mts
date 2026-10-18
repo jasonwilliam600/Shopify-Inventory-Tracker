@@ -1,5 +1,6 @@
 export const MAX_FILE_BYTES: number;
 export function fail(code: string): never;
+export function isReplitDevelopmentWorkspace(env: Readonly<Record<string, string | undefined>>): boolean;
 export function requireDevelopmentRuntime(): void;
 export function sha256(bytes: Uint8Array | string): string;
 export function within(root: string, value: string): boolean;

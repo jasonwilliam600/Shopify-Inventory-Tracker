@@ -7,9 +7,29 @@ import { execFileSync } from "node:child_process";
 
 export const MAX_FILE_BYTES = 256 * 1024 * 1024;
 export function fail(code) { throw new Error(code); }
+/** Classification only: no I/O, environment mutation or archive authorization. */
+export function isReplitDevelopmentWorkspace(env) {
+  // A present deployment indicator is always a veto, even if empty/unknown.
+  if (env.REPLIT_DEPLOYMENT !== undefined
+    || ![undefined, "development"].includes(env.NODE_ENV)
+    || ![undefined, "development", "production"].includes(env.REPLIT_ENVIRONMENT)) return false;
+  const developmentHost = value => typeof value === "string"
+    && value.length <= 253 && value.endsWith(".replit.dev")
+    && value.split(".").every(label => label.length <= 63
+      && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label));
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(env.REPL_ID ?? "")
+    || !developmentHost(env.REPLIT_DEV_DOMAIN)
+    || typeof env.REPLIT_DOMAINS !== "string") return false;
+  const domains = env.REPLIT_DOMAINS.split(",").map(domain => domain.trim());
+  // REPLIT_DEV_DOMAIN is editor-only, not available in published deployments.
+  // REPLIT_ENVIRONMENT is descriptive metadata, not the deployment detector:
+  // this workspace legitimately reports "production" alongside editor markers.
+  return domains.length > 0 && new Set(domains).size === domains.length
+    && domains.every(developmentHost) && domains.includes(env.REPLIT_DEV_DOMAIN);
+}
 export function requireDevelopmentRuntime() {
-  if (process.env.NODE_ENV === "production" || process.env.REPLIT_DEPLOYMENT
-    || process.env.REPLIT_ENVIRONMENT === "production") fail("ARCHIVE_DEVELOPMENT_ONLY");
+  // Always inspect the real process; callers cannot supply a substitute context.
+  if (!isReplitDevelopmentWorkspace(process.env)) fail("ARCHIVE_DEVELOPMENT_ONLY");
 }
 export const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
 export const within = (root, value) => value === root || value.startsWith(root + path.sep);

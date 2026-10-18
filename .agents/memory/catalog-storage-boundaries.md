@@ -59,13 +59,14 @@ development workflow name or `NODE_ENV=development` alone is insufficient.
 The existing development-only guard correctly refused activation. Independently
 verifying the development database did not authorize overriding the archive guard.
 
-**How to apply:** Never reuse the clean environment used for synthetic tests,
-unset production markers, or weaken the guard for real data. The owner confirmed
-the same conflicting marker in the actual workspace Shell; do not repeat
-Shell/SSH switching as a presumed fix. Official Replit configuration docs identify
+**How to apply:** Never reuse a synthetic test environment, unset production
+markers, or weaken the guard for real data. The owner confirmed the same
+conflicting marker in the actual workspace Shell; do not repeat Shell/SSH
+switching as a presumed fix. Official Replit configuration docs identify
 `REPLIT_DEPLOYMENT=1` as the published-app signal and `REPLIT_DEV_DOMAIN` as
 editor-only and unavailable in deployments. Do not infer a published process from
-the conflicting marker alone. A proposed runtime-classification correction needs
-separate approval, positive development-context checks and isolated fail-closed
-tests before any real activation; it has not been implemented or approved.
+the descriptive label alone; require positively coherent workspace identity.
+The owner authorized the classification correction and isolated testing, but
+explicitly withheld real archive/key creation and data staging pending another
+approval. A successful guard check is never archive-activation authorization.
 Database backup verification is separate from encrypted catalog archive activation.

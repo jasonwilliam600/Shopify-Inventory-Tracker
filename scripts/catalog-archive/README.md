@@ -73,8 +73,14 @@ directory. Encryption alone does not make an unsafe directory acceptable.
 1. Owner approval to initialize/stage the real DEVELOPMENT archive, separately
    from any catalog import or DB access.
 2. Verify the actual operator process is a development process. The initial test
-   runner inherited deployment-like flags and correctly refused operation.
-   Synthetic tests used a clean child environment. **Never unset/override
+   runner inherited deployment-like flags and refused operation. The runtime guard
+   now requires a UUID Replit project identity, a canonical `.replit.dev` editor
+   hostname and a matching development-only `REPLIT_DOMAINS` list. Any present
+   deployment marker, production/unknown Node environment, unknown descriptive
+   environment, or missing/conflicting workspace identity is rejected.
+   `REPLIT_ENVIRONMENT=production` alone is descriptive metadata, not deployment
+   authorization; only a complete positively identified editor context can pass.
+   Synthetic tests use explicitly fictional child contexts. **Never unset/override
    production markers to force these tools to operate on a real target.**
 3. Node.js 22+ on Windows, with Windows PowerShell and NTFS ACL support. The tool
    fails closed if it cannot establish/check owner-only ACLs.

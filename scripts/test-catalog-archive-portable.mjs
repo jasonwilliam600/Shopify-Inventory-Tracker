@@ -14,7 +14,10 @@ import { seal, keyId, makeBackup } from "./catalog-archive/format.mjs";
 import { sha256 } from "./catalog-archive/secure-fs.mjs";
 
 const tool = fileURLToPath(new URL("./catalog-archive/tool.mjs", import.meta.url));
-const cleanEnv = { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: os.tmpdir(), LANG: "C.UTF-8", NODE_ENV: "development" };
+// New child-process fixture only; never alters the real process environment.
+const cleanEnv = { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: os.tmpdir(), LANG: "C.UTF-8",
+  NODE_ENV: "development", REPL_ID: "11111111-2222-4333-8444-555555555555",
+  REPLIT_DEV_DOMAIN: "synthetic.editor.replit.dev", REPLIT_DOMAINS: "synthetic.editor.replit.dev" };
 const password = "fictional PTY fixture passphrase only";
 async function isolated(fn) {
   const base = await fs.mkdtemp(path.join(os.tmpdir(), "tsh-portable-cli-test-"));
