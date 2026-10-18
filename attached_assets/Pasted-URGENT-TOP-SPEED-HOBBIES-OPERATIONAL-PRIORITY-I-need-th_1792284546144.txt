@@ -1,0 +1,35 @@
+URGENT — TOP SPEED HOBBIES OPERATIONAL PRIORITY
+
+I need this application operational as soon as reasonably possible. We have spent too much time on repeated discussions, fragmented approvals, and development tasks that have not yet produced a usable inventory workflow.
+
+I am authorizing ONE consolidated, bounded, READ-ONLY Shopify verification session using my existing installation and a policy-permitted connection.
+
+Within that authorization, proceed without repeatedly asking for permission for each individual read-only step:
+
+1. Verify shop identity and actual granted application scopes.
+2. Check whether the original bulk catalog result remains available.
+3. If available, download it with authenticated completion evidence, byte count and checksum verification.
+4. If the original result matches, perform ONE independent read-only bulk identity query and complete the required reconciliation.
+5. Preserve all existing catalog data, backups, source holds and safeguards.
+
+If the connection is prohibited, the original result has expired, or identity verification fails, STOP that operation and report the specific blocker. Do not bypass restrictions or silently launch replacement retrievals.
+
+After verification, complete all remaining authorized offline preparation that does not require a new approval.
+
+Then present ONE consolidated approval package covering the remaining required real archive backup/restore steps and guarded development catalog import, with exact actions and rollback protections.
+
+Do not perform the catalog import, Shopify writes, production changes, or automatic synchronization without my separate authorization.
+
+IMPORTANT DEVELOPMENT PRIORITIES:
+
+- Stop unrelated enhancements and redesigns.
+- Do not repeat passing tests unless a change makes them necessary.
+- Do not create unnecessary documentation or additional infrastructure.
+- Do not ask questions already answered.
+- Keep responses brief and actionable.
+- Prioritize the fastest legitimate route to a real 10-product Matrixify test.
+- Preserve all 209 source holds and supplier protections.
+
+I do not want another extended planning exercise. Execute the authorized work, report actual results, and tell me only when a decision or action is genuinely required from me.
+
+My objective is a WORKING inventory and pricing management application for Top Speed Hobbies.
