@@ -55,3 +55,12 @@ customizable authentication UI, with a remembered selection and OS-following mod
 
 **How to apply:** Future screens and dialogs must inherit the shared appearance;
 do not introduce light-only surfaces or a separate authentication theme.
+
+Preserve page-scoped theme variables when adding dialog portals.
+
+**Why:** Moving a mapping dialog to the document body lost inherited theme
+variables and made its surface transparent, despite otherwise working controls.
+
+**How to apply:** Keep the dialog in its existing theme scope or explicitly
+provide the same tokens to a portal, and inspect the rendered surface rather
+than relying on a successful build or interaction checks alone.

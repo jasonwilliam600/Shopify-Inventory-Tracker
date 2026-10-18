@@ -179,6 +179,15 @@
 .action-column { min-width: 116px; text-align: right !important; }
 .review-button { display: inline-flex; align-items: center; gap: 3px; border: 0; background: transparent; color: #597665; font-size: 10px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .review-button:hover { color: #334f3d; }
+.rejected-review-row { cursor: pointer; }
+.mapping-table .rejected-review-row:focus { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+.rejected-mapping-details { display: grid; gap: 12px; margin-top: 16px; }
+.rejected-mapping-details h3 { margin: 0; font-size: 13px; font-weight: 600; color: inherit; }
+.rejected-mapping-facts { display: grid; gap: 12px; margin: 0; }
+.rejected-mapping-facts dt { font-size: 11px; font-weight: 600; }
+.rejected-mapping-facts dd { margin: 3px 0 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.rejected-review-notes { margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.5; }
+.sku-mappings-page.mapping-overlay { padding: 18px; animation: none; }
 .mapping-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 20px; border-top: 1px solid #ebefeb; color: #84918d; font-size: 10px; }
 .mapping-pagination strong { color: #485e5a; font-family: var(--app-font-mono), monospace; }
 .mapping-pagination em { color: #a27a45; font-style: normal; }

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
 import {
@@ -81,12 +82,15 @@ function sourceWarnings(row: SkuMappingRow) {
   return [...new Set(warnings)];
 }
 
-function MappingDialog({ row, onClose, canApprove, reviewerAuthorized }: {
+function MappingDialog({ row, onClose, canApprove, reviewerAuthorized, returnFocus }: {
   row: SkuMappingRow;
   onClose: () => void;
   canApprove: boolean;
   reviewerAuthorized: boolean;
+  returnFocus: HTMLElement | null;
 }) {
+  const [showReview, setShowReview] = useState(row.mappingStatus !== "rejected");
+  const closeButton = useRef<HTMLButtonElement>(null);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogSource, setCatalogSource] = useState<"historical" | "live">("historical");
   const [selectedVariant, setSelectedVariant] = useState<MappingCatalogVariant | null>(null);
@@ -189,20 +193,56 @@ function MappingDialog({ row, onClose, canApprove, reviewerAuthorized }: {
   const warnings = sourceWarnings(row);
 
   return (
-    <div className="mapping-overlay" role="presentation" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose();
-    }}>
-      <section className="mapping-dialog" role="dialog" aria-modal="true" aria-labelledby="mapping-dialog-title" data-testid="dialog-fix-mapping">
+    <DialogPrimitive.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <DialogPrimitive.Portal>
+    <DialogPrimitive.Overlay className="mapping-overlay sku-mappings-page">
+      <DialogPrimitive.Content
+        className="mapping-dialog"
+        aria-describedby={row.mappingStatus === "rejected" ? "rejected-mapping-safety" : undefined}
+        data-testid="dialog-fix-mapping"
+        onOpenAutoFocus={(event) => { event.preventDefault(); closeButton.current?.focus(); }}
+        onCloseAutoFocus={(event) => { event.preventDefault(); returnFocus?.focus(); }}
+      >
         <header className="mapping-dialog-head">
           <div>
             <p className="mapping-kicker">Relationship review</p>
-            <h2 id="mapping-dialog-title">{row.mappingStatus === "rejected" || row.mappingStatus === "ambiguous" ? "Review source mapping" : "Fix SKU mapping"}</h2>
+            <DialogPrimitive.Title asChild>
+              <h2>{!showReview ? "Rejected mapping details" : row.mappingStatus === "rejected" || row.mappingStatus === "ambiguous" ? "Review source mapping" : "Fix SKU mapping"}</h2>
+            </DialogPrimitive.Title>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close mapping review" data-testid="button-close-mapping">
+          <button ref={closeButton} className="icon-button" onClick={onClose} aria-label="Close mapping review" data-testid="button-close-mapping">
             <X size={18} />
           </button>
         </header>
 
+        {row.mappingStatus === "rejected" && (
+          <section className="rejected-mapping-details" aria-label="Rejected source details">
+            <p id="rejected-mapping-safety" className="mapping-field-hint">Read-only inspection. This rejection and its protected source hold remain in effect. Opening review does not approve, remap, or clear it.</p>
+            <dl className="rejected-mapping-facts">
+              <div><dt>Supplier</dt><dd>{row.supplier}</dd></div>
+              <div><dt>Original SKU</dt><dd>{row.originalSku}</dd></div>
+              <div><dt>Product description</dt><dd>{row.supplierProductName || "Not supplied in the current source record."}</dd></div>
+              <div><dt>Supplier quantity</dt><dd>{quantityLabel(row)} · {statusName(row.quantityKind)} supplier units · {freshnessLabel(row)}</dd></div>
+              <div><dt>Last feed import</dt><dd>{row.lastFeedImport ? new Date(row.lastFeedImport).toLocaleString() : "Import time unknown"}</dd></div>
+              <div><dt>Previous destination</dt><dd>{row.diagnosticSkus.join(" · ") || "Not available in this review response."}</dd></div>
+              <div><dt>Rejection reason</dt><dd>{row.reason || "No reason supplied in this review response."}</dd></div>
+            </dl>
+            <h3>Review notes</h3>
+            <ul className="rejected-review-notes">{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+            <p className="mapping-field-hint">These are source review warnings. Saved reviewer notes are not exposed by the current review response.</p>
+            <h3>Available mapping history</h3>
+            <p className="mapping-field-hint">{row.diagnosticSkus.length > 0 ? `Previously rejected relationship: ${row.originalSku} → ${row.diagnosticSkus.join(" · ")}.` : "Previous destination evidence is unavailable."}</p>
+            {row.decisionId && <p className="mapping-field-hint">Decision reference: {row.decisionId} · version {row.decisionVersion ?? "unknown"}{row.approvedVariantId ? ` · variant ${row.approvedVariantId}` : ""}.</p>}
+            <p className="mapping-field-hint">Full timestamped audit events are not exposed by the current review response. Existing history is unchanged.</p>
+            {!showReview && <footer className="mapping-dialog-footer">
+              <button className="button-secondary" onClick={onClose}>Back to filtered list</button>
+              <button className="button-secondary" onClick={() => setShowReview(true)} data-testid="button-open-rejected-review">Open existing mapping review <ChevronRight size={14} /></button>
+              <span className="mapping-disabled-caption">Diagnostic review is available; correcting or approving a protected rejection is not supported by this workflow.</span>
+            </footer>}
+          </section>
+        )}
+
+        {showReview && <>
         <div className="mapping-source-pair">
           <div className="mapping-source-block">
             <span className="mapping-overline">Supplier source</span>
@@ -376,8 +416,11 @@ function MappingDialog({ row, onClose, canApprove, reviewerAuthorized }: {
           {revokeMapping.isError && <span className="mapping-write-error" role="alert">{revokeMapping.error instanceof Error ? revokeMapping.error.message : "Revocation failed."}</span>}
         </footer>
         <p className="mapping-disabled-caption">Approval atomically saves this individual source relationship. It never updates inventory or publishes to Shopify.</p>
-      </section>
-    </div>
+        </>}
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Overlay>
+    </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
@@ -399,6 +442,11 @@ export default function SkuMappings() {
   const [page, setPage] = useState(1);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [activeRow, setActiveRow] = useState<SkuMappingRow | null>(null);
+  const mappingOpener = useRef<HTMLElement | null>(null);
+  const openMapping = (row: SkuMappingRow, opener: HTMLElement) => {
+    mappingOpener.current = opener;
+    setActiveRow(row);
+  };
   const reviewerSession = useGetReviewerSession({
     query: { queryKey: getGetReviewerSessionQueryKey(), staleTime: 15_000 },
   });
@@ -517,7 +565,7 @@ export default function SkuMappings() {
               <article key={rowKey(row)}>
                 <div><strong>{row.supplier} <span>·</span> {row.originalSku}</strong><small>{row.suggestedSkus.length ? `Suggested: ${row.suggestedSkus.join(", ")}` : "No destination suggested"}</small></div>
                 <ul>{sourceWarnings(row).length ? sourceWarnings(row).map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>) : <li>Source has no recorded warnings; identity still requires individual verification.</li>}</ul>
-                <button onClick={() => setActiveRow(row)} data-testid={`button-review-selected-${encodeURIComponent(rowKey(row))}`}>Review</button>
+            <button onClick={(event) => openMapping(row, event.currentTarget)} data-testid={`button-review-selected-${encodeURIComponent(rowKey(row))}`}>Review</button>
               </article>
             ))}</div>
             <footer><span>Bulk approval is unavailable. Rejected, ambiguous, and unit-conflict cases require individual verification.</span><button disabled title="Bulk approval is disabled until migration and reviewer identity approval." data-testid="button-bulk-approve">Approve selected</button></footer>
@@ -548,7 +596,23 @@ export default function SkuMappings() {
                   {rows.map((row) => {
                     const warnings = sourceWarnings(row);
                     const isChecked = selectedKeys.includes(rowKey(row));
-                    return <tr key={rowKey(row)} data-testid={`row-sku-mapping-${encodeURIComponent(rowKey(row))}`}>
+                    return <tr
+                      key={rowKey(row)}
+                      data-testid={`row-sku-mapping-${encodeURIComponent(rowKey(row))}`}
+                      className={row.mappingStatus === "rejected" ? "rejected-review-row" : undefined}
+                      tabIndex={row.mappingStatus === "rejected" ? 0 : undefined}
+                      aria-label={row.mappingStatus === "rejected" ? `Inspect rejected mapping ${row.supplier} ${row.originalSku}` : undefined}
+                      aria-haspopup={row.mappingStatus === "rejected" ? "dialog" : undefined}
+                      onClick={(event) => {
+                        if (row.mappingStatus !== "rejected" || (event.target as HTMLElement).closest("button, input, a, select, textarea, label")) return;
+                        openMapping(row, event.currentTarget);
+                      }}
+                      onKeyDown={(event) => {
+                        if (row.mappingStatus !== "rejected" || event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return;
+                        event.preventDefault();
+                        openMapping(row, event.currentTarget);
+                      }}
+                    >
                       <td className="select-column"><input type="checkbox" checked={isChecked} aria-label={`Select ${row.supplier} ${row.originalSku}`} onChange={() => toggleSelection(rowKey(row))} data-testid={`check-mapping-${encodeURIComponent(rowKey(row))}`} /></td>
                       <td className="source-cell"><strong>{row.originalSku}</strong><span>{row.supplier}</span>{row.supplierProductName && <small>{row.supplierProductName}</small>}</td>
                       <td className="destination-cell">
@@ -567,7 +631,7 @@ export default function SkuMappings() {
                       </td>
                       <td className="feed-cell"><span className={`freshness freshness-${row.freshness.toLowerCase()}`}>{row.freshness === "stale" ? <AlertTriangle size={12} /> : <Clock3 size={12} />}{freshnessLabel(row)}</span><small>{row.lastFeedImport ? new Date(row.lastFeedImport).toLocaleString() : "Import time unknown"}</small><span className={`availability availability-${row.availability.toLowerCase().replaceAll(" ", "-")}`}>{row.availability}</span></td>
                       <td><span className={`mapping-status status-${row.mappingStatus}`} data-testid={`status-row-mapping-${encodeURIComponent(rowKey(row))}`}>{row.mappingStatus}</span>{warnings.length > 0 && <small className="warning-count"><AlertTriangle size={12} /> {warnings.length} {warnings.length === 1 ? "review note" : "review notes"}</small>}</td>
-                       <td className="action-column"><button className="review-button" onClick={() => setActiveRow(row)} data-testid={`button-fix-mapping-${encodeURIComponent(rowKey(row))}`}>{row.mappingStatus === "rejected" || row.mappingStatus === "flagged" || row.mappingStatus === "held" ? "Inspect" : row.mappingStatus === "approved" ? "Review approval" : "Review mapping"} <ChevronRight size={14} /></button></td>
+                       <td className="action-column"><button className="review-button" onClick={(event) => openMapping(row, event.currentTarget)} data-testid={`button-fix-mapping-${encodeURIComponent(rowKey(row))}`}>{row.mappingStatus === "rejected" || row.mappingStatus === "flagged" || row.mappingStatus === "held" ? "Inspect" : row.mappingStatus === "approved" ? "Review approval" : "Review mapping"} <ChevronRight size={14} /></button></td>
                     </tr>;
                   })}
                 </tbody>
@@ -582,7 +646,9 @@ export default function SkuMappings() {
       </section>
       <div className="mapping-footnote"><LockKeyhole size={14} /><span>Preview only. This screen does not persist relationships, alter stock, or publish to Shopify.</span></div>
       {activeRow && <MappingDialog
+        key={rowKey(activeRow)}
         row={activeRow}
+        returnFocus={mappingOpener.current}
         onClose={() => setActiveRow(null)}
         canApprove={capabilities.data?.canApprove === true}
         reviewerAuthorized={reviewerSession.data?.configured === true && reviewerSession.data.authenticated && reviewerSession.data.authorized}
