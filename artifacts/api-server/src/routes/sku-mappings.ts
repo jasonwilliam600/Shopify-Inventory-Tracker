@@ -6,6 +6,7 @@ import {
 import { MAPPING_CAPABILITIES, mappingManagerRows } from "../lib/mapping-manager";
 import { loadAvailabilityCatalog } from "../lib/supplier-availability-catalog";
 import { mappingStorageBlocker } from "../lib/mapping-storage-status";
+import { matchesMappingReview } from "../lib/mapping-review-filter";
 
 const router: IRouter = Router();
 // Fail closed even if a client bypasses disabled controls. No approval writer exists.
@@ -58,7 +59,7 @@ router.get("/sku-mappings", async (req, res): Promise<void> => {
     for (const row of rows) counts[row.mappingStatus] = (counts[row.mappingStatus] ?? 0) + 1;
     const term = search.trim().toLocaleLowerCase();
     const filtered = rows.filter(r => (!supplier || r.supplier === supplier)
-      && (status === "all" || r.mappingStatus === status)
+      && matchesMappingReview(r, status)
       && (!term || [r.originalSku, r.supplierProductName ?? "", ...r.suggestedSkus, ...r.diagnosticSkus, ...r.shopifyTitles]
         .some(x => x.toLocaleLowerCase().includes(term))));
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));

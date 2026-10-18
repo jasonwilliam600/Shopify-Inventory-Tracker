@@ -1,0 +1,56 @@
+**TASK: Make all six existing Inventory summary cards clickable and functional.**
+
+Work only within the existing TSH Inventory Sync application.
+
+**IMPORTANT: This is a small, targeted functionality update. Do NOT redesign, restyle, rebuild, or reorganize the Inventory page. Preserve the existing colors, cards, spacing, typography, layout, supplier information, and all current functionality.**
+
+### Required behavior
+
+Make each of the six summary cards clickable:
+
+1. **Historical Variants (42,309):** Display all historical variant records and clear other summary-card filters.
+2. **Duplicate SKU Groups (154):** Display the records belonging to duplicate SKU groups.
+3. **Missing SKUs (21):** Display records with missing SKUs.
+4. **Rejected Mappings (12):** Display rejected supplier mapping records in the appropriate existing review interface.
+5. **Flagged Candidates (200):** Display flagged supplier mapping candidates requiring review.
+6. **Held Source SKUs (209):** Display protected source SKU holds, including existing hold reasons where available.
+
+### Implementation requirements
+
+- Reuse existing data, queries, filters, components, and review interfaces wherever possible.
+- For the first three cards, integrate with the existing Inventory variant list and search functionality.
+- For mapping-related cards, navigate to or filter the existing relevant review interface if those records are not part of the variant list.
+- Do not create duplicate data structures or invent mappings between supplier records and Shopify variants.
+- Make the entire card clickable, with a pointer cursor, subtle hover state, keyboard accessibility, and a visible selected state.
+- Provide an obvious way to clear the selected filter and return to all records.
+- Ensure the displayed records actually correspond to the selected category.
+- Keep counts dynamically sourced from existing data; do not hardcode the screenshot numbers.
+- Preserve existing pagination, search behavior, and filter controls.
+- Do not modify any underlying records when clicking a card.
+
+### Strict restrictions
+
+- No database migrations.
+- No supplier feed modifications.
+- No Shopify API calls or writes.
+- No publishing or inventory synchronization changes.
+- No changes to SKU matching, mapping decisions, rejected mappings, or protected holds.
+- No unrelated refactoring.
+- No new dependencies unless absolutely necessary.
+- Keep publishing disabled.
+
+### Before making changes
+
+Inspect the existing implementation and identify where each card's count and corresponding records come from.
+
+If a card cannot be connected accurately using the existing data or review interface, report that specific limitation rather than fabricating results or building a new subsystem.
+
+### After implementation
+
+Verify all six cards individually, confirm that search and clearing filters work correctly, and report:
+
+- Which files changed.
+- What each card does when clicked.
+- Whether any card remains blocked by missing functionality or data.
+
+**Keep the implementation minimal and preserve the current dashboard appearance exactly.**

@@ -6,6 +6,7 @@ import { loadMatrixifyConfiguration, type MatrixifyConfiguration } from "../lib/
 import { reviewerSession, requireMappingReviewer, workflowError, type MappingReviewer } from "../lib/reviewer-authorization";
 import { mappingManagerRows, invalidateMappingManagerRows } from "../lib/mapping-manager";
 import { mappingHold } from "../lib/supplier-mapping-policy";
+import { matchesMappingReview } from "../lib/mapping-review-filter";
 import type { AvailabilityCatalog } from "../lib/supplier-availability-catalog";
 
 /** Factory accepts isolated resources; construction does not query any database. */
@@ -114,7 +115,7 @@ export function createMappingWorkflowRouter(options: {
       const search = String(req.query.search ?? "").toLowerCase(), supplier = String(req.query.supplier ?? "");
       const status = String(req.query.status ?? "all");
       const rows = allRows.filter(row => (!supplier || row.supplier === supplier)
-        && (status === "all" || row.mappingStatus === status)
+        && matchesMappingReview(row, status)
         && (!search || `${row.originalSku} ${row.supplierProductName ?? ""} ${row.suggestedSkus.join(" ")}`.toLowerCase().includes(search)));
       const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 25));
       const totalPages = Math.max(1, Math.ceil(rows.length / pageSize)), page = Math.min(totalPages, Math.max(1, Number(req.query.page) || 1));

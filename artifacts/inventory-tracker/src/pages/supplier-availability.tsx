@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState } from "react"
 import type { ReactNode } from "react"
+import { Link } from "wouter"
 import {
   getListSupplierAvailabilityQueryKey,
   useListSupplierAvailability,
@@ -230,30 +231,30 @@ export default function SupplierAvailability({ viewTabs }: { viewTabs?: ReactNod
       {catalog && (
         <>
         <div className="sa-catalog-grid" data-testid="text-catalog-metadata">
-          <div className="sa-stat-card sa-stat-green">
+          <button type="button" className="sa-stat-card sa-stat-green" aria-pressed={issue === "all"} onClick={() => { setIssue("all"); setPage(1) }} data-testid="summary-historical">
             <strong>{catalog.totalVariants.toLocaleString()}</strong><span>Historical variants</span>
             <small><Database size={15} aria-hidden="true" /> Catalog count</small>
-          </div>
-          <div className="sa-stat-card sa-stat-amber">
+          </button>
+          <button type="button" className="sa-stat-card sa-stat-amber" aria-pressed={issue === "duplicate"} onClick={() => { setIssue("duplicate"); setPage(1) }} data-testid="summary-duplicate">
             <strong>{catalog.duplicateSkuGroups.toLocaleString()}</strong><span>Duplicate SKU groups</span>
             <small><TriangleAlert size={15} aria-hidden="true" /> Needs review</small>
-          </div>
-          <div className="sa-stat-card sa-stat-amber">
+          </button>
+          <button type="button" className="sa-stat-card sa-stat-amber" aria-pressed={issue === "missing"} onClick={() => { setIssue("missing"); setPage(1) }} data-testid="summary-missing">
             <strong>{catalog.missingSkuVariants.toLocaleString()}</strong><span>Missing SKUs</span>
             <small><TriangleAlert size={15} aria-hidden="true" /> Needs review</small>
-          </div>
-          <div className="sa-stat-card sa-stat-red">
+          </button>
+          <Link href="/sku-mappings?status=rejected" className="sa-stat-card sa-stat-red" data-testid="summary-rejected">
             <strong>{catalog.rejectedMappings.toLocaleString()}</strong><span>Rejected mappings</span>
             <small><CircleX size={15} aria-hidden="true" /> Rejected</small>
-          </div>
-          <div className="sa-stat-card sa-stat-amber">
+          </Link>
+          <Link href="/sku-mappings?status=flagged" className="sa-stat-card sa-stat-amber" data-testid="summary-flagged">
             <strong>{catalog.flaggedCandidates.toLocaleString()}</strong><span>Flagged candidates</span>
             <small><TriangleAlert size={15} aria-hidden="true" /> Needs review</small>
-          </div>
-          <div className="sa-stat-card sa-stat-red">
+          </Link>
+          <Link href="/sku-mappings?status=held" className="sa-stat-card sa-stat-red" data-testid="summary-held">
             <strong>{catalog.uniqueHeldSources.toLocaleString()}</strong><span>Held source SKUs</span>
             <small><LockKeyhole size={15} aria-hidden="true" /> Protected hold</small>
-          </div>
+          </Link>
         </div>
         <div className="sa-legend-row" data-testid="text-availability-legend">
           <div className="sa-legend">
