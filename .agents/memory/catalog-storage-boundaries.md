@@ -50,3 +50,17 @@ approach. Workspace survival alone is not sufficient recovery assurance.
 deployment artifacts. Real activation and catalog import remain separate
 approvals. Do not assume Linux fixture results establish native Windows ACLs,
 off-workspace backup possession or a physical independent restore.
+
+Check the actual archive execution environment before real activation; a
+development workflow name or `NODE_ENV=development` alone is insufficient.
+
+**Why:** The shell and managed development API both carried a conflicting
+`REPLIT_ENVIRONMENT=production` marker during an authorized real archive operation.
+The existing development-only guard correctly refused activation. Independently
+verifying the development database did not authorize overriding the archive guard.
+
+**How to apply:** Never reuse the clean environment used for synthetic tests,
+unset production markers, or weaken the guard for real data. Obtain a genuinely
+development-marked execution context and rerun the existing guard before creating
+keys or staging real catalog records. Database backup verification is separate
+from encrypted catalog archive activation.
