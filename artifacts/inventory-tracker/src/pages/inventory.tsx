@@ -389,13 +389,16 @@ export default function Inventory() {
       </div>
     )
   }
-  return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-1 rounded-md border bg-muted/30 p-1" role="tablist" aria-label="Inventory views">
-        <Button role="tab" aria-selected={view === "availability"} variant={view === "availability" ? "secondary" : "ghost"} size="sm" onClick={() => setView("availability")} data-testid="tab-supplier-availability">Supplier availability</Button>
-        <Button role="tab" aria-selected={view === "source"} variant={view === "source" ? "secondary" : "ghost"} size="sm" onClick={() => setView("source")} data-testid="tab-source-review">Source review</Button>
-      </div>
+  const viewTabs = (
+    <div className={view === "availability" ? "sa-view-tabs" : "flex items-center gap-1 rounded-md border bg-muted/30 p-1"} role="tablist" aria-label="Inventory views">
+      <Button role="tab" aria-selected={view === "availability"} variant={view === "availability" ? "secondary" : "ghost"} size="sm" onClick={() => setView("availability")} data-testid="tab-supplier-availability">Supplier availability</Button>
+      <Button role="tab" aria-selected={view === "source"} variant={view === "source" ? "secondary" : "ghost"} size="sm" onClick={() => setView("source")} data-testid="tab-source-review">Source review</Button>
     </div>
-    {view === "availability" ? <SupplierAvailability /> : <SourceReviewView />}
-  </div>
+  )
+  return view === "availability"
+    ? <SupplierAvailability viewTabs={viewTabs} />
+    : <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">{viewTabs}</div>
+        <SourceReviewView />
+      </div>
 }

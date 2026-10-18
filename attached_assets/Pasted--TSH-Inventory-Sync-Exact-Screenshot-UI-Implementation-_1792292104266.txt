@@ -1,0 +1,158 @@
+## TSH Inventory Sync — Exact Screenshot UI Implementation
+
+I am attaching an approved design mockup for the **Inventory → Supplier availability** page.
+
+**Your assignment is to reproduce the attached screenshot as faithfully as possible. This is a visual implementation task, NOT a redesign.**
+
+The screenshot is the authoritative visual reference. Do not reinterpret it, simplify it, substitute your own design preferences, or rearrange its elements.
+
+### 1. Page layout — match the screenshot
+
+Reproduce the layout, proportions, spacing, alignment, colors, typography, borders, and visual hierarchy shown in the image.
+
+Preserve the existing TSH Inventory Sync sidebar and navigation functionality.
+
+At the top of the content area:
+
+- Display the **Supplier availability** and **Source review** tabs, aligned left.
+- Position the **Refresh** button on the far right of the same row.
+- Remove the redundant INVENTORY / SUPPLIER VISIBILITY breadcrumb.
+- Remove the oversized Supplier availability heading and descriptive subtitle.
+- Remove the large blue historical-information panel.
+- Retain the existing application header, sidebar, and theme controls.
+
+### 2. Six statistics cards — exact 3×2 grid
+
+Create six equally sized cards arranged in three columns and two rows, matching the screenshot.
+
+**First row:**
+- GREEN: 42,309 — Historical variants — Catalog count
+- AMBER: 154 — Duplicate SKU groups — Needs review
+- AMBER: 21 — Missing SKUs — Needs review
+
+**Second row:**
+- RED: 12 — Rejected mappings — Rejected
+- AMBER: 200 — Flagged candidates — Needs review
+- RED: 209 — Held source SKUs — Protected hold
+
+These numbers are reference values from the screenshot. **Continue using the application's actual existing data sources for all six counts. Do not hardcode these numbers.**
+
+Match the screenshot's:
+
+- Large, bold, color-coded numerical values.
+- Dark tinted card backgrounds.
+- Thin matching colored borders.
+- Status icons and labels.
+- Card dimensions, internal padding, and spacing.
+- Rounded corners and typography.
+
+Color scheme:
+- Green: #4ADE80
+- Amber: #FBBF24
+- Red: #F87171
+
+Use restrained translucent backgrounds matching the mockup, not bright solid fills.
+
+### 3. Status legend and timestamp
+
+Immediately below the six cards, reproduce the horizontal legend:
+
+- Green dot — Normal information
+- Amber dot — Needs review
+- Red dot — Blocked / rejected
+
+Align the existing data-observation timestamp to the right, as shown in the screenshot.
+
+Do not substitute the current time for the actual recorded observation time.
+
+### 4. Orange warning panel — preserve it
+
+Keep the existing amber/orange historical-export warning panel and reproduce its screenshot appearance.
+
+It must contain:
+- Warning triangle on the left.
+- Historical export and verification warning text.
+- The existing requirement for separate authorization before catalog import and approval activation.
+- **Publishing disabled** status on the right.
+
+Retain all important existing warnings and safety information, including the distinction between historical supplier observations and verified Shopify inventory.
+
+The removal of the blue panel must NOT remove any safety checks, restrictions, or backend safeguards.
+
+### 5. Search and filters
+
+Below the orange warning panel:
+
+- Search field aligned left.
+- All variants / Duplicate SKU / Missing SKU filters aligned right.
+- Preserve their existing functionality.
+- Match the screenshot's sizing, spacing, borders, and active filter styling.
+- Retain the filtered record count and supplier-observations disclaimer below.
+
+### 6. Existing collapsible product records
+
+**DO NOT redesign or rebuild the collapsible product cards.**
+
+They were just implemented and are working correctly.
+
+Preserve:
+- Collapsed product title, SKU, and chevron.
+- Click-to-expand/collapse functionality.
+- One expanded card at a time.
+- All four existing supplier sections.
+- Source SKUs, quantities, feed import timestamps, freshness, mapping status, and warnings.
+- Keyboard accessibility.
+- Existing search, filter, pagination, and refresh behavior.
+
+Only adjust surrounding page spacing if necessary to match the screenshot.
+
+### 7. Visual fidelity requirements
+
+The attached screenshot is the target design.
+
+Match it as closely as the existing frontend framework permits, including:
+
+- Dark navy background and panel colors.
+- Inter font and existing typography conventions.
+- Three-column card grid.
+- Card heights and gaps.
+- Status icon placement.
+- Warning panel styling.
+- Search/filter positioning.
+- Content width and margins.
+- Sidebar alignment.
+- Overall visual density.
+
+Do not add extra headings, banners, explanatory paragraphs, decorative elements, or new functionality.
+
+Maintain responsive behavior for smaller screens without compromising the desktop screenshot layout.
+
+### 8. Strict implementation boundaries
+
+This is a **frontend presentation change only**.
+
+DO NOT:
+- Modify database records or schemas.
+- Change supplier import logic.
+- Modify SKU mappings or matching rules.
+- Change Shopify or Matrixify integrations.
+- Change inventory calculations.
+- Enable publishing or Shopify writes.
+- Release or modify the 209 protected source-SKU holds.
+- Alter existing safety or approval logic.
+- Modify the newly completed collapsible-card component.
+
+### 9. Verification before completion
+
+After implementing:
+
+1. Run frontend typecheck and build.
+2. Verify dark-mode appearance against the attached screenshot.
+3. Check that the six statistics still display live application-derived values.
+4. Confirm search, filters, Refresh, and collapsible product cards still work.
+5. Confirm all warnings and protected holds remain unchanged.
+6. Provide an actual screenshot of the completed page at approximately the same desktop viewport size as the reference image.
+
+**Do not declare the job complete until you have visually compared the implementation against the attached mockup and corrected noticeable layout differences.**
+
+The goal is a near pixel-perfect reproduction of the approved design, not a new interpretation of it.

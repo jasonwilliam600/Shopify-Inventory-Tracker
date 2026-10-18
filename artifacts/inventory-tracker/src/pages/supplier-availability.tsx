@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react"
+import type { ReactNode } from "react"
 import {
   getListSupplierAvailabilityQueryKey,
   useListSupplierAvailability,
@@ -8,7 +9,7 @@ import type {
   SupplierAvailabilityOffer,
   SupplierAvailabilityVariant,
 } from "@workspace/api-client-react"
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock3, RefreshCw, Search, ShieldAlert } from "lucide-react"
+import { AlertTriangle, ChevronLeft, ChevronRight, CircleX, Clock3, Database, LockKeyhole, RefreshCw, Search, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import "./supplier-availability.css"
@@ -154,7 +155,7 @@ function SkeletonList() {
   </div>
 }
 
-export default function SupplierAvailability() {
+export default function SupplierAvailability({ viewTabs }: { viewTabs?: ReactNode }) {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [issue, setIssue] = useState<"all" | "duplicate" | "missing">("all")
@@ -196,15 +197,24 @@ export default function SupplierAvailability() {
   const firstResult = visiblePage && visiblePage.total > 0 ? (visiblePage.page - 1) * visiblePage.pageSize + 1 : 0
   const lastResult = visiblePage ? Math.min(visiblePage.page * visiblePage.pageSize, visiblePage.total) : 0
   const isUnavailable = catalog?.source === "unavailable"
+  const blockerText = catalog?.blocker?.trim() || ""
+  const blockerSplit = blockerText.indexOf(". ")
+  const warningLead = catalog?.source === "unavailable"
+    ? "Historical catalog unavailable — no current Shopify verification."
+    : blockerText
+      ? blockerSplit >= 0 ? blockerText.slice(0, blockerSplit + 1) : blockerText
+      : catalog?.containsVariantIds
+        ? "Historical export only: Shopify inventory and product/selling-unit approvals remain unverified."
+        : "Historical export only: no live Shopify variant IDs or current catalog verification."
+  const warningDetail = blockerText && blockerSplit >= 0
+    ? blockerText.slice(blockerSplit + 2)
+    : "Live catalog import and approval activation require separate authorization. Publishing is disabled."
+  const safetyDetail = `${catalog?.verified ? "Catalog verification flag is set." : "Catalog remains unverified."} Historical supplier observations are not verified Shopify inventory; none is shown or changed. Supplier mappings are candidates or blocked records, not trusted product matches. ${catalog?.physicalStockExists ? "Store stock model is not a Shopify quantity." : "No physical store stock is represented."} HobbyTyme source quantities are individual pieces with no pack conversion; other suppliers’ selling units are unverified.`
 
   return (
-    <section className="supplier-availability" aria-labelledby="sa-title">
+    <section className="supplier-availability" aria-label="Supplier availability">
       <div className="sa-page-heading">
-        <div>
-          <p className="sa-kicker">Inventory <span>/</span> Supplier visibility</p>
-          <h1 id="sa-title">Supplier availability</h1>
-          <p className="sa-subtitle">Source-level observations, kept separate from store inventory.</p>
-        </div>
+        {viewTabs}
         <Button
           variant="outline"
           className="sa-refresh"
@@ -217,32 +227,53 @@ export default function SupplierAvailability() {
         </Button>
       </div>
 
-      <div className={`sa-history-banner${catalog?.source === "unavailable" ? " is-unavailable" : ""}`} role="note" data-testid="status-historical-catalog">
-        <span className="sa-banner-icon"><ShieldAlert size={18} aria-hidden="true" /></span>
-        <div>
-          <strong>{catalog?.source === "unavailable" ? "Historical catalog unavailable — no current Shopify verification" : "Historical October 5 export — not a current Shopify verification"}</strong>
-          <p>This catalog has no live variant IDs. Supplier mappings are candidates or blocked records; none are trusted or verified. Source quantities are shown as supplied: HobbyTyme quantities are individual pieces with no pack conversion; other suppliers’ selling units are not yet verified. No Shopify inventory is shown or changed here.</p>
-        </div>
-      </div>
-
       {catalog && (
-        <div className="sa-catalog-strip" data-testid="text-catalog-metadata">
-          <div><strong>{catalog.totalVariants.toLocaleString()}</strong><span>Historical variants</span></div>
-          <div><strong>{catalog.duplicateSkuGroups.toLocaleString()}</strong><span>Duplicate SKU groups</span></div>
-          <div><strong>{catalog.missingSkuVariants.toLocaleString()}</strong><span>Variants missing SKU</span></div>
-          <div><strong>{catalog.rejectedMappings.toLocaleString()}</strong><span>Rejected mappings</span></div>
-          <div><strong>{catalog.flaggedCandidates.toLocaleString()}</strong><span>Flagged candidates</span></div>
-          <div><strong>{catalog.uniqueHeldSources.toLocaleString()}</strong><span>Held source SKUs</span></div>
-          <div className="sa-catalog-trust"><strong>{catalog.verified ? "Verified" : "Unverified"}</strong><span>{catalog.containsVariantIds ? "Live variant IDs present" : "No live variant IDs"}</span></div>
-          <div className="sa-catalog-trust"><strong>{catalog.physicalStockExists ? "Physical stock exists" : "No physical store stock"}</strong><span>Store stock model · not a Shopify quantity</span></div>
-          <div className="sa-catalog-observed"><Clock3 size={13} aria-hidden="true" /> Observed {formatDate(catalog.observedAt)}</div>
+        <>
+        <div className="sa-catalog-grid" data-testid="text-catalog-metadata">
+          <div className="sa-stat-card sa-stat-green">
+            <strong>{catalog.totalVariants.toLocaleString()}</strong><span>Historical variants</span>
+            <small><Database size={15} aria-hidden="true" /> Catalog count</small>
+          </div>
+          <div className="sa-stat-card sa-stat-amber">
+            <strong>{catalog.duplicateSkuGroups.toLocaleString()}</strong><span>Duplicate SKU groups</span>
+            <small><TriangleAlert size={15} aria-hidden="true" /> Needs review</small>
+          </div>
+          <div className="sa-stat-card sa-stat-amber">
+            <strong>{catalog.missingSkuVariants.toLocaleString()}</strong><span>Missing SKUs</span>
+            <small><TriangleAlert size={15} aria-hidden="true" /> Needs review</small>
+          </div>
+          <div className="sa-stat-card sa-stat-red">
+            <strong>{catalog.rejectedMappings.toLocaleString()}</strong><span>Rejected mappings</span>
+            <small><CircleX size={15} aria-hidden="true" /> Rejected</small>
+          </div>
+          <div className="sa-stat-card sa-stat-amber">
+            <strong>{catalog.flaggedCandidates.toLocaleString()}</strong><span>Flagged candidates</span>
+            <small><TriangleAlert size={15} aria-hidden="true" /> Needs review</small>
+          </div>
+          <div className="sa-stat-card sa-stat-red">
+            <strong>{catalog.uniqueHeldSources.toLocaleString()}</strong><span>Held source SKUs</span>
+            <small><LockKeyhole size={15} aria-hidden="true" /> Protected hold</small>
+          </div>
         </div>
+        <div className="sa-legend-row" data-testid="text-availability-legend">
+          <div className="sa-legend">
+            <span><i className="sa-dot sa-dot-green" />Normal information</span>
+            <span><i className="sa-dot sa-dot-amber" />Needs review</span>
+            <span><i className="sa-dot sa-dot-red" />Blocked / rejected</span>
+          </div>
+          <div className="sa-catalog-observed"><Clock3 size={13} aria-hidden="true" /> Last updated: {formatDate(catalog.observedAt)}</div>
+        </div>
+        </>
       )}
 
       {catalog && (
-        <div className="sa-blocker" data-testid="text-availability-blocker">
-          <AlertTriangle size={15} aria-hidden="true" />
-          <span>{catalog.blocker || "Publishing is disabled. Historical source observations are for review only."}</span>
+        <div className={`sa-blocker${catalog.source === "unavailable" ? " is-unavailable" : ""}`} data-testid="text-availability-blocker" role="note" tabIndex={0} title={safetyDetail} aria-describedby="sa-safety-details">
+          <AlertTriangle size={18} aria-hidden="true" />
+          <div className="sa-warning-copy">
+            <strong>{warningLead}</strong>
+            <span>{warningDetail}</span>
+            <small id="sa-safety-details">{safetyDetail}</small>
+          </div>
           <span className="sa-publish-state">{catalog.publishingEnabled ? "Catalog flag: enabled" : "Publishing disabled"}</span>
         </div>
       )}
