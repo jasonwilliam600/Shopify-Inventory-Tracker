@@ -60,7 +60,12 @@ The existing development-only guard correctly refused activation. Independently
 verifying the development database did not authorize overriding the archive guard.
 
 **How to apply:** Never reuse the clean environment used for synthetic tests,
-unset production markers, or weaken the guard for real data. Obtain a genuinely
-development-marked execution context and rerun the existing guard before creating
-keys or staging real catalog records. Database backup verification is separate
-from encrypted catalog archive activation.
+unset production markers, or weaken the guard for real data. The owner confirmed
+the same conflicting marker in the actual workspace Shell; do not repeat
+Shell/SSH switching as a presumed fix. Official Replit configuration docs identify
+`REPLIT_DEPLOYMENT=1` as the published-app signal and `REPLIT_DEV_DOMAIN` as
+editor-only and unavailable in deployments. Do not infer a published process from
+the conflicting marker alone. A proposed runtime-classification correction needs
+separate approval, positive development-context checks and isolated fail-closed
+tests before any real activation; it has not been implemented or approved.
+Database backup verification is separate from encrypted catalog archive activation.
