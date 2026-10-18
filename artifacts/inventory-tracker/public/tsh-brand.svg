@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 72" fill="none">
+  <defs>
+    <linearGradient id="gear" x1="7" y1="5" x2="60" y2="63" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1587F8"/><stop offset="1" stop-color="#0752C7"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(3 3)">
+    <path d="M29 1h10l2.5 7.1a23 23 0 0 1 5.3 2.2l6.7-3.4 7.1 7-3.4 6.8a23 23 0 0 1 2.2 5.2l7.1 2.6v10l-7.1 2.5a23 23 0 0 1-2.2 5.3l3.4 6.7-7.1 7.1-6.7-3.4a23 23 0 0 1-5.3 2.2L39 66h-10l-2.5-7.1a23 23 0 0 1-5.3-2.2l-6.7 3.4-7.1-7 3.4-6.8a23 23 0 0 1-2.2-5.2L1.5 38.5v-10l7.1-2.5a23 23 0 0 1 2.2-5.3L7.4 14l7.1-7.1 6.7 3.4a23 23 0 0 1 5.3-2.2L29 1Z" fill="url(#gear)" stroke="#0A3C96" stroke-width="2"/>
+    <circle cx="34" cy="33.5" r="22" fill="#122238" stroke="#48A4FF" stroke-width="2"/>
+    <path d="M24 27.5 34 22l10 5.5v12L34 45l-10-5.5v-12Z" fill="#D89A50" stroke="#F3C477" stroke-width="1.5"/>
+    <path d="m24 27.5 10 5.7 10-5.7M34 33.2V45" stroke="#855B32" stroke-width="1.5"/>
+    <path d="M50 20c4 8 2 17-4 23" stroke="#FF9C23" stroke-width="5" stroke-linecap="round"/>
+    <path d="m42 42 5 3 1-7" stroke="#FF9C23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M17 46c-3-7-2-15 3-21" stroke="#2086F4" stroke-width="4" stroke-linecap="round"/>
+    <path d="m22 27-5-3-1 7" stroke="#2086F4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g font-family="Space Grotesk,Arial,sans-serif" font-style="italic" font-weight="700">
+    <text x="76" y="33" font-size="31" letter-spacing="-1.8" fill="#152235">TSH</text>
+    <text x="76" y="55" font-size="14.5" letter-spacing="-.35" fill="#152235">INVENTORY <tspan fill="#0878EE">SYNC</tspan></text>
+  </g>
+</svg>

@@ -22,8 +22,8 @@ export function ClerkHost({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const { resolvedTheme } = useTheme();
   const dark = resolvedTheme === "dark";
-  const ink = dark ? "#e8edf5" : "#18324d";
-  const muted = dark ? "#a9b9ce" : "#64758a";
+      const ink = dark ? "#eaf0f8" : "#182437";
+      const muted = dark ? "#a9b9ce" : "#6b7b8e";
   if (!configuredKey) {
     return <ClerkConfigured.Provider value={false}>{children}</ClerkConfigured.Provider>;
   }
@@ -37,14 +37,14 @@ export function ClerkHost({ children }: { children: ReactNode }) {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
       appearance={{
         variables: {
-          colorPrimary: dark ? "#81b4fa" : "#294f83",
-          colorBackground: dark ? "#172338" : "#fbfcfd",
+          colorPrimary: dark ? "#80bfff" : "#0878ee",
+          colorBackground: dark ? "#14233a" : "#ffffff",
           colorForeground: ink,
-          colorInput: dark ? "#101b2c" : "#ffffff",
+          colorInput: dark ? "#101d30" : "#ffffff",
           colorInputForeground: ink,
           colorMutedForeground: muted,
           colorNeutral: ink,
-          colorBorder: dark ? "#34445c" : "#dce4ec",
+          colorBorder: dark ? "#2c405a" : "#dce3ec",
           borderRadius: "6px",
           fontFamily: "'Space Grotesk', sans-serif",
         },
@@ -56,9 +56,9 @@ export function ClerkHost({ children }: { children: ReactNode }) {
           headerTitle: { color: ink, fontWeight: 700 },
           headerSubtitle: { color: muted },
           formFieldLabel: { color: ink },
-          formFieldInput: { color: ink, borderColor: dark ? "#34445c" : "#dce4ec" },
-          formButtonPrimary: { backgroundColor: "#294f83", color: "#ffffff" },
-          footerActionLink: { color: dark ? "#81b4fa" : "#294f83" },
+          formFieldInput: { color: ink, borderColor: dark ? "#2c405a" : "#dce3ec" },
+          formButtonPrimary: { backgroundColor: dark ? "#0878ee" : "#0878ee", color: "#ffffff" },
+          footerActionLink: { color: dark ? "#80bfff" : "#0878ee" },
           footerActionText: { color: muted },
         },
       }}
@@ -101,14 +101,16 @@ export function ReviewerSignIn({ children }: { children?: ReactNode }) {
 
 export function ClerkSignInPage() {
   const configured = useContext(ClerkConfigured);
+  const { resolvedTheme } = useTheme();
   if (!configured) return <AuthSetupMessage />;
-  return <div className="clerk-page"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
+  return <div className="clerk-page"><img className="clerk-auth-brand" src={`${import.meta.env.BASE_URL}${resolvedTheme === "dark" ? "tsh-brand-dark.svg" : "tsh-brand.svg"}`} alt="TSH Inventory Sync" /><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div>;
 }
 
 export function ClerkSignUpPage() {
   const configured = useContext(ClerkConfigured);
+  const { resolvedTheme } = useTheme();
   if (!configured) return <AuthSetupMessage />;
-  return <div className="clerk-page"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
+  return <div className="clerk-page"><img className="clerk-auth-brand" src={`${import.meta.env.BASE_URL}${resolvedTheme === "dark" ? "tsh-brand-dark.svg" : "tsh-brand.svg"}`} alt="TSH Inventory Sync" /><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></div>;
 }
 
 function AuthSetupMessage() {

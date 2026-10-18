@@ -10,7 +10,6 @@ import {
   Box,
   CircleHelp,
   CircleOff,
-  Clock3,
   PackageCheck,
   PackageMinus,
   PackageSearch,
@@ -61,16 +60,7 @@ function MetricCard({ title, description, icon: Icon, featured = false }: {
 export default function StoreDashboard() {
   const { data: dashboard, isLoading: dashLoading } = useGetDashboard({ query: { queryKey: getGetDashboardQueryKey(), staleTime: 30000, refetchInterval: 60000 } })
   const supplierQuery = useListSuppliers({ query: { queryKey: getListSuppliersQueryKey(), staleTime: 30000, refetchInterval: 60000 } })
-  const suppliers = (supplierQuery.data ?? []).map((supplier) => {
-    const importedAt = supplier.lastUpdate ? new Date(supplier.lastUpdate) : null
-    const hasImport = importedAt !== null && !Number.isNaN(importedAt.getTime())
-    return {
-      name: supplier.name, kind: "Import record", status: hasImport ? "imported" : "unknown",
-      state: "Connection not verified",
-      detail: hasImport ? "Last import recorded" : "No import date available",
-      date: hasImport ? `Last import · ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(importedAt!)}` : "Last import unknown",
-    }
-  })
+  const suppliers = supplierQuery.data ?? []
 
   if (dashLoading) return <DashboardSkeleton />
 
@@ -102,9 +92,9 @@ export default function StoreDashboard() {
 
         <header className="rd-heading">
           <div>
-            <p className="rd-eyebrow">Top Speed Hobbies <span> / </span> Operations</p>
-            <h1 className="rd-title">Inventory overview</h1>
-            <p className="rd-subtitle">A clear view of store inventory and supplier records.</p>
+            <p className="rd-eyebrow">Welcome back</p>
+            <h1 className="rd-title">TSH Inventory <span>Sync</span></h1>
+            <p className="rd-subtitle">Manage supplier inventory, map SKUs, and prepare Shopify updates for review.</p>
           </div>
           <div className={`rd-shopify-chip${connected ? " is-connected" : ""}`} data-testid="status-shopify">
             <span className="rd-shopify-icon"><Store size={17} aria-hidden="true" /></span>
@@ -145,8 +135,6 @@ export default function StoreDashboard() {
           </div>
         </section>
 
-        <SupplierCatalogBox />
-
         <div className="rd-lower-grid">
           <Card className="rd-panel rd-connection-card">
             <div className="rd-card-heading">
@@ -156,8 +144,8 @@ export default function StoreDashboard() {
                 <h2 className="rd-card-title">Shopify</h2>
               </div>
             </div>
-            <div className="rd-connection-state">
-              <span className="rd-state-mark"><CircleOff size={17} aria-hidden="true" /></span>
+            <div className={`rd-connection-state${connected ? " is-connected" : ""}`}>
+              <span className="rd-state-mark">{connected ? <PackageCheck size={17} aria-hidden="true" /> : <CircleOff size={17} aria-hidden="true" />}</span>
               <div>
                 <strong>{connected ? "Connected" : "Disconnected"}</strong>
                 <span>{connected ? "Verified store counts are not available yet" : "Store data is not available"}</span>
@@ -176,37 +164,42 @@ export default function StoreDashboard() {
                 <span className="rd-card-icon"><Truck size={17} aria-hidden="true" /></span>
                 <div>
                   <p className="rd-section-kicker">Supplier registry</p>
-                  <h2 className="rd-card-title">Supplier connections</h2>
+                  <h2 className="rd-card-title">Supplier status</h2>
                 </div>
               </div>
-              <span className="rd-record-count">{supplierQuery.isPending || supplierQuery.isError ? "—" : `${suppliers.length} records`}</span>
+              <Link href="/suppliers" className="rd-registry-link" data-testid="link-dashboard-suppliers">View suppliers <ArrowRight size={13} aria-hidden="true" /></Link>
             </div>
-            <div className="rd-supplier-list">
-              {supplierQuery.isPending && <p className="rd-supplier-message" role="status">Loading suppliers…</p>}
-              {supplierQuery.isError && <div className="rd-supplier-message" role="alert"><p>Unable to refresh supplier records.</p><button type="button" onClick={() => void supplierQuery.refetch()}>Retry</button></div>}
-              {!supplierQuery.isPending && !supplierQuery.isError && suppliers.length === 0 && <p className="rd-supplier-message">No suppliers registered yet.</p>}
-              {suppliers.map((supplier) => (
-                <article className="rd-supplier-row" key={supplier.name} data-testid={`card-supplier-${supplier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
-                  <span className={`rd-supplier-mark ${supplier.status === "imported" ? "is-imported" : "is-example"}`}>
-                    {supplier.status === "imported" ? <PackageCheck size={16} aria-hidden="true" /> : <CircleHelp size={16} aria-hidden="true" />}
-                  </span>
-                  <div className="rd-supplier-info">
-                    <div className="rd-supplier-name-line">
-                      <strong>{supplier.name}</strong>
-                      <span className={`rd-supplier-kind ${supplier.status === "unknown" ? "is-example" : ""}`}>{supplier.kind}</span>
-                    </div>
-                    <span className="rd-supplier-state">{supplier.state}</span>
-                    <span className="rd-supplier-detail">{supplier.detail}</span>
-                  </div>
-                  <span className="rd-supplier-date"><Clock3 size={12} aria-hidden="true" />{supplier.date}</span>
-                </article>
-              ))}
+            <div className="rd-supplier-table-wrap">
+              {supplierQuery.isPending && <div className="rd-supplier-message" role="status">Loading supplier registry…</div>}
+              {supplierQuery.isError && <div className="rd-supplier-message" role="alert"><span>Unable to load supplier records.</span><button type="button" onClick={() => void supplierQuery.refetch()}>Retry</button></div>}
+              {!supplierQuery.isPending && !supplierQuery.isError && suppliers.length === 0 && <div className="rd-supplier-message">No suppliers registered yet.</div>}
+              {!supplierQuery.isPending && !supplierQuery.isError && suppliers.length > 0 && (
+                <table className="rd-supplier-table" aria-label="Supplier registry" data-testid="table-dashboard-suppliers">
+                  <thead><tr><th scope="col">Supplier</th><th scope="col">Supplier SKUs</th><th scope="col">Last import</th><th scope="col">Import status</th></tr></thead>
+                  <tbody>
+                    {suppliers.map((supplier) => {
+                      const importedAt = supplier.lastUpdate ? new Date(supplier.lastUpdate) : null
+                      const hasImport = importedAt !== null && !Number.isNaN(importedAt.getTime())
+                      return (
+                        <tr key={supplier.name} data-testid={`row-dashboard-supplier-${supplier.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
+                          <td data-label="Supplier"><strong>{supplier.name}</strong></td>
+                          <td data-label="Supplier SKUs" className="rd-supplier-sku-count">{supplier.skuCount.toLocaleString()}</td>
+                          <td data-label="Last import">{hasImport ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(importedAt!) : "No import recorded"}</td>
+                          <td data-label="Import status"><span className={`rd-import-status${hasImport ? " is-recorded" : ""}`}>{hasImport ? "Import recorded" : "No import record"} <span>· Connection unverified</span></span></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
             <div className="rd-supplier-foot">
-              <span><AlertCircle size={14} aria-hidden="true" /> Import history is not a current connection-health check.</span>
+              <span><AlertCircle size={14} aria-hidden="true" /> Supplier SKU totals and import history are not store inventory or connection-health checks.</span>
             </div>
           </Card>
         </div>
+
+        <SupplierCatalogBox />
 
         <details className="rd-explanation">
           <summary><CircleHelp size={15} aria-hidden="true" /> About these counts</summary>

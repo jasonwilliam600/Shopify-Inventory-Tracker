@@ -5,7 +5,7 @@ export function ThemeSelector() {
   const { theme = "system", setTheme } = useTheme();
   const Icon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
   return (
-    <label className="flex shrink-0 items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-sm">
+    <label className="theme-selector shrink-0">
       <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
       <span className="sr-only">Appearance</span>
       <select

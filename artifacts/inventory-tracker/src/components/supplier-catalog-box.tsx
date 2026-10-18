@@ -110,7 +110,7 @@ export function SupplierCatalogBox() {
         <span className="sc-warning-icon"><AlertTriangle size={18} aria-hidden="true" /></span>
         <div>
           <strong>Store comparison is unavailable</strong>
-          <p>Shopify is disconnected, so we cannot verify which supplier SKUs are missing from your store. These records are not confirmed missing; each is awaiting store comparison.</p>
+          <p>A verified store catalog comparison is not available yet. These supplier records are not confirmed missing from your store; each is awaiting comparison.</p>
         </div>
       </div>
 

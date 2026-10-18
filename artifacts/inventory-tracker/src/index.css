@@ -92,52 +92,52 @@
 
 /* LIGHT MODE */
 :root {
-  --background: 210 20% 98%; /* slate-50 */
-  --foreground: 222 47% 11%; /* slate-900 */
-  --border: 214 32% 91%; /* slate-200 */
-  --input: 214 32% 91%; /* slate-200 */
-  --ring: 224 76% 33%; /* blue-800 */
+  --background: 220 20% 97%;
+  --foreground: 222 33% 13%;
+  --border: 218 18% 86%;
+  --input: 218 18% 82%;
+  --ring: 214 92% 48%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
+  --card-foreground: 222 33% 13%;
+  --card-border: 218 18% 86%;
 
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-primary: 224 76% 33%;
+  --sidebar: 220 25% 98%;
+  --sidebar-foreground: 222 33% 13%;
+  --sidebar-border: 218 18% 88%;
+  --sidebar-primary: 214 92% 48%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-ring: 214 32% 91%;
+  --sidebar-accent: 214 92% 95%;
+  --sidebar-accent-foreground: 214 86% 34%;
+  --sidebar-ring: 214 92% 48%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
+  --popover-foreground: 222 33% 13%;
+  --popover-border: 218 18% 86%;
 
-  --primary: 224 76% 33%; /* Deep logistics blue */
+  --primary: 214 92% 48%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 218 20% 94%;
+  --secondary-foreground: 222 33% 20%;
 
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 218 22% 94%;
+  --muted-foreground: 218 12% 43%;
 
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 214 92% 95%;
+  --accent-foreground: 214 86% 34%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --warning: 24 98% 48%; /* High-vis orange */
+  --warning: 29 100% 50%;
   --warning-foreground: 0 0% 100%;
 
-  --success: 142 71% 45%;
+  --success: 151 57% 38%;
   --success-foreground: 0 0% 100%;
 
-  --chart-1: 224 76% 33%;
-  --chart-2: 24 98% 48%;
+  --chart-1: 214 92% 48%;
+  --chart-2: 29 100% 50%;
   --chart-3: 142 71% 45%;
   --chart-4: 0 84% 60%;
   --chart-5: 215 16% 47%;
@@ -159,48 +159,48 @@
 
 .dark {
   color-scheme: dark;
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224 76% 50%;
+  --background: 219 28% 10%;
+  --foreground: 215 28% 94%;
+  --border: 217 23% 23%;
+  --input: 217 23% 28%;
+  --ring: 211 100% 59%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217.2 32.6% 17.5%;
+  --card: 219 26% 13%;
+  --card-foreground: 215 28% 94%;
+  --card-border: 217 23% 23%;
 
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217.2 32.6% 17.5%;
-  --sidebar-primary: 224 76% 50%;
+  --sidebar: 220 30% 9%;
+  --sidebar-foreground: 215 28% 94%;
+  --sidebar-border: 217 23% 20%;
+  --sidebar-primary: 211 100% 55%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217.2 32.6% 17.5%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 224 76% 50%;
+  --sidebar-accent: 215 42% 19%;
+  --sidebar-accent-foreground: 212 90% 79%;
+  --sidebar-ring: 211 100% 55%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217.2 32.6% 17.5%;
+  --popover: 219 25% 15%;
+  --popover-foreground: 215 28% 94%;
+  --popover-border: 217 23% 24%;
 
-  --primary: 215 88% 73%;
-  --primary-foreground: 222 47% 11%;
+  --primary: 211 100% 59%;
+  --primary-foreground: 220 30% 9%;
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 217 23% 20%;
+  --secondary-foreground: 215 28% 94%;
 
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 217 23% 19%;
+  --muted-foreground: 215 16% 69%;
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 215 42% 19%;
+  --accent-foreground: 212 90% 79%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
   
-  --warning: 24 98% 48%;
+  --warning: 29 100% 55%;
   --warning-foreground: 210 40% 98%;
 
-  --success: 142 71% 45%;
+  --success: 151 57% 45%;
   --success-foreground: 210 40% 98%;
 }
 

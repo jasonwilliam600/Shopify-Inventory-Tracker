@@ -45,7 +45,7 @@ function ClerkAccountMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="h-9 w-9 shrink-0 rounded-full border-primary/30 bg-primary/10 p-0 text-primary"
+          className="account-trigger h-9 w-9 shrink-0 rounded-full border-primary/30 bg-primary/10 p-0 text-primary"
           aria-label={`Account: ${label}`}
           disabled={signingOut}
         >
