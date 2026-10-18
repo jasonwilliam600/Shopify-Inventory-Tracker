@@ -66,7 +66,9 @@ switching as a presumed fix. Official Replit configuration docs identify
 `REPLIT_DEPLOYMENT=1` as the published-app signal and `REPLIT_DEV_DOMAIN` as
 editor-only and unavailable in deployments. Do not infer a published process from
 the descriptive label alone; require positively coherent workspace identity.
-The owner authorized the classification correction and isolated testing, but
-explicitly withheld real archive/key creation and data staging pending another
-approval. A successful guard check is never archive-activation authorization.
+The owner subsequently authorized real archive/key initialization and staging of
+the unchanged source plus available provenance, explicitly excluding creation or
+approval of an import manifest. Do not turn a source-staging receipt into an
+import manifest or infer import permission from archive activation. Independently
+accepted backup receipts and final import approval remain separate requirements.
 Database backup verification is separate from encrypted catalog archive activation.

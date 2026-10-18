@@ -2,9 +2,16 @@
 
 ## Status and boundaries
 
-The filesystem backend and portable backup tooling are implemented but **not
-connected to the app**. No real archive/key has been initialized, no real catalog
-has been archived, and no database or Shopify request is part of these tools.
+The filesystem backend has been explicitly initialized at the approved private
+development locations. The unchanged real catalog source and available provenance
+have been encrypted and verified through the existing adapter. A private
+`*.staging-receipt.json` records checksums and verification results; it is NOT an
+import manifest or import approval.
+
+No import manifest, portable backup or accepted independent-restore receipt exists
+for this staged run. Missing provenance and full-identity reconciliation remain
+blocked. The adapter is **not connected to automatic application startup**, and no
+database or Shopify request was part of staging.
 
 Backend: `artifacts/api-server/src/lib/catalog-filesystem-archive.ts`.
 Operator export/receipt CLI: `artifacts/api-server/src/lib/catalog-archive-export-cli.ts`.
@@ -20,9 +27,10 @@ failure injection. All 42 existing offline catalog regression tests passed.
 API TypeScript checking and operator CLI compilation passed. No native Windows,
 real SSH transfer, actual runtime activation, or real catalog import was tested.
 
-The current authorization covers code and isolated synthetic testing ONLY.
-Everything below involving real paths/data/SSH is a **future procedure requiring
-explicit approval**, not permission to execute it now.
+The owner authorized real private initialization and source/provenance staging
+only. Operations below involving a validated import manifest, portable export,
+independent restore or import remain **future procedures requiring the applicable
+approval**. Staging neither supplies missing evidence nor authorizes an import.
 
 ## Security and limitations
 
