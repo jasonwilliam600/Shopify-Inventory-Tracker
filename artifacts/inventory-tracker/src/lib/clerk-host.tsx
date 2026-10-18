@@ -46,7 +46,7 @@ export function ClerkHost({ children }: { children: ReactNode }) {
           colorNeutral: ink,
           colorBorder: dark ? "#2c405a" : "#dce3ec",
           borderRadius: "6px",
-          fontFamily: "'Space Grotesk', sans-serif",
+          fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
         },
         elements: {
           rootBox: "w-full flex justify-center",

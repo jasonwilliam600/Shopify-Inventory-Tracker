@@ -34,21 +34,21 @@ Keep the store connection badge at the top of the dashboard, even when connectio
 
 **How to apply:** Do not remove the top badge as redundant when simplifying connection information.
 
-The final primary font for the entire TSH Inventory Sync application is
-**Space Grotesk**, including customizable authentication UI.
+The primary UI font for the entire TSH Inventory Sync application is
+**Inter**, including customizable authentication UI. Do not modify the TSH logo
+artwork or its custom lettering.
 
-**Why:** The owner explicitly selected it as the final font and requested a bold,
-modern technology-platform appearance. The subsequently approved blue/orange
-redesign changes presentation only, never functionality or business logic.
+**Why:** The owner explicitly replaced the earlier Space Grotesk selection with
+Inter to match the cleaner approved dashboard reference, while preserving logo
+artwork and application behavior.
 
-**How to apply:** Use 700 for major page titles and section headings, 600 for
-navigation/buttons/labels, and 400 or 500 for body text/tables through shared
-typography settings. Remove decorative/serif and italicized display treatments.
-The owner specified numeric weight 700 for titles even when calling it ExtraBold;
-do not substitute 800 or invent a different font.
+**How to apply:** Use 400 for body/table content, 500 for secondary information,
+600 for navigation/buttons/card labels, 700 for headings, and 800 for large
+dashboard statistics. Keep sizes, line heights and tracking clean rather than
+heavy or cramped. Typography changes must not redesign the seven-card dashboard.
 
 Support Light, Dark and System appearance with the approved TSH branding and
-Space Grotesk typography.
+Inter typography.
 
 **Why:** The owner requested application-wide theme consistency, including
 customizable authentication UI, with a remembered selection and OS-following mode.
