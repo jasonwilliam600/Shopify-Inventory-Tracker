@@ -31,12 +31,8 @@ function DashboardSkeleton() {
   return (
     <section className="refined-dashboard">
       <div className="rd-shell" aria-label="Loading inventory dashboard" aria-busy="true">
-        <div className="rd-topline">
-          <span className="rd-skeleton" style={{ width: 164 }} />
-          <span className="rd-skeleton" style={{ width: 140 }} />
-        </div>
         <div className="rd-heading">
-          <span className="rd-skeleton" style={{ width: 340, height: 35 }} />
+          <span className="rd-skeleton" style={{ width: "min(100%, 340px)", height: 35 }} />
         </div>
         <div className="rd-network-grid">
           {[1, 2, 3].map((item) => <span className="rd-skeleton rd-dashboard-skeleton-card" key={`source-${item}`} />)}
@@ -105,33 +101,21 @@ export default function StoreDashboard() {
   return (
     <section className="refined-dashboard">
       <div className="rd-shell">
-        <div className="rd-topline">
-          <div className="rd-crumb">Inventory <span>/</span> Overview</div>
-          <div className="rd-preview-label">
-            <span className="rd-preview-mark" aria-hidden="true" />
-            Supplier registry <span className="rd-preview-divider">·</span> {supplierQuery.isFetching ? "Updating…" : "Refreshes every minute"}
-          </div>
-        </div>
-
         <header className="rd-heading">
-          <div>
-            <p className="rd-eyebrow">Welcome back</p>
-            <h1 className="rd-title">TSH Inventory <span>Sync</span></h1>
-            <p className="rd-subtitle">Manage supplier inventory, map SKUs, and prepare Shopify updates for review.</p>
-          </div>
+          <h1 className="rd-title">TSH Inventory <span>Sync</span></h1>
           <div className={`rd-shopify-chip${connected ? " is-connected" : ""}`} data-testid="status-shopify">
             <span className="rd-shopify-icon"><Store size={17} aria-hidden="true" /></span>
-            <span className="rd-shopify-copy">
-              <span className="rd-shopify-name">Shopify</span>
-              <span className="rd-shopify-state">
-                <span className="rd-status-indicator" aria-hidden="true" />
-                {connected ? "Connected" : "Disconnected"}
+            <span className="rd-header-shopify-content">
+              <span className="rd-shopify-copy">
+                <span className="rd-shopify-name">Shopify authentication</span>
+                <span className="rd-shopify-state">
+                  <span className="rd-status-indicator" aria-hidden="true" />
+                  {connected ? "Connected" : "Disconnected"}
+                </span>
               </span>
+              <span className="rd-header-catalog-note">Catalog sync not verified</span>
             </span>
           </div>
-          <Link href="/inventory" className="rd-inventory-link" data-testid="link-supplier-availability">
-            View supplier availability <ArrowRight size={14} aria-hidden="true" />
-          </Link>
         </header>
 
         <section className="rd-overview-section rd-network-section" aria-labelledby="rd-network-heading">
@@ -140,7 +124,13 @@ export default function StoreDashboard() {
               <p className="rd-section-kicker">Supplier network</p>
               <h2 className="rd-section-title" id="rd-network-heading">Source inventory</h2>
             </div>
-            <span className="rd-data-boundary"><Truck size={14} aria-hidden="true" /> Supplier data only</span>
+            <div className="rd-network-meta">
+              <span className="rd-data-boundary"><Truck size={14} aria-hidden="true" /> Supplier data only</span>
+              <span className="rd-preview-label">
+                <span className="rd-preview-mark" aria-hidden="true" />
+                Supplier registry <span className="rd-preview-divider">·</span> {supplierQuery.isFetching ? "Updating…" : "Refreshes every minute"}
+              </span>
+            </div>
           </div>
           <div className="rd-network-grid">
             <NavigationCard

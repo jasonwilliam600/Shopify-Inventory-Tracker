@@ -315,6 +315,23 @@
 }
 @media (prefers-reduced-motion:reduce) { .rd-summary-card { transition:none; } }
 
+/* Compact dashboard heading only; cards, table and application shell are unchanged. */
+.refined-dashboard .rd-heading { align-items:center; gap:16px; margin-bottom:16px; }
+.rd-heading .rd-shopify-chip { width:auto; min-width:0; max-width:100%; gap:9px; padding:8px 12px; }
+.rd-heading .rd-shopify-icon { width:30px; height:30px; }
+.rd-header-shopify-content { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.rd-heading .rd-shopify-copy { display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:5px 10px; }
+.rd-heading .rd-shopify-name { font-size:10px; font-weight:600; letter-spacing:.025em; }
+.rd-heading .rd-shopify-state { font-size:12px; font-weight:600; }
+.rd-header-catalog-note { color:var(--rd-ink-soft); font-size:11px; font-weight:500; line-height:1.4; }
+.rd-network-meta { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px 14px; }
+.rd-network-meta .rd-preview-label { font-size:10px; gap:5px; }
+.rd-network-meta .rd-preview-mark { width:5px; height:5px; }
+@media (max-width:760px) {
+  .refined-dashboard .rd-heading { align-items:flex-start; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .rd-network-meta { justify-content:flex-start; }
+}
+
 .store-inventory-unavailable { max-width:760px; margin:clamp(20px,7vh,72px) auto; padding:clamp(20px,4vw,34px); border:1px solid hsl(var(--border)); border-radius:9px; background:hsl(var(--card)); box-shadow:0 2px 9px rgba(19,43,74,.05); }
 .store-unavailable-kicker { display:flex; align-items:center; gap:8px; color:hsl(var(--primary)); font-size:10px; font-weight:700; letter-spacing:.12em; }
 .store-inventory-unavailable h2 { margin:13px 0 5px; font-size:clamp(22px,3vw,29px); letter-spacing:-.04em; }
