@@ -1,0 +1,169 @@
+/* Shared dark appearance for the existing custom page styles and portals.
+   Light colors and all page layouts remain unchanged. */
+:root { color-scheme: light; }
+.dark :is(.refined-dashboard, .sku-mappings-page, .supplier-availability, .grouped-inventory, .matrixify-page) {
+  --rd-ink: #e8edf5;
+  --rd-ink-soft: #b4c2d4;
+  --rd-muted: #a4b4c9;
+  --rd-border: #34445c;
+  --rd-border-strong: #465c79;
+  --rd-paper: #172338;
+  --rd-canvas: #0f1929;
+  --rd-blue: #91bdf6;
+  --rd-blue-wash: #20334d;
+  --rd-amber: #f2c078;
+  --rd-amber-wash: #352d22;
+  --rd-red: #f2aaa5;
+  --rd-green: #8fd1b4;
+  --map-ink: #e8edf5;
+  --map-muted: #a4b4c9;
+  --map-line: #34445c;
+  --map-paper: #172338;
+  --map-mint: #1d3536;
+  --map-amber: #f2c078;
+  --sa-ink: #e8edf5;
+  --sa-muted: #a4b4c9;
+  --sa-line: #34445c;
+  --sa-paper: #172338;
+  --sa-wash: #111e30;
+  --sa-teal: #8fd1c9;
+  --sa-teal-soft: #1d3536;
+  --sa-amber: #f2c078;
+  --inventory-ink: #e8edf5;
+  --inventory-muted: #a4b4c9;
+  --inventory-line: #34445c;
+  --inventory-tint: #20334d;
+  --mx-ink: #e8edf5;
+  --mx-muted: #a4b4c9;
+  --mx-line: #34445c;
+  --mx-paper: #172338;
+  --mx-blue: #91bdf6;
+  --mx-blue-pale: #20334d;
+  --mx-gold: #f2c078;
+  --mx-gold-pale: #352d22;
+  --mx-red: #f2aaa5;
+}
+.dark .refined-dashboard { background: var(--rd-canvas); }
+.dark :is(
+  .rd-heading .rd-inventory-link, .rd-shopify-chip, .rd-shopify-icon,
+  .rd-metric-card.is-featured, .rd-card-icon-alert, .rd-record-count,
+  .rd-supplier-mark, .rd-supplier-kind, .rd-explanation,
+  .catalog-date-card, .date-mark, .refresh-button, .button-secondary,
+  .mapping-search, .filter-select select, .mapping-table th,
+  .mapping-pagination button, .bulk-rows article > button, .mapping-dialog,
+  .icon-button, .mapping-source-pair, .catalog-result, .catalog-radio,
+  .catalog-result.selected .catalog-radio, .variant-preview, .historic-tag,
+  .sku-pill, .bulk-review, .bulk-count, .availability, .mapping-status,
+  .error-symbol, .empty-symbol, .sa-refresh, .sa-history-banner,
+  .sa-banner-icon, .sa-filter-group, .sa-filter.is-active, .sa-variant-head,
+  .sa-sku-unique, .sa-sku-missing, .sa-offer, .sa-status-candidate,
+  .sa-no-match, .sa-no-match-mark, .sa-state, .sa-empty-mark,
+  .grouped-inventory .group-table th, .matrixify-readonly-mark,
+  .matrixify-notice, .matrixify-status-tile, .matrixify-panel,
+  .file-limit, .matrixify-file-picker, .matrixify-form-row input[type=datetime-local],
+  .matrixify-batch-field textarea, .matrixify-quiet-button, .matrixify-metric,
+  .matrixify-table th, .matrixify-pagination button, .matrixify-download-button,
+  .matrixify-import-note
+) { background: #172338; border-color: #34445c; }
+.dark .rd-metric-card.is-featured { background: #1c2c43 !important; }
+.dark :is(
+  .mapping-workspace, .mapping-table td, .mapping-pagination, .bulk-review > header,
+  .bulk-rows article, .bulk-review > footer, .skeleton-row, .mapping-dialog-head,
+  .mapping-searchbox, .catalog-results, .catalog-empty, .catalog-prompt,
+  .variant-facts, .sa-catalog-strip > div, .sa-supplier,
+  .sa-catalog-observed, .sa-pagination button, .sa-search input,
+  .grouped-inventory .group-table td, .grouped-inventory .supplier-line + .supplier-line,
+  .rd-sync-row, .rd-supplier-list, .rd-supplier-row, .rd-footer-note,
+  .matrixify-table td, .matrixify-step, .matrixify-notice .reviewer-sign-in
+) { border-color: #34445c; }
+.dark :is(
+  .rd-heading .rd-inventory-link, .mapping-eyebrow, .mapping-kicker,
+  .mapping-intro-copy h1, .workspace-heading h2, .source-cell strong,
+  .quantity-cell strong, .mapping-pagination strong, .bulk-review header strong,
+  .bulk-rows article > div strong, .mapping-error h3, .mapping-empty h3,
+  .mapping-dialog-head h2, .mapping-source-block strong,
+  .mapping-source-block.destination strong, .mapping-field > label,
+  .mapping-search input, .mapping-searchbox input, .supplier-filter input,
+  .filter-select select, .catalog-result-main strong, .variant-facts b,
+  .variant-preview > div:nth-child(2) strong,
+  .sa-page-heading h1, .sa-refresh, .sa-history-banner strong,
+  .sa-catalog-strip strong, .sa-results-top span:first-child,
+  .sa-product h3, .sa-supplier-name, .sa-fact strong,
+  .sa-no-match strong, .sa-state strong, .matrixify-form-row > label:first-child,
+  .matrixify-batch-field, .matrixify-quiet-button
+) { color: #e8edf5; }
+.dark :is(
+  .mapping-intro-copy h1 em, .mapping-intro-copy > p, .catalog-date-card div > span,
+  .capability-state > span, .catalog-date-card small, .workspace-heading > div > span,
+  .refresh-button, .button-secondary, .mapping-search, .mapping-search > button,
+  .supplier-filter > span, .filter-select > span, .mapping-table th, .source-cell span,
+  .source-cell small, .muted-text, .destination-title, .reason-line,
+  .quantity-cell > span, .quantity-cell > small, .feed-cell > small,
+  .freshness-unknown, .mapping-pagination, .mapping-pagination button,
+  .bulk-review header small, .clear-selection, .bulk-rows article > div strong span,
+  .bulk-rows article > div small, .bulk-review > footer, .mapping-footnote,
+  .mapping-footnote svg, .mapping-error p, .mapping-empty p, .mapping-overline,
+  .mapping-source-block > span:last-child, .mapping-arrow, .mapping-searchbox,
+  .mapping-field-hint, .catalog-result-main small, .catalog-result-meta small,
+  .catalog-result-meta em, .catalog-empty, .catalog-prompt, .catalog-loading,
+  .variant-preview > div:nth-child(2) span, .variant-facts span,
+  .mapping-confirmations label, .mapping-disabled-caption, .icon-button,
+  .sa-kicker span, .sa-history-banner p, .sa-catalog-trust strong,
+  .sa-search > svg, .sa-filter, .sa-results-top, .sa-product-eyebrow,
+  .sa-product-meta, .sa-source-label, .sa-reason, .sa-fact > span,
+  .sa-fact small, .sa-no-match span, .sa-pagination, .sa-state span,
+  .rd-crumb span, .rd-preview-divider, .rd-eyebrow span, .rd-unavailable-tag,
+  .matrixify-intro h2 em, .matrixify-notice code, .matrixify-subject, .file-limit,
+  .matrixify-table th, .matrixify-table td:first-child small,
+  .matrixify-table td > span, .matrixify-table td li, .matrixify-import-note
+) { color: #b4c2d4; }
+.dark :is(.mapping-search input, .mapping-searchbox input, .supplier-filter input, .sa-search input)::placeholder { color: #9baec5; }
+.dark :is(.sa-product-meta code, .sa-source code, .sa-pagination button, .sa-filter.is-active, .grouped-inventory .inventory-kicker) { color: #91bdf6; }
+.dark :is(.matrixify-columns code, .matrixify-preview-meta code, .matrixify-downloads p code) { background: #20334d; color: #bdd4f3; }
+.dark :is(.rd-review-strip, .rd-review-icon, .rd-preview-mark, .capability-banner,
+  .capability-icon, .capability-chips span, .mapping-note, .mapping-warning-box,
+  .mapping-blocker, .status-flagged, .status-ambiguous, .sa-blocker,
+  .sa-sku-duplicate, .sa-status-held, .sa-offer.is-blocked,
+  .matrixify-notice.warning, .matrixify-blockers, .matrixify-warnings
+) { background: #352d22; border-color: #74603e; }
+.dark :is(.capability-content > strong, .capability-content > p, .capability-chips span,
+  .capability-loading, .capability-blockers, .capability-state strong,
+  .diagnostic-line, .quantity-cell strong.quantity-caution, .quantity-cell > small.stale-quantity,
+  .freshness-stale, .warning-count, .mapping-pagination em, .bulk-rows ul,
+  .mapping-note, .mapping-note span, .warning-heading, .mapping-warning-box ul,
+  .mapping-blocker, .mapping-blocker strong, .mapping-blocker span,
+  .status-flagged, .status-ambiguous, .sa-blocker, .sa-publish-state,
+  .sa-sku-duplicate, .sa-status-held, .matrixify-blockers ul,
+  .matrixify-warnings ul, .matrixify-blockers small
+) { color: #f2c078; }
+.dark .sa-freshness-stale { color: #f2c078 !important; }
+.dark :is(.mapping-write-message, .freshness, .availability, .status-approved,
+  .status-candidate, .review-button, .sku-pill, .bulk-count,
+  .bulk-rows article > button, .catalog-radio, .catalog-inline-error button,
+  .variant-preview-head, .historic-tag, .sa-sku-unique, .sa-status-candidate,
+  .sa-no-match-mark, .sa-empty-mark
+) { color: #8fd1b4; }
+.dark .sa-freshness-fresh { color: #8fd1b4 !important; }
+.dark .freshness-stale { color: #f2c078; }
+.dark :is(.availability-out-of-stock, .status-rejected, .sa-status-rejected,
+  .sa-status-collision, .rd-connection-state, .rd-state-mark, .rd-error,
+  .matrixify-notice.error
+) { background: #3a252b; border-color: #795056; color: #f2aaa5; }
+.dark :is(.mapping-write-error, .capability-error, .catalog-inline-error, .sa-error > svg) { color: #f2aaa5; }
+.dark :is(.status-unmatched, .availability-unknown, .sa-sku-missing,
+  .rd-supplier-mark.is-example, .rd-supplier-kind.is-example) { background: #263348; color: #b4c2d4; }
+.dark :is(.mapping-table tbody tr:hover, .catalog-result:hover, .catalog-result.selected,
+  .refresh-button:hover, .button-secondary:hover, .grouped-inventory .group-table tbody tr:hover,
+  .rd-heading .rd-inventory-link:hover) { background: #23364f; color: #e8edf5; }
+.dark :is(.rd-skeleton, .skeleton-title, .skeleton-toolbar, .skeleton-row i,
+  .sa-skeleton-card, .matrixify-skeleton) { background: linear-gradient(90deg, #20334d, #34445c, #20334d); }
+.dark .mapping-overlay { background: rgb(0 0 0 / 65%); }
+.dark :is(.bulk-review > footer button, .mapping-pagination button:disabled) { background: #263348; color: #93a3b8; }
+.dark .button-primary { background: #294f83; color: #ffffff; }
+.dark :is(.text-amber-800, .text-amber-700, .text-yellow-800) { color: #f2c078; }
+.dark :is(.bg-amber-50, .bg-yellow-50) { background-color: #352d22; }
+.dark :is(.bg-red-50, .bg-rose-50) { background-color: #3a252b; }
+.dark :is(.text-red-700, .text-red-800, .text-rose-800) { color: #f2aaa5; }
+@media (forced-colors: active) {
+  :root { forced-color-adjust: auto; }
+}

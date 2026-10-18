@@ -3,6 +3,7 @@ import { publishableKeyFromHost } from "@clerk/react/internal";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useLocation } from "wouter";
+import { useTheme } from "next-themes";
 
 const rawPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ?? "";
 const configuredKey = rawPublishableKey
@@ -11,6 +12,7 @@ const configuredKey = rawPublishableKey
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const ClerkConfigured = createContext(false);
+export const useClerkConfigured = () => useContext(ClerkConfigured);
 
 function stripBase(path: string) {
   return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
@@ -18,6 +20,10 @@ function stripBase(path: string) {
 
 export function ClerkHost({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
+  const { resolvedTheme } = useTheme();
+  const dark = resolvedTheme === "dark";
+  const ink = dark ? "#e8edf5" : "#18324d";
+  const muted = dark ? "#a9b9ce" : "#64758a";
   if (!configuredKey) {
     return <ClerkConfigured.Provider value={false}>{children}</ClerkConfigured.Provider>;
   }
@@ -31,26 +37,29 @@ export function ClerkHost({ children }: { children: ReactNode }) {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
       appearance={{
         variables: {
-          colorPrimary: "#294f83",
-          colorBackground: "#fbfcfd",
-          colorForeground: "#18324d",
-          colorInput: "#ffffff",
-          colorInputForeground: "#18324d",
+          colorPrimary: dark ? "#81b4fa" : "#294f83",
+          colorBackground: dark ? "#172338" : "#fbfcfd",
+          colorForeground: ink,
+          colorInput: dark ? "#101b2c" : "#ffffff",
+          colorInputForeground: ink,
+          colorMutedForeground: muted,
+          colorNeutral: ink,
+          colorBorder: dark ? "#34445c" : "#dce4ec",
           borderRadius: "6px",
           fontFamily: "'Space Grotesk', sans-serif",
         },
         elements: {
           rootBox: "w-full flex justify-center",
-          cardBox: "bg-[#fbfcfd] rounded-md w-[440px] max-w-full overflow-hidden",
+          cardBox: "bg-card rounded-md max-w-full overflow-hidden",
           card: "!shadow-none !border-0 !bg-transparent !rounded-none",
           footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-          headerTitle: { color: "#18324d", fontWeight: 700 },
-          headerSubtitle: { color: "#64758a" },
-          formFieldLabel: { color: "#18324d" },
-          formFieldInput: { color: "#18324d", borderColor: "#dce4ec" },
-          formButtonPrimary: { backgroundColor: "#294f83" },
-          footerActionLink: { color: "#294f83" },
-          footerActionText: { color: "#64758a" },
+          headerTitle: { color: ink, fontWeight: 700 },
+          headerSubtitle: { color: muted },
+          formFieldLabel: { color: ink },
+          formFieldInput: { color: ink, borderColor: dark ? "#34445c" : "#dce4ec" },
+          formButtonPrimary: { backgroundColor: "#294f83", color: "#ffffff" },
+          footerActionLink: { color: dark ? "#81b4fa" : "#294f83" },
+          footerActionText: { color: muted },
         },
       }}
     >

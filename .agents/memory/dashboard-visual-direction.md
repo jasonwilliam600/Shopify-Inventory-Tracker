@@ -27,3 +27,12 @@ navigation/buttons/labels, and 400 or 500 for body text/tables through shared
 typography settings. Remove decorative/serif and italicized display treatments.
 The owner specified numeric weight 700 for titles even when calling it ExtraBold;
 do not substitute 800 or invent a different font.
+
+Support Light, Dark and System appearance without changing the existing branding,
+Space Grotesk typography or page layouts.
+
+**Why:** The owner requested application-wide theme consistency, including
+customizable authentication UI, with a remembered selection and OS-following mode.
+
+**How to apply:** Future screens and dialogs must inherit the shared appearance;
+do not introduce light-only surfaces or a separate authentication theme.

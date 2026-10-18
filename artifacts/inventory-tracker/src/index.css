@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './theme-overrides.css';
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -157,6 +158,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
   --border: 217.2 32.6% 17.5%;
@@ -180,8 +182,8 @@
   --popover-foreground: 210 40% 98%;
   --popover-border: 217.2 32.6% 17.5%;
 
-  --primary: 224 76% 50%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 215 88% 73%;
+  --primary-foreground: 222 47% 11%;
 
   --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
