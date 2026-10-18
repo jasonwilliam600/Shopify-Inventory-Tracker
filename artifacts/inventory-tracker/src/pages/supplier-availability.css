@@ -46,6 +46,15 @@
 .sa-variant-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:14px 16px 12px; border-bottom:1px solid #e7eeeb; background:linear-gradient(110deg,#fbfdfc,#f5f9f7); }
 .sa-product-eyebrow { display:block; text-transform:uppercase; letter-spacing:.1em; color:#8b9c97; font-size:9px; font-weight:700; margin-bottom:4px; }
 .sa-product h3 { margin:0; color:#29443f; font-size:14px; line-height:1.4; font-weight:700; }
+.sa-variant-head { position:relative; }
+.sa-variant-toggle {
+  position:absolute; inset:0; width:100%; height:100%; padding:0; border:0;
+  background:transparent; color:inherit; cursor:pointer; border-radius:0;
+}
+.sa-variant-toggle svg { position:absolute; right:16px; top:50%; transform:translateY(-50%); }
+.sa-variant-toggle:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:-3px; }
+.sa-variant-head.is-collapsed { border-bottom:0; }
+.sa-variant-head.is-collapsed .sa-product { padding-right:26px; }
 .sa-product-meta { display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:5px; color:#788a84; font-size:10px; }
 .sa-product-meta code,.sa-source code { font-family:var(--app-font-sans),sans-serif; color:#476660; font-size:10px; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .sa-sku-state,.sa-status { display:inline-flex; align-items:center; white-space:nowrap; border-radius:20px; padding:4px 8px; font-size:9px; line-height:1.2; font-weight:700; }

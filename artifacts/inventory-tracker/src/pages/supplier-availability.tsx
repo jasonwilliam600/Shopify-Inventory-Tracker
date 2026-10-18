@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useState } from "react"
 import {
   getListSupplierAvailabilityQueryKey,
   useListSupplierAvailability,
@@ -90,25 +90,42 @@ function OfferRow({ offer }: { offer: SupplierAvailabilityOffer }) {
   )
 }
 
-function VariantCard({ variant }: { variant: SupplierAvailabilityVariant }) {
+function VariantCard({ variant, expanded, onToggle }: {
+  variant: SupplierAvailabilityVariant
+  expanded: boolean
+  onToggle: () => void
+}) {
   const options = variant.options.filter(Boolean)
+  const detailsId = useId()
+  const title = variant.title || variant.handle || "Untitled variant"
   return (
     <article className="sa-variant" data-testid={`card-availability-variant-${variant.key}`}>
-      <header className="sa-variant-head">
+      <header className={`sa-variant-head${expanded ? "" : " is-collapsed"}`}>
         <div className="sa-product">
-          <span className="sa-product-eyebrow">Historical variant record</span>
-          <h3>{variant.title || variant.handle || "Untitled variant"}</h3>
+          {expanded && <span className="sa-product-eyebrow">Historical variant record</span>}
+          <h3 id={`${detailsId}-title`}>{title}</h3>
           <div className="sa-product-meta">
             <code>{variant.sku || "No SKU on record"}</code>
-            {variant.handle && <span>{variant.handle}</span>}
-            {options.length > 0 && <span>{options.join(" · ")}</span>}
+            {expanded && variant.handle && <span>{variant.handle}</span>}
+            {expanded && options.length > 0 && <span>{options.join(" · ")}</span>}
           </div>
         </div>
-        <span className={`sa-sku-state sa-sku-${variant.skuStatus}`}>
+        {expanded && <span className={`sa-sku-state sa-sku-${variant.skuStatus}`}>
           {variant.skuStatus === "unique" ? "Unique SKU" : variant.skuStatus === "duplicate" ? "Duplicate SKU" : "Missing SKU"}
-        </span>
+        </span>}
+        <button
+          type="button"
+          className="sa-variant-toggle"
+          aria-expanded={expanded}
+          aria-controls={detailsId}
+          aria-label={`${expanded ? "Collapse" : "Expand"} ${title}, store SKU ${variant.sku || "not recorded"}`}
+          onClick={onToggle}
+        >
+          {!expanded && <ChevronRight size={18} aria-hidden="true" />}
+        </button>
       </header>
 
+      <div id={detailsId} hidden={!expanded} role="region" aria-labelledby={`${detailsId}-title`}>
       <div className="sa-suppliers">
         {variant.suppliers.length === 0 ? (
           <div className="sa-no-match">
@@ -123,6 +140,7 @@ function VariantCard({ variant }: { variant: SupplierAvailabilityVariant }) {
               : supplier.offers.map((offer, offerIndex) => <OfferRow key={`${offer.sourceSku}-${offerIndex}`} offer={offer} />)}
           </section>
         ))}
+      </div>
       </div>
     </article>
   )
@@ -141,6 +159,11 @@ export default function SupplierAvailability() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [issue, setIssue] = useState<"all" | "duplicate" | "missing">("all")
   const [page, setPage] = useState(1)
+  const [expandedKey, setExpandedKey] = useState<string | null>(null)
+
+  useEffect(() => {
+    setExpandedKey(null)
+  }, [debouncedSearch, issue, page])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
@@ -270,7 +293,14 @@ export default function SupplierAvailability() {
             <span>{visiblePage.total.toLocaleString()} variants</span>
             <span>Supplier observations only · quantities are never combined</span>
           </div>
-          {visiblePage.items.map((variant) => <VariantCard key={variant.key} variant={variant} />)}
+          {visiblePage.items.map((variant) => (
+            <VariantCard
+              key={variant.key}
+              variant={variant}
+              expanded={expandedKey === variant.key}
+              onToggle={() => setExpandedKey((current) => current === variant.key ? null : variant.key)}
+            />
+          ))}
         </div>
       ) : (
         <div className="sa-state sa-empty" role="status" data-testid="status-availability-empty">
