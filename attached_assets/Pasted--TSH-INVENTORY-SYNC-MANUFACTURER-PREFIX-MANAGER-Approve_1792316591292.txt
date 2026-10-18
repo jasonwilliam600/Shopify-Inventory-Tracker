@@ -1,0 +1,249 @@
+# TSH INVENTORY SYNC — MANUFACTURER PREFIX MANAGER
+## Approved Design Implementation & Functional Requirements
+
+I am attaching the approved visual mockup for the new **Manufacturer Prefix Manager**.
+
+**Build this feature into my existing TSH Inventory Sync application. The attached image is the authoritative visual design reference.**
+
+This is not a request for another mockup or prototype. I want the actual working interface, integrated with the application's existing supplier and SKU-mapping infrastructure.
+
+### 1. EXACT VISUAL DESIGN
+
+Reproduce the attached mockup as closely as possible, including:
+
+- Dark navy background and matching existing TSH Inventory Sync styling.
+- Existing TSH logo, sidebar, header, and account controls.
+- Inter typography.
+- Four color-coded summary cards.
+- Search bar, supplier filters, and Add Manufacturer button.
+- Expandable manufacturer records.
+- Manufacturer logos displayed prominently beside manufacturer names.
+- Green TSH prefix badges.
+- Supplier conversion tables with editable fields.
+- Edit, delete, and add controls.
+- Rounded cards, borders, spacing, and overall visual hierarchy.
+
+Do not substitute a generic spreadsheet or form-based interface for this design.
+
+Add **Manufacturer Prefixes** as its own navigation item, directly beneath SKU Mapping Manager.
+
+Keep the existing SKU Mapping Manager and its mapping-review functionality intact.
+
+### 2. FOUR SUMMARY CARDS
+
+Implement the following cards:
+
+**BLUE — Manufacturers / Brands**
+- Total number of manufacturer records.
+
+**GREEN — Supplier Prefix Rules**
+- Total number of configured supplier-specific prefix conversion rules.
+
+**AMBER — Active Suppliers**
+- Number of active suppliers from the existing Suppliers configuration.
+
+**RED — Unmapped Suppliers**
+- Number of active suppliers without configured prefix rules, using a clearly documented definition.
+
+All counts must come from actual application data.
+
+The mockup numbers (487, 1,942, 6, 0) are illustrative only. DO NOT hardcode them.
+
+### 3. MANUFACTURER RECORDS — COLLAPSIBLE
+
+Each manufacturer must appear as a compact, expandable record.
+
+Collapsed view displays:
+
+- Manufacturer logo.
+- Manufacturer name.
+- TSH SKU prefix.
+- Number of supplier prefix rules.
+- Expand/collapse chevron.
+- Edit Brand button.
+- Delete button.
+
+Clicking the manufacturer header expands its supplier conversion table.
+
+Expanded view displays every configured supplier-specific conversion rule for that manufacturer.
+
+Allow an unlimited number of supplier rules per manufacturer. The interface must scale to hundreds or thousands of manufacturers and dozens of suppliers without requiring additional supplier columns.
+
+Preserve the compact collapsed layout shown in the mockup.
+
+### 4. MANUFACTURER LOGOS — IMPORTANT
+
+Manufacturer logos are an essential feature of this design.
+
+Each manufacturer record must support:
+
+- Uploading a manufacturer logo.
+- Displaying the logo beside the manufacturer's name.
+- Replacing an existing logo.
+- Removing a logo.
+- A professional default TSH icon when no logo is available.
+
+Store each logo once against its manufacturer record.
+
+Support common web image formats such as PNG, JPG, and WebP.
+
+Display logos at consistent dimensions without distortion.
+
+Do not fabricate logos, scrape arbitrary images, or automatically assign an unverified logo to a manufacturer. Use uploaded or otherwise appropriately sourced artwork.
+
+### 5. ADD MANUFACTURER
+
+The **+ Add Manufacturer** button must open a functional form or modal containing:
+
+- Manufacturer / brand name — required.
+- Our TSH SKU prefix — required.
+- Manufacturer logo upload — optional.
+- Save and Cancel buttons.
+
+Validate required fields and check for duplicate manufacturer records and conflicting TSH prefixes.
+
+After successful creation, the manufacturer should immediately appear in the list, ready for supplier conversion rules.
+
+This must persist in the application's database, not just browser state.
+
+### 6. SUPPLIER PREFIX CONVERSION TABLE
+
+Each expanded manufacturer displays a table with these columns:
+
+1. Supplier
+2. Their Prefix
+3. Our TSH Prefix
+4. Example (Supplier → Store)
+5. Status
+6. Actions
+
+**Their Prefix** is the prefix appearing in that supplier's SKU feed.
+
+**Our TSH Prefix** comes from the manufacturer's master record and should populate automatically. It should not need to be entered separately for every supplier.
+
+**Example** should demonstrate the transformation using the configured rule, preserving the remaining SKU characters according to the rule's actual matching behavior.
+
+Examples must be labeled as examples, not verified product matches.
+
+Status must distinguish between a configured rule, a validated rule, and any rule eligible for approved use. Do not label a newly entered rule as trusted or approved simply because it has been saved.
+
+### 7. ADD SUPPLIER RULE
+
+The **+ Add Supplier Rule** button inside an expanded manufacturer must open a functional form containing:
+
+- Supplier dropdown, populated dynamically from the existing Suppliers page.
+- Supplier's SKU prefix.
+- Automatically populated TSH prefix.
+- Optional example supplier SKU for testing the conversion.
+- Save and Cancel buttons.
+
+A manufacturer may have multiple prefix rules for the same supplier when necessary.
+
+Validate duplicate and conflicting rules, ambiguous prefix matches, overlapping prefixes, and SKU-format differences before saving.
+
+Supplier names must come from existing supplier records, not hardcoded dropdown choices.
+
+When a new supplier is added to TSH Inventory Sync, it must automatically become available for selection without requiring a code change.
+
+### 8. EDITING AND DELETING
+
+Provide working controls to:
+
+- Edit manufacturer names.
+- Change TSH prefixes.
+- Upload or replace logos.
+- Edit supplier conversion rules.
+- Delete supplier rules.
+- Delete manufacturers.
+
+Require confirmation before destructive actions.
+
+Warn about dependent rules before changing or deleting a manufacturer's TSH prefix.
+
+Do not silently cascade changes into existing SKU mappings, approved relationships, or inventory calculations.
+
+Use appropriate authorization and audit logging for configuration changes.
+
+### 9. SEARCH AND FILTERING
+
+Implement functional controls for:
+
+- Searching by manufacturer name.
+- Searching by TSH prefix.
+- Searching by supplier prefix.
+- Filtering by supplier.
+- Filtering manufacturers with or without configured rules.
+- Clearing all filters.
+
+Filtering should update the displayed manufacturer list without destroying the expanded records or existing data.
+
+Use pagination or efficient server-side loading as necessary for large manufacturer catalogs.
+
+### 10. DATABASE AND EXISTING MATCHING RULES
+
+First inspect the existing application architecture, matching-rule configuration, manufacturer aliases, prefix aliases, and manual SKU overrides.
+
+Reuse existing structures where appropriate instead of creating competing or duplicate matching systems.
+
+The current comma-separated manufacturer and prefix alias configuration must not be silently discarded.
+
+Determine how existing rules can be represented in the new manager. Preserve their original values and supplier scope.
+
+If an existing alias cannot be reliably associated with a specific manufacturer and supplier, flag it for review rather than guessing.
+
+Keep manual product-specific SKU overrides separate from manufacturer-prefix rules.
+
+The intended data relationship is:
+
+**Manufacturer → TSH Prefix → Supplier → Supplier Prefix Rule**
+
+A manufacturer can have any number of supplier-specific rules.
+
+### 11. CRITICAL INVENTORY SAFEGUARDS
+
+Saving a manufacturer or prefix rule is NOT equivalent to approving a supplier-to-Shopify product mapping.
+
+Prefix rules may generate candidate matches, but actual product identity, complete SKU, scale, size, pack quantity, and selling units still require the existing validation and approval process.
+
+Do not:
+
+- Modify Shopify products or inventory.
+- Execute Shopify writes.
+- Enable inventory publishing.
+- Automatically approve supplier mappings.
+- Release or modify the existing 209 protected source-SKU holds.
+- Change supplier feed imports or inventory calculations.
+- Bypass the fresh Shopify catalog verification requirements.
+- Remove or weaken existing approval safeguards.
+
+Configuration editing should be limited to properly authorized users.
+
+If the existing architecture cannot safely support persistent configuration changes, identify the precise blocker before making changes.
+
+### 12. IMPLEMENTATION AND VERIFICATION
+
+Build this incrementally, using the existing frontend and backend architecture.
+
+Before declaring completion:
+
+1. Confirm the page closely matches the supplied mockup.
+2. Verify manufacturer expand/collapse functionality.
+3. Test adding and editing a manufacturer.
+4. Test uploading and displaying a manufacturer logo.
+5. Test adding, editing, and deleting supplier rules.
+6. Confirm all saved changes persist after a page refresh.
+7. Confirm supplier dropdowns use existing supplier records.
+8. Confirm summary statistics reflect real data.
+9. Verify searching, filtering, and responsive layout.
+10. Run typecheck, build, and relevant tests.
+11. Confirm the existing SKU Mapping Manager, Shopify integrations, and all 209 protected holds remain unchanged.
+
+Provide a screenshot of the completed page at a desktop viewport similar to the reference image.
+
+**FINAL INSTRUCTION:**
+
+The attached mockup is the approved design. Reproduce it faithfully while implementing real, persistent functionality.
+
+Do not redesign it, invent fake metrics, populate unverified manufacturer conversions, or make unrelated changes to the application.
+
+The goal is a professional, scalable Manufacturer Prefix Manager that can support Top Speed Hobbies as its manufacturer and supplier network grows substantially.
