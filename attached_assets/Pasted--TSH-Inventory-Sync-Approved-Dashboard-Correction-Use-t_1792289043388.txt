@@ -1,0 +1,107 @@
+# TSH Inventory Sync — Approved Dashboard Correction
+
+Use the attached dashboard mockup as the visual reference. Implement a targeted frontend redesign of the Dashboard page, not a rebuild of the application.
+
+**The key requirement: all seven summary cards must be functional navigation shortcuts, not decorative displays.**
+
+## 1. Supplier Network — three clickable cards
+
+Display three compact, colorful cards across the top:
+
+**Blue — Supplier SKUs**
+- Display total supplier SKU records from existing data.
+- Current reference: 189,286.
+- Clicking opens the existing supplier inventory view, or the Suppliers page if that is where the records can actually be inspected.
+
+**Green — Mapping Candidates**
+- Display existing mapping candidate count.
+- Current reference: 4,774.
+- Clicking opens SKU Mapping Manager, filtered to mapping candidates when supported.
+
+**Amber — Needs Review**
+- Display existing flagged mapping candidate count.
+- Current reference: 200.
+- Clicking opens SKU Mapping Manager, filtered specifically to the flagged candidates requiring review.
+- If the current manager does not support this filter, implement a read-only filtered view using existing data, without altering mapping approval logic.
+
+Each card must have a right-facing navigation arrow, clear hover/focus styling, keyboard accessibility, and a working destination.
+
+**Percentage trend indicators:** Match the visual treatment in the mockup, but display percentages ONLY if calculated from reliable historical snapshots with a clearly defined comparison period. Do not hardcode the illustrative 12%, 8%, or 15%. Hide trends when reliable historical comparisons are unavailable.
+
+## 2. Shopify Store Inventory — four clickable cards
+
+Below the supplier cards, display four smaller cards in one row:
+
+- Total Store SKUs
+- In-Stock SKUs
+- Out-of-Stock SKUs
+- Low-Stock SKUs
+
+Each card should link to the Inventory page with the corresponding Shopify-store filter, where the underlying data and filtering are available.
+
+Until verified Shopify catalog data is onboarded, preserve the dash and "Unavailable" label. Do not imply these counts are known. If the destination cannot display a valid corresponding dataset, provide a useful explanatory state rather than pretending the filter works.
+
+Do not substitute supplier records for Shopify inventory.
+
+## 3. Supplier Status — full-width table
+
+Place the Supplier Status table directly below the seven cards.
+
+Include HobbyTyme, Heartland Hobby Wholesale, Walthers, and MMD/Squadron using actual existing records.
+
+Columns:
+- Supplier
+- Supplier SKUs
+- Last Successful Import
+- Import Status
+- Actions
+
+Provide working View Details links to the corresponding supplier view, where supported.
+
+Preserve accurate distinctions between a recorded import, an independently verified live connection, and a successful refresh.
+
+Only include a Refresh All button if there is a genuinely implemented, authorized, safe action. Otherwise preserve the existing individual supplier refresh controls.
+
+## 4. Layout and appearance
+
+- Closely follow the attached mockup.
+- Three prominent supplier cards above four smaller Shopify cards.
+- Full-width supplier table beneath them.
+- Compact welcome header and balanced spacing.
+- Preserve the approved TSH logo, navy/blue/orange branding, Space Grotesk, sidebar navigation, and Clerk account menu.
+- Support Light, Dark, and System themes.
+- Responsive layout for smaller screens.
+- Preserve existing connection warnings and review notices without creating large duplicate panels.
+
+## 5. Strict protections
+
+FRONTEND AND READ-ONLY NAVIGATION CHANGES ONLY.
+
+Do not modify:
+- Database schemas or stored records.
+- Supplier integrations or scheduled jobs.
+- SKU mapping rules, approvals, or protected holds.
+- Shopify authentication or catalog onboarding.
+- Inventory aggregation or pricing.
+- Matrixify workflows.
+- Shopify inventory or product data.
+
+Do not auto-approve mappings, execute inventory updates, or fabricate dashboard data.
+
+Reuse existing endpoints and components. Implement only the minimum read-only filtering needed to make the card destinations genuinely useful.
+
+## 6. Verify before completion
+
+Check that:
+1. All seven cards display in the correct order.
+2. All seven navigation arrows have working, meaningful destinations or accurately explained unavailable states.
+3. Needs Review opens the correct flagged mapping candidates without bypassing protections.
+4. The Supplier Status table spans the full content width.
+5. Both light and dark themes render correctly.
+6. Counts and statuses are sourced from actual data.
+7. Existing navigation and controls still work.
+8. Frontend typecheck and build pass.
+
+Show me the finished Dashboard in both themes and report any functionality that remains unavailable.
+
+Do not perform unrelated work.

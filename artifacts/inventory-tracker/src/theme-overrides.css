@@ -166,6 +166,8 @@
 .dark .rd-import-status.is-recorded { color:#70d2a0; }
 .dark .rd-import-status span { color:#9aacc2; }
 .dark .rd-supplier-message button { background:#172b44; border-color:#344b69; color:#9ccfff; }
+.supplier-detail-target:focus { outline:2px solid #0878ee; outline-offset:2px; scroll-margin:24px; }
+.dark .supplier-detail-target:focus { outline-color:#80bfff; }
 .dark .rd-error { color:#f2a29b; background:#3a252b; border-color:#704448; }
 
 .dark .sku-mappings-page { --map-ink:#e8eff8; --map-muted:#a9b9ce; --map-line:#2c405a; --map-paper:#14233a; --map-mint:#193554; --map-amber:#ffb34d; }

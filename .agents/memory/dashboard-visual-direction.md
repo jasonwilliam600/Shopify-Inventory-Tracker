@@ -16,6 +16,18 @@ was rejected; that rejection does not prohibit the newly approved TSH branding.
 Screenshot metrics and account names are examples, not factual application data;
 never copy them into live views or imply unverified supplier health.
 
+For the Dashboard, use the later approved seven-card correction: three supplier
+network shortcuts, then four separate Shopify-store shortcuts, followed by a
+full-width supplier table. All summary cards must be functional navigation,
+not decorative metrics.
+
+**Why:** The owner explicitly identified functional card destinations as the key
+requirement of the dashboard correction.
+
+**How to apply:** Route to real, matching filtered data or an honest unavailable
+explanation. Never substitute supplier inventory for Shopify stock, fabricate
+historical trend percentages, or label an import timestamp as verified health.
+
 Keep the store connection badge at the top of the dashboard, even when connection details are also shown below.
 
 **Why:** The user said the badge is "very important info and needs to be at the top."

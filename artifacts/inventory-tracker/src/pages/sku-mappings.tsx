@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocation, useSearch } from "wouter";
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -385,10 +386,16 @@ function MappingSkeleton() {
 }
 
 export default function SkuMappings() {
+  const searchString = useSearch();
+  const [, setLocation] = useLocation();
+  const statusFromLocation = useMemo<ListSkuMappingRowsStatus>(() => {
+    const value = new URLSearchParams(searchString).get("status");
+    return statusFilters.some((filter) => filter.value === value) ? value as ListSkuMappingRowsStatus : "all";
+  }, [searchString]);
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
   const [supplier, setSupplier] = useState("");
-  const [status, setStatus] = useState<ListSkuMappingRowsStatus>("all");
+  const [status, setStatus] = useState<ListSkuMappingRowsStatus>(statusFromLocation);
   const [page, setPage] = useState(1);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [activeRow, setActiveRow] = useState<SkuMappingRow | null>(null);
@@ -397,9 +404,21 @@ export default function SkuMappings() {
   });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setSearch(searchDraft.trim()); setPage(1); }, 300);
+    const timer = window.setTimeout(() => {
+      setSearch(searchDraft.trim());
+      setPage(1);
+      setSelectedKeys([]);
+      setActiveRow(null);
+    }, 300);
     return () => window.clearTimeout(timer);
   }, [searchDraft]);
+
+  useEffect(() => {
+    setStatus(statusFromLocation);
+    setPage(1);
+    setSelectedKeys([]);
+    setActiveRow(null);
+  }, [statusFromLocation]);
 
   const params = useMemo(() => ({
     search: search || undefined,
@@ -478,8 +497,15 @@ export default function SkuMappings() {
             <input value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} placeholder="Search original SKU, product, or destination" aria-label="Search SKU mappings" data-testid="input-mapping-search" />
             {searchDraft && <button type="button" onClick={() => setSearchDraft("")} aria-label="Clear search" data-testid="button-clear-mapping-search"><X size={15} /></button>}
           </label>
-          <label className="supplier-filter"><span>Supplier</span><input value={supplier} onChange={(event) => { setSupplier(event.target.value); setPage(1); setSelectedKeys([]); }} placeholder="Any supplier" aria-label="Filter by supplier" data-testid="input-mapping-supplier" /></label>
-          <label className="filter-select"><span>Status</span><select value={status} onChange={(event) => { setStatus(event.target.value as ListSkuMappingRowsStatus); setPage(1); setSelectedKeys([]); }} data-testid="select-mapping-status">{statusFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
+          <label className="supplier-filter"><span>Supplier</span><input value={supplier} onChange={(event) => { setSupplier(event.target.value); setPage(1); setSelectedKeys([]); setActiveRow(null); }} placeholder="Any supplier" aria-label="Filter by supplier" data-testid="input-mapping-supplier" /></label>
+          <label className="filter-select"><span>Status</span><select value={status} onChange={(event) => {
+            const nextStatus = event.target.value as ListSkuMappingRowsStatus;
+            setStatus(nextStatus);
+            setPage(1);
+            setSelectedKeys([]);
+            setActiveRow(null);
+            setLocation(nextStatus === "all" ? "/sku-mappings" : `/sku-mappings?status=${encodeURIComponent(nextStatus)}`);
+          }} data-testid="select-mapping-status">{statusFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
         </div>
 
         {selectedRows.length > 0 && (
@@ -508,7 +534,7 @@ export default function SkuMappings() {
           <div className="mapping-empty" data-testid="status-mapping-empty">
             <div className="empty-symbol"><Search size={20} /></div><h3>No matching relationships</h3>
             <p>Try a different supplier, status, or search term. Feed quantities are not inferred from missing matches.</p>
-            <button onClick={() => { setSearchDraft(""); setSupplier(""); setStatus("all"); setPage(1); }} className="button-secondary" data-testid="button-reset-mapping-filters">Reset filters</button>
+            <button onClick={() => { setSearchDraft(""); setSupplier(""); setStatus("all"); setPage(1); setSelectedKeys([]); setActiveRow(null); setLocation("/sku-mappings"); }} className="button-secondary" data-testid="button-reset-mapping-filters">Reset filters</button>
           </div>
         ) : (
           <>

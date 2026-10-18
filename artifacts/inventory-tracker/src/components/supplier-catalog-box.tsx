@@ -21,7 +21,7 @@ import { getSkuManufacturer } from "@/lib/sku-manufacturer"
 
 const PAGE_SIZE = 20
 
-export function SupplierCatalogBox() {
+export function SupplierCatalogBox({ title = "Supplier SKUs not in your store" }: { title?: string } = {}) {
   const [search, setSearch] = useState("")
   const [supplier, setSupplier] = useState("")
   const [page, setPage] = useState(1)
@@ -87,7 +87,7 @@ export function SupplierCatalogBox() {
       <header className="sc-heading">
         <div className="sc-heading-copy">
           <p className="sc-kicker">Supplier catalog</p>
-          <h2 id="supplier-catalog-title">Supplier SKUs not in your store</h2>
+          <h2 id="supplier-catalog-title">{title}</h2>
           <p className="sc-subtitle">Imported supplier records, ready to compare against your store.</p>
         </div>
         <div className="sc-counts" aria-label="Comparison counts">

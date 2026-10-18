@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link, useSearch } from "wouter"
 import { useListInventory, useReviewInventoryItem, getListInventoryQueryKey, getGetDashboardQueryKey, useGetInventoryItem, getGetInventoryItemQueryKey, useGetDashboard } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -8,10 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, AlertTriangle, Box, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, AlertTriangle, Box, ChevronLeft, ChevronRight, Store } from "lucide-react"
 import React from "react"
 import SupplierAvailability from "./supplier-availability"
 import { SkuManufacturerLabel } from "@/components/sku-manufacturer-label"
+import { SupplierCatalogBox } from "@/components/supplier-catalog-box"
 
 function SourceReviewView() {
   const { data: dashboard } = useGetDashboard({ query: { queryKey: getGetDashboardQueryKey(), staleTime: 30_000 } })
@@ -350,7 +352,43 @@ function SourceReviewView() {
 }
 
 export default function Inventory() {
+  const searchString = useSearch()
+  const query = new URLSearchParams(searchString)
+  const isShopifyStoreView = query.get("source") === "shopify-store"
+  const requestedStoreView = query.get("view")
+  const storeViewLabels: Record<string, string> = {
+    total: "Total Store SKUs",
+    "in-stock": "In-Stock SKUs",
+    "out-of-stock": "Out-of-Stock SKUs",
+    "low-stock": "Low-Stock SKUs",
+  }
   const [view, setView] = useState<"availability" | "source">("availability")
+  if (query.get("source") === "supplier-records") {
+    return (
+      <div className="space-y-5" data-testid="view-supplier-records">
+        <Link href="/" className="text-sm font-semibold text-primary underline underline-offset-4">Back to dashboard</Link>
+        <SupplierCatalogBox title="Supplier inventory records" />
+      </div>
+    )
+  }
+  if (isShopifyStoreView) {
+    const selectedView = requestedStoreView && storeViewLabels[requestedStoreView] ? requestedStoreView : "total"
+    return (
+      <div className="store-inventory-unavailable" data-testid="view-shopify-inventory-unavailable">
+        <div className="store-unavailable-kicker"><Store size={15} aria-hidden="true" /> SHOPIFY STORE INVENTORY</div>
+        <h2>{storeViewLabels[selectedView]}</h2>
+        <p className="store-unavailable-lead">This store inventory view is currently unavailable.</p>
+        <div className="store-unavailable-notice" role="status">
+          <AlertTriangle size={17} aria-hidden="true" />
+          <p>Verified Shopify catalog data for this filter is not available here. Supplier records and historical inventory are not substituted for store SKUs.</p>
+        </div>
+        <div className="store-unavailable-actions">
+          <Link href="/" data-testid="link-back-to-dashboard">Back to dashboard</Link>
+          <Link href="/inventory" data-testid="link-open-supplier-availability">Browse supplier availability</Link>
+        </div>
+      </div>
+    )
+  }
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-1 rounded-md border bg-muted/30 p-1" role="tablist" aria-label="Inventory views">

@@ -65,6 +65,22 @@ export default function Suppliers() {
   const { data: suppliers, isLoading } = useListSuppliers({
     query: { queryKey: getListSuppliersQueryKey(), staleTime: 30_000, refetchInterval: 60_000 },
   })
+  const focusedSupplierHash = useRef<string | null>(null)
+  React.useEffect(() => {
+    if (isLoading || !suppliers?.length) return
+    const target = window.location.hash.slice(1)
+    if (!target.startsWith("supplier-")) return
+    if (focusedSupplierHash.current === target) return
+    const frame = window.requestAnimationFrame(() => {
+      const element = Array.from(document.querySelectorAll<HTMLElement>("[data-supplier-anchor]"))
+        .find((candidate) => candidate.dataset.supplierAnchor === target && candidate.getClientRects().length > 0)
+      if (!element) return
+      focusedSupplierHash.current = target
+      element.focus({ preventScroll: true })
+      element.scrollIntoView({ behavior: "smooth", block: "center" })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [isLoading, suppliers])
   const queryClient = useQueryClient()
   const lastCompletedMmdRefresh = useRef<string | null>(null)
   const { data: mmdJob } = useGetMmdRefreshStatus({
@@ -370,8 +386,8 @@ export default function Suppliers() {
       {/* Suppliers List */}
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Active Suppliers</CardTitle>
-          <CardDescription>Supplier inventory counts and the last successfully recorded update.</CardDescription>
+          <CardTitle>Supplier Registry</CardTitle>
+          <CardDescription>Supplier inventory counts and stored import timestamps. A timestamp does not independently verify a successful refresh or live connection.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -389,7 +405,7 @@ export default function Suppliers() {
                     <TableRow>
                       <TableHead className="w-[34%]">Supplier</TableHead>
                       <TableHead className="w-[12%]">SKUs</TableHead>
-                      <TableHead className="w-[31%]">Last Successful Update</TableHead>
+                      <TableHead className="w-[31%]">Last Import Record</TableHead>
                       <TableHead className="w-[23%]">Refresh State</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -414,10 +430,10 @@ export default function Suppliers() {
                         ? refreshState === "running" ? "Refreshing" : refreshState === "complete" ? "Refresh complete" : refreshState === "failed" ? "Refresh failed" : "Idle"
                         : refreshPending ? "Refresh in progress" : "Not reported"
                       return (
-                        <TableRow key={s.name} data-testid={`row-supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`}>
+                        <TableRow key={s.name} tabIndex={-1} className="supplier-detail-target" data-supplier-anchor={`supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`} data-testid={`row-supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`}>
                           <TableCell className="whitespace-normal break-words font-semibold text-primary">{s.name}</TableCell>
                           <TableCell className="font-mono tabular-nums">{s.skuCount}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground">
                             {hasValidLastUpdate ? (
                               <time dateTime={parsedLastUpdate!.toISOString()}>
                                 {formatSupplierSuccessfulUpdate(rawLastUpdate)}
@@ -454,14 +470,14 @@ export default function Suppliers() {
                     ? refreshState === "running" ? "Refreshing" : refreshState === "complete" ? "Refresh complete" : refreshState === "failed" ? "Refresh failed" : "Idle"
                     : refreshPending ? "Refresh in progress" : "Not reported"
                   return (
-                    <article key={s.name} className="rounded-md border bg-card p-4" data-testid={`card-supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`}>
+                    <article key={s.name} tabIndex={-1} className="supplier-detail-target rounded-md border bg-card p-4" data-supplier-anchor={`supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`} data-testid={`card-supplier-${supplierKey.replace(/[^a-z0-9]+/g, "-")}`}>
                       <div className="flex min-w-0 items-start justify-between gap-4">
                         <h4 className="min-w-0 break-words font-semibold text-primary">{s.name}</h4>
                         <span className="shrink-0 font-mono tabular-nums text-sm">{s.skuCount} <span className="font-sans text-muted-foreground">SKUs</span></span>
                       </div>
                       <dl className="mt-4 grid gap-3 text-sm">
                         <div>
-                          <dt className="text-xs text-muted-foreground">Last Successful Update</dt>
+                          <dt className="text-xs text-muted-foreground">Last Import Record</dt>
                           <dd className="mt-1 break-words text-muted-foreground">
                             {hasValidLastUpdate ? (
                               <time dateTime={parsedLastUpdate!.toISOString()}>
