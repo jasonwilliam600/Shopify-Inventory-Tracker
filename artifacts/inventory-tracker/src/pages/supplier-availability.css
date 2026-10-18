@@ -17,11 +17,11 @@
 .sa-refresh { height:32px; gap:8px; border-color:#3a5269; color:#e5edf5; background:#142638; font-size:12px; }
 .sa-refresh:hover { color:#fff; background:#203a51; }
 .sa-catalog-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-.sa-stat-card { min-width:0; min-height:72px; display:grid; grid-template-columns:1fr; align-content:center; padding:6px 12px; border:1px solid; border-radius:7px; background:#111e2c; }
+.sa-stat-card { min-width:0; min-height:72px; display:grid; grid-template-columns:1fr; row-gap:2px; align-content:center; padding:4.5px 12px; border:1px solid; border-radius:7px; background:#111e2c; }
 .sa-stat-card > strong { font-size:25px; line-height:1.05; letter-spacing:-.035em; font-weight:800; font-variant-numeric:tabular-nums; }
-.sa-stat-card > span { margin:2px 0 2px 30px; color:#e7edf5; font-size:11px; line-height:1.2; font-weight:600; }
-.sa-stat-card > small { display:flex; align-items:center; gap:6px; color:currentColor; font-size:10px; line-height:1.2; }
-.sa-stat-card > small svg { width:18px; height:17px; stroke-width:2.3; }
+.sa-stat-card > span { margin:0; color:#e7edf5; font-size:11px; line-height:1.2; font-weight:600; }
+.sa-stat-card > small { display:flex; align-items:center; gap:8px; color:currentColor; font-size:10px; line-height:1.2; }
+.sa-stat-card > small svg { width:20px; height:20px; flex:0 0 20px; stroke-width:2.3; }
 .sa-stat-green { color:#4ade80; border-color:#23794f; background:rgba(20,95,57,.2); }
 .sa-stat-amber { color:#fbbf24; border-color:#806222; background:rgba(116,83,20,.19); }
 .sa-stat-red { color:#f87171; border-color:#843c43; background:rgba(111,41,48,.2); }
