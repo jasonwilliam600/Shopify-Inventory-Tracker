@@ -1,0 +1,119 @@
+# TSH INVENTORY SYNC — PERMANENT DATABASE STORAGE
+
+PRIORITY: CRITICAL — DATA DURABILITY
+
+TSH Inventory Sync is a permanent internal inventory management system for Top Speed Hobbies.
+
+The current SKU Mapping Center uses a private development-only proposal journal. This is unacceptable for long-term business use.
+
+We need durable, production-ready persistence.
+
+## 1. Inspect existing infrastructure first
+
+Determine:
+
+- What database technology the application currently uses.
+- Whether a suitable PostgreSQL database already exists.
+- Where manufacturer rules, individual proposals, rejected mappings, protected holds, supplier configurations, and audit records are currently stored.
+- Which records are durable and which depend on temporary development storage.
+- What existing backups and recovery mechanisms are available.
+
+Reuse the existing production-capable database infrastructure wherever practical.
+
+Do not create a second database unnecessarily.
+
+## 2. Implement permanent storage
+
+Use PostgreSQL or an existing equally suitable durable relational database.
+
+Persist all critical SKU mapping records, including:
+
+- Manufacturer prefix rules and their lifecycle states
+- Individual SKU correction proposals
+- Source and historical destination identifiers
+- Product titles and comparison evidence where available
+- Verification confirmations
+- Reviewer identity and timestamps
+- Rejection decisions
+- Protected holds
+- Edit and deletion history
+- Rule activation and deactivation history
+
+Preserve stable record IDs and existing relationships.
+
+Use database transactions, appropriate constraints, and indexes.
+
+Deleted proposals must remain recoverable through an authorized audit/recovery process rather than being permanently destroyed.
+
+## 3. Safe migration
+
+Before migrating anything:
+
+- Inventory all existing data stores and records.
+- Produce a verified backup or export.
+- Record baseline counts and identifiers.
+- Identify any conflicts, duplicates, or incompatible records.
+- Provide a migration and rollback plan.
+
+Do not reset, truncate, overwrite, or delete existing data.
+
+Preserve all 209 protected holds, 12 rejected mappings, 200 flagged relationships, and existing proposals.
+
+If a migration cannot safely preserve records, stop and report the blocker.
+
+## 4. Durability and recovery
+
+Implement or verify:
+
+- Persistence across application restarts
+- Persistence across deployments
+- Automated backups with defined retention
+- A tested restoration procedure
+- Database integrity constraints
+- Audit logging for important mapping changes
+- Clear failure handling so unsuccessful writes never appear successful
+
+Backups must be stored independently of disposable development runtime storage.
+
+## 5. Preserve application behavior
+
+Existing screens and workflows must continue working without visual redesign.
+
+Maintain manufacturer rules as the primary mapping method and individual SKU corrections as the fallback.
+
+Preserve all current approval, authorization, rejection, and hold safeguards.
+
+Shopify is NOT connected. Do not attempt Shopify authentication, API requests, or inventory publishing.
+
+## 6. Verification
+
+Test:
+
+- Creating and retrieving proposals
+- Editing and deleting proposals
+- Duplicate prevention
+- Audit preservation
+- Restart persistence
+- Deployment persistence where safely testable
+- Database transaction rollback
+- Backup and restoration
+- Existing manufacturer rules
+- Rejected mapping and protected-hold regression checks
+
+Run TypeScript checks, relevant automated tests, and the frontend production build.
+
+## 7. Delivery report
+
+Provide:
+
+1. Existing database architecture discovered
+2. Permanent storage architecture implemented
+3. Records migrated and reconciled
+4. Backup and recovery configuration
+5. Files and database schema changed
+6. Test results
+7. Any remaining durability risks
+
+IMPORTANT: Perform the inspection and produce the migration plan FIRST. Do not execute a migration or modify existing records until I explicitly approve the plan.
+
+The objective is permanent, recoverable business data—not another temporary development journal.
