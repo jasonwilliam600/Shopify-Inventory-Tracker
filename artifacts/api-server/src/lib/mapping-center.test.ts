@@ -13,6 +13,7 @@ import { APPROVED_CATALOG_MAPPINGS, CANDIDATE_RULES } from "./sku-mapping";
 import { createMappingCenterRouter } from "../routes/mapping-center";
 import { GetMappingCenterResponse, PreviewCenterRuleResponse,
   SaveCenterProposalResponse, ListCenterProposalsResponse } from "@workspace/api-zod";
+import { INDIVIDUAL_CORRECTION_REASONS, resolveIndividualReason } from "../../../inventory-tracker/src/lib/individual-correction-reason";
 
 const catalog = parseAvailabilityCatalog(
   "Store SKU,Handle,Title,Option 1,Option 2,Option 3,Vendor\nWDS001,tree,Woodland Tree 1:72,,,,Woodland\nWDS002,tree2,Woodland Trees,,,,Woodland\n",
@@ -151,6 +152,31 @@ test("both HTTP workflows round-trip isolated proposals; unauthorized saves, inv
       assert.ok(mappingHold(s.supplier, s.sku));
     }
     assert.equal(ListCenterProposalsResponse.parse(await (await call("/mapping-center/proposals")).json()).items.length, 13);
+    for (const choice of INDIVIDUAL_CORRECTION_REASONS) {
+      const reason = resolveIndividualReason(choice, "Fixture-only custom correction reason.");
+      const value = { kind: "individual", supplier: source.supplier, originalSku: source.sku,
+        catalogKey: catalog.variants[0].key, reason, identityChecked: true, unitChecked: true };
+      const response = await call("/mapping-center/proposals", value);
+      assert.equal(response.status, 201);
+      const receipt = SaveCenterProposalResponse.parse(await response.json());
+      const saved = JSON.parse(await readFile(path.join(root, `${receipt.id}.json`), "utf8"));
+      assert.equal(saved.input.reason, reason);
+      assert.deepEqual(saved.evidence.source, source);
+      assert.equal(saved.evidence.destination.sku, catalog.variants[0].sku);
+      assert.equal(saved.evidence.destination.title, catalog.variants[0].title);
+      assert.deepEqual(saved.reviewer, reviewer);
+      assert.ok(Number.isFinite(Date.parse(saved.createdAt)));
+      assert.equal(saved.active, false);
+      assert.equal(saved.publishable, false);
+      assert.equal((await call("/mapping-center/proposals", { ...value, identityChecked: false })).status, 400);
+      assert.equal((await call("/mapping-center/proposals", { ...value, unitChecked: false })).status, 400);
+      assert.equal((await call("/mapping-center/proposals", value, false)).status, 401);
+    }
+    assert.equal((await call("/mapping-center/proposals", { kind: "individual", supplier: source.supplier,
+      originalSku: source.sku, catalogKey: catalog.variants[0].key,
+      reason: resolveIndividualReason("Other reason", "too short"), identityChecked: true, unitChecked: true })).status, 400);
+    // Records written with the previous free-text format still coexist and load unchanged.
+    assert.equal(ListCenterProposalsResponse.parse(await (await call("/mapping-center/proposals")).json()).items.length, 19);
     const invalid = { kind: "individual", supplier: source.supplier, originalSku: source.sku, catalogKey: "invented",
       reason: "Fixture-only invalid destination.", identityChecked: true, unitChecked: true };
     assert.equal((await call("/mapping-center/proposals", invalid)).status, 409);

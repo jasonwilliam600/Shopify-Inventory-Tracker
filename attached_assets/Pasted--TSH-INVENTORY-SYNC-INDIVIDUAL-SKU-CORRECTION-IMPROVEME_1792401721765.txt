@@ -1,0 +1,47 @@
+**TSH INVENTORY SYNC — INDIVIDUAL SKU CORRECTION IMPROVEMENT**
+
+Modify the existing **SKU Mapping Center → Fix Individual SKU** workflow.
+
+**OBJECTIVE:** Replace the mandatory free-text "Reason for individual correction" field with a quick-select reason menu to eliminate repetitive typing.
+
+### Required changes
+
+1. Replace the existing required text area with a single-selection list containing:
+   - Manually verified product match (default)
+   - Manufacturer prefix exception
+   - Supplier SKU formatting difference
+   - Incorrect previous mapping
+   - Selling unit / package quantity exception
+   - Other reason
+
+2. When "Other reason" is selected, display a text box requiring at least 12 characters. For all other selections, no typing is required.
+
+3. Automatically save the selected reason as part of the existing inactive proposal record. Preserve compatibility with the current proposal database and API.
+
+4. Automatically retain the available supplier SKU, supplier product title, selected historical catalog SKU, catalog product title, reason, reviewer identity (when authenticated), and timestamp. Do not fabricate missing information.
+
+5. Preserve the two existing product-verification checkboxes and all current validation, rejection, hold, and authorization safeguards.
+
+6. The **Save proposed individual correction** button should become available when the required supplier and historical catalog products are selected, both verification checkboxes are checked, and the selected reason is valid.
+
+7. Preserve the current approved dark-theme layout. The reason selector should visually match the existing screen.
+
+### Strict restrictions
+
+- Do not redesign the page.
+- Do not change Manufacturer Rules.
+- Do not change supplier imports or inventory calculations.
+- Do not modify existing mapping decisions, rejections, or the 209 protected holds.
+- Do not activate or approve mappings.
+- Do not connect to Shopify or make Shopify API requests.
+- Do not modify unrelated features.
+
+### Verification
+
+Test all six reason choices, including the conditional text box, form validation, successful inactive proposal saving, and existing protection safeguards.
+
+Confirm existing saved proposals remain readable.
+
+Report files changed and test results.
+
+**This is a targeted user-interface and proposal-saving improvement only. No other changes are authorized.**

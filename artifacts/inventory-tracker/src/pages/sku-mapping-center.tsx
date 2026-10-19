@@ -17,6 +17,8 @@ import type {
   CenterComparison, CenterProposalInput, CenterRulePreviewInput,
 } from "@workspace/api-client-react";
 import { ReviewerSignIn } from "@/lib/clerk-host";
+import { INDIVIDUAL_CORRECTION_REASONS, IndividualCorrectionReasonField, resolveIndividualReason } from "@/lib/individual-correction-reason";
+import type { IndividualCorrectionReason } from "@/lib/individual-correction-reason";
 import "./sku-mapping-center.css";
 
 type Workflow = "rule" | "individual";
@@ -125,6 +127,9 @@ export default function SkuMappingCenter() {
   const [individualIdentityChecked, setIndividualIdentityChecked] = useState(false);
   const [individualUnitChecked, setIndividualUnitChecked] = useState(false);
   const [reason, setReason] = useState("");
+  const [individualReasonChoice, setIndividualReasonChoice] = useState<IndividualCorrectionReason>(INDIVIDUAL_CORRECTION_REASONS[0]);
+  const [individualOtherReason, setIndividualOtherReason] = useState("");
+  const individualReason = resolveIndividualReason(individualReasonChoice, individualOtherReason);
   const [receipt, setReceipt] = useState<{ id: string; createdAt: string; state: string; active: boolean; sha256: string } | null>(null);
   const [writeError, setWriteError] = useState("");
   const [preselectSku, setPreselectSku] = useState("");
@@ -200,7 +205,7 @@ export default function SkuMappingCenter() {
   });
 
   const canSaveRule = Boolean(currentPreview && currentPreview.affected > 0 && ruleIdentityChecked && ruleUnitChecked && reason.trim().length >= 12 && authorized);
-  const canSaveIndividual = Boolean(selectedSource && selectedCatalog?.skuStatus === "unique" && individualIdentityChecked && individualUnitChecked && reason.trim().length >= 12 && authorized);
+  const canSaveIndividual = Boolean(selectedSource && selectedCatalog?.skuStatus === "unique" && individualIdentityChecked && individualUnitChecked && individualReason && authorized);
   const isPreviewPending = previewRequestPending || previewMutation.isPending;
 
   const startPreview = () => {
@@ -271,7 +276,7 @@ export default function SkuMappingCenter() {
       reason: reason.trim(), identityChecked: true, unitChecked: true,
     } : {
       kind, supplier: selectedSource!.supplier, originalSku: selectedSource!.sku,
-      catalogKey: selectedCatalog!.key, reason: reason.trim(),
+      catalogKey: selectedCatalog!.key, reason: individualReason,
       identityChecked: true, unitChecked: true,
     };
     setWriteError("");
@@ -459,7 +464,9 @@ export default function SkuMappingCenter() {
           <label><input type="checkbox" checked={individualUnitChecked} disabled={!selectedSource || !selectedCatalog} onChange={event => setIndividualUnitChecked(event.target.checked)} data-testid="check-center-individual-unit" /> I checked scale, size, and selling unit or pack quantity.</label>
           <small>Historical title similarity is not identity verification.</small>
         </section>
-        <label className="center-field center-reason"><span>Reason for individual correction <b>Required · at least 12 characters</b></span><textarea value={reason} maxLength={2000} onChange={event => { setReason(event.target.value); setReceipt(null); }} rows={3} placeholder="Explain why the manufacturer rule does not apply to this product." data-testid="input-center-individual-reason" /></label>
+        <IndividualCorrectionReasonField choice={individualReasonChoice} other={individualOtherReason}
+          onChoice={value => { setIndividualReasonChoice(value); setReceipt(null); }}
+          onOther={value => { setIndividualOtherReason(value); setReceipt(null); }} />
         <div className="center-safety-note"><LockKeyhole size={16} /><span><strong>Protected and unverified</strong>A historical catalog selection is only a proposed match. Rejected mappings and protected holds remain blocked. No activation or publishing is possible.</span></div>
         <div className="center-actions">
           <button type="button" className="center-primary-button" disabled={!canSaveIndividual || saveProposal.isPending} onClick={() => void save()} data-testid="button-save-center-individual">{saveProposal.isPending ? "Saving proposal…" : "Save proposed individual correction"}</button>
