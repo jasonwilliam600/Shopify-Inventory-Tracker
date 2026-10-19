@@ -21,6 +21,10 @@ import type {
 
 import type {
   Activity,
+  CenterProposalDeleted,
+  CenterProposalDeletion,
+  CenterProposalDetail,
+  CenterProposalEdit,
   CenterProposalInput,
   CenterProposalReceipt,
   CenterProposalResults,
@@ -436,6 +440,209 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getSaveCenterProposalMutationOptions(options));
+    }
+
+export const getGetCenterProposalUrl = (id: string,) => {
+
+
+
+
+  return `/api/mapping-center/proposals/${id}`
+}
+
+export const getCenterProposal = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CenterProposalDetail> => {
+
+  return customFetch<CenterProposalDetail>(getGetCenterProposalUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCenterProposalQueryKey = (id: string,) => {
+    return [
+    `/api/mapping-center/proposals/${id}`
+    ] as const;
+    }
+
+
+export const getGetCenterProposalQueryOptions = <TData = Awaited<ReturnType<typeof getCenterProposal>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCenterProposal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCenterProposalQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCenterProposal>>> = ({ signal }) => getCenterProposal(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCenterProposal>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCenterProposalQueryResult = NonNullable<Awaited<ReturnType<typeof getCenterProposal>>>
+export type GetCenterProposalQueryError = ErrorType<void>
+
+
+
+export function useGetCenterProposal<TData = Awaited<ReturnType<typeof getCenterProposal>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCenterProposal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCenterProposalQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateCenterProposalUrl = (id: string,) => {
+
+
+
+
+  return `/api/mapping-center/proposals/${id}`
+}
+
+export const updateCenterProposal = async (id: string,
+    centerProposalEdit: CenterProposalEdit, options?: Parameters<typeof customFetch>[1]): Promise<CenterProposalDetail> => {
+
+  return customFetch<CenterProposalDetail>(getUpdateCenterProposalUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(centerProposalEdit)
+  }
+);}
+
+
+
+
+
+export const getUpdateCenterProposalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCenterProposal>>, TError,{id: string;data: BodyType<CenterProposalEdit>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCenterProposal>>, TError,{id: string;data: BodyType<CenterProposalEdit>}, TContext> => {
+
+const mutationKey = ['updateCenterProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCenterProposal>>, {id: string;data: BodyType<CenterProposalEdit>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCenterProposal(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCenterProposalMutationResult = NonNullable<Awaited<ReturnType<typeof updateCenterProposal>>>
+    export type UpdateCenterProposalMutationBody = BodyType<CenterProposalEdit>
+    export type UpdateCenterProposalMutationError = ErrorType<void>
+
+    export const useUpdateCenterProposal = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCenterProposal>>, TError,{id: string;data: BodyType<CenterProposalEdit>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCenterProposal>>,
+        TError,
+        {id: string;data: BodyType<CenterProposalEdit>},
+        TContext
+      > => {
+      return useMutation(getUpdateCenterProposalMutationOptions(options));
+    }
+
+export const getDeleteCenterProposalUrl = (id: string,) => {
+
+
+
+
+  return `/api/mapping-center/proposals/${id}`
+}
+
+export const deleteCenterProposal = async (id: string,
+    centerProposalDeletion: CenterProposalDeletion, options?: Parameters<typeof customFetch>[1]): Promise<CenterProposalDeleted> => {
+
+  return customFetch<CenterProposalDeleted>(getDeleteCenterProposalUrl(id),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(centerProposalDeletion)
+  }
+);}
+
+
+
+
+
+export const getDeleteCenterProposalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCenterProposal>>, TError,{id: string;data: BodyType<CenterProposalDeletion>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCenterProposal>>, TError,{id: string;data: BodyType<CenterProposalDeletion>}, TContext> => {
+
+const mutationKey = ['deleteCenterProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCenterProposal>>, {id: string;data: BodyType<CenterProposalDeletion>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  deleteCenterProposal(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCenterProposalMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCenterProposal>>>
+    export type DeleteCenterProposalMutationBody = BodyType<CenterProposalDeletion>
+    export type DeleteCenterProposalMutationError = ErrorType<void>
+
+    export const useDeleteCenterProposal = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCenterProposal>>, TError,{id: string;data: BodyType<CenterProposalDeletion>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCenterProposal>>,
+        TError,
+        {id: string;data: BodyType<CenterProposalDeletion>},
+        TContext
+      > => {
+      return useMutation(getDeleteCenterProposalMutationOptions(options));
     }
 
 export const getGetReviewerSessionUrl = () => {

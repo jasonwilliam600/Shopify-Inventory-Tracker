@@ -5,6 +5,7 @@ import {
   GetMappingCenterResponse, PreviewCenterRuleBody, PreviewCenterRuleResponse,
   SearchCenterSourcesQueryParams, SearchCenterSourcesResponse,
   SaveCenterProposalResponse, ListCenterProposalsResponse,
+  GetCenterProposalResponse, UpdateCenterProposalBody, DeleteCenterProposalBody,
 } from "@workspace/api-zod";
 import { loadAvailabilityCatalog } from "../lib/supplier-availability-catalog";
 import { CANDIDATE_RULES } from "../lib/sku-mapping";
@@ -12,6 +13,8 @@ import { MAPPING_POLICY_COUNTS } from "../lib/supplier-mapping-policy";
 import { evaluateRule, individualEvidence, proposalInput, ruleConflicts,
   saveCenterProposal, listCenterProposals } from "../lib/mapping-center";
 import { requireMappingReviewer, workflowError, type MappingReviewer } from "../lib/reviewer-authorization";
+import { assertProposalRuntime, proposalJournalDetail, readProposalJournal,
+  changeProposalJournal, ProposalJournalError } from "../lib/mapping-proposal-journal";
 
 const root = "/home/runner/tsh-private-mapping-proposals";
 const fields = { supplier: inventory.supplier, sku: inventory.sku, title: inventory.productName };
@@ -44,11 +47,31 @@ async search(search: string, supplier: string | undefined, page: number) {
 catalog: loadAvailabilityCatalog,
 save: saveCenterProposal,
 list: listCenterProposals,
+detail: proposalJournalDetail,
+read: readProposalJournal,
+async change(directory: string, ...args: Parameters<typeof changeProposalJournal> extends [string, ...infer R] ? R : never) {
+  assertProposalRuntime(directory);
+  return changeProposalJournal(directory, ...args);
+},
 };
 
 /** Resource injection is used only by isolated fixture tests; API inputs cannot select resources. */
 export function createMappingCenterRouter(resources = defaultResources, guard: RequestHandler = requireMappingReviewer): IRouter {
 const router: IRouter = Router();
+function failure(res: Parameters<typeof workflowError>[0], error: unknown) {
+  if (error instanceof ProposalJournalError) {
+    res.status(error.status).json({ error: error.message, existingId: error.existingId }); return;
+  }
+  workflowError(res, error);
+}
+async function catalogEvidence(supplier: string, sku: string, catalogKey: string) {
+  const sources = await resources.source(supplier, sku);
+  const catalog = await resources.catalog();
+  const destination = catalog.variants.find(v => v.key === catalogKey);
+  if (sources.length !== 1 || !destination?.sku || destination.skuStatus !== "unique")
+    throw new ProposalJournalError(409, "Select one current supplier record and a unique historical SKU destination.");
+  return { ...individualEvidence(sources[0], destination), catalogObservedAt: catalog.metadata.observedAt };
+}
 async function ruleEvidence(supplier: string, incoming: string, destination: string) {
   const available = await resources.suppliers();
   if (supplier && !available.includes(supplier)) throw new Error("UNKNOWN_SUPPLIER");
@@ -114,17 +137,42 @@ router.post("/mapping-center/proposals", guard, async (req, res): Promise<void> 
         res.status(409).json({ error: "No affected supplier products. Preview a valid rule first." }); return;
       }
     } else {
-      const sources = await resources.source(input.supplier, input.originalSku);
-      const catalog = await resources.catalog();
-      const destination = catalog.variants.find(v => v.key === input.catalogKey);
-      if (sources.length !== 1 || !destination?.sku || destination.skuStatus !== "unique") {
-        res.status(409).json({ error: "Select one current supplier record and a unique historical SKU destination." }); return;
-      }
-      evidence = { ...individualEvidence(sources[0], destination), catalogObservedAt: catalog.metadata.observedAt };
+      evidence = await catalogEvidence(input.supplier, input.originalSku, input.catalogKey);
     }
     const receipt = await resources.save(root, input, evidence, res.locals.mappingReviewer as MappingReviewer);
     res.status(201).json(SaveCenterProposalResponse.parse(receipt));
-  } catch (e) { workflowError(res, e); }
+  } catch (e) { failure(res, e); }
+});
+router.get("/mapping-center/proposals/:id", guard, async (req, res): Promise<void> => {
+  try { res.json(GetCenterProposalResponse.parse(await resources.detail(root, String(req.params.id)))); }
+  catch (e) { failure(res, e); }
+});
+router.patch("/mapping-center/proposals/:id", guard, async (req, res): Promise<void> => {
+  const parsed = UpdateCenterProposalBody.strict().safeParse(req.body);
+  if (!parsed.success || parsed.data.identityChecked !== true || parsed.data.unitChecked !== true) {
+    res.status(400).json({ error: "Renew both verification confirmations and provide a valid destination and reason." }); return;
+  }
+  try {
+    const id = String(req.params.id), current = await resources.read(root, id);
+    if (current.deleted) throw new ProposalJournalError(410, "PROPOSAL_DELETED");
+    if (current.record.input.kind !== "individual") throw new ProposalJournalError(400, "INDIVIDUAL_PROPOSAL_REQUIRED");
+    const checked = proposalInput.safeParse({ ...current.record.input, catalogKey: parsed.data.catalogKey,
+      reason: parsed.data.reason, identityChecked: true, unitChecked: true });
+    if (!checked.success) { res.status(400).json({ error: "A non-space reason of 12–2000 characters is required." }); return; }
+    const input = checked.data;
+    const evidence = await catalogEvidence(input.supplier, input.originalSku, input.catalogKey);
+    await resources.change(root, id, parsed.data.revision, { input, evidence }, res.locals.mappingReviewer);
+    res.json(GetCenterProposalResponse.parse(await resources.detail(root, id)));
+  } catch (e) { failure(res, e); }
+});
+router.delete("/mapping-center/proposals/:id", guard, async (req, res): Promise<void> => {
+  const parsed = DeleteCenterProposalBody.strict().safeParse(req.body);
+  if (!parsed.success || parsed.data.confirmed !== true) {
+    res.status(400).json({ error: "Explicit deletion confirmation is required." }); return;
+  }
+  try {
+    res.json(await resources.change(root, String(req.params.id), parsed.data.revision, null, res.locals.mappingReviewer));
+  } catch (e) { failure(res, e); }
 });
 return router;
 }

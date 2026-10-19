@@ -98,6 +98,61 @@ paths:
           description: Source or historical destination no longer available
         "503":
           description: Private development proposal storage unavailable
+  /mapping-center/proposals/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string}
+    get:
+      operationId: getCenterProposal
+      tags: [mapping-review]
+      responses:
+        "200":
+          description: Private proposal details and modification history
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterProposalDetail"}
+        "401": {description: Sign-in required}
+        "403": {description: Authorized reviewer required}
+        "404": {description: Proposal not found}
+        "410": {description: Proposal deleted}
+    patch:
+      operationId: updateCenterProposal
+      tags: [mapping-review]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CenterProposalEdit"}
+      responses:
+        "200":
+          description: Updated inactive proposal with unchanged identity
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterProposalDetail"}
+        "400": {description: Invalid verification or input}
+        "401": {description: Sign-in required}
+        "403": {description: Authorized reviewer required}
+        "409": {description: "Duplicate, stale revision, or protected state"}
+    delete:
+      operationId: deleteCenterProposal
+      tags: [mapping-review]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CenterProposalDeletion"}
+      responses:
+        "200":
+          description: Removed from active list with retained deletion audit
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterProposalDeleted"}
+        "400": {description: Confirmation required}
+        "401": {description: Sign-in required}
+        "403": {description: Authorized reviewer required}
+        "409": {description: Stale revision or protected state}
   /reviewer/session:
     get:
       operationId: getReviewerSession
@@ -644,6 +699,63 @@ components:
         reason: {type: string, minLength: 12, maxLength: 2000}
         identityChecked: {type: boolean}
         unitChecked: {type: boolean}
+    CenterProposalEdit:
+      type: object
+      required: [revision, catalogKey, reason, identityChecked, unitChecked]
+      properties:
+        revision: {type: integer, minimum: 0}
+        catalogKey: {type: string, minLength: 1, maxLength: 100}
+        reason: {type: string, minLength: 12, maxLength: 2000}
+        identityChecked: {type: boolean}
+        unitChecked: {type: boolean}
+    CenterProposalDeletion:
+      type: object
+      required: [revision, confirmed]
+      properties:
+        revision: {type: integer, minimum: 0}
+        confirmed: {type: boolean}
+    CenterProposalDeleted:
+      type: object
+      required: [id, deleted]
+      properties:
+        id: {type: string}
+        deleted: {type: boolean}
+    CenterProposalAudit:
+      type: object
+      required: [action, at, reviewerIssuer, reviewerSubject, reason, catalogSku, catalogTitle]
+      properties:
+        action: {type: string}
+        at: {type: string}
+        reviewerIssuer: {type: [string, "null"]}
+        reviewerSubject: {type: [string, "null"]}
+        reason: {type: string}
+        catalogSku: {type: [string, "null"]}
+        catalogTitle: {type: [string, "null"]}
+    CenterProposalDetail:
+      type: object
+      required: [id, kind, createdAt, updatedAt, revision, state, active, supplier, originalSku, supplierTitle, catalogKey, catalogSku, catalogTitle, reason, identityChecked, unitChecked, reviewerIssuer, reviewerSubject, history]
+      properties:
+        id: {type: string}
+        kind: {type: string}
+        createdAt: {type: string}
+        updatedAt: {type: [string, "null"]}
+        revision: {type: integer}
+        state: {type: string}
+        active: {type: boolean}
+        supplier: {type: string}
+        originalSku: {type: string}
+        supplierTitle: {type: [string, "null"]}
+        catalogKey: {type: string}
+        catalogSku: {type: [string, "null"]}
+        catalogTitle: {type: [string, "null"]}
+        reason: {type: string}
+        identityChecked: {type: boolean}
+        unitChecked: {type: boolean}
+        reviewerIssuer: {type: [string, "null"]}
+        reviewerSubject: {type: [string, "null"]}
+        history:
+          type: array
+          items: {$ref: "#/components/schemas/CenterProposalAudit"}
     CenterProposalReceipt:
       type: object
       required: [id, createdAt, state, active, sha256]

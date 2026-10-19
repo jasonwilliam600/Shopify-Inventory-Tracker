@@ -17,6 +17,7 @@ import type {
   CenterComparison, CenterProposalInput, CenterRulePreviewInput,
 } from "@workspace/api-client-react";
 import { ReviewerSignIn } from "@/lib/clerk-host";
+import { MappingProposalDetails, duplicateProposalId } from "@/components/mapping-proposal-details";
 import { INDIVIDUAL_CORRECTION_REASONS, IndividualCorrectionReasonField, resolveIndividualReason } from "@/lib/individual-correction-reason";
 import type { IndividualCorrectionReason } from "@/lib/individual-correction-reason";
 import "./sku-mapping-center.css";
@@ -132,6 +133,11 @@ export default function SkuMappingCenter() {
   const individualReason = resolveIndividualReason(individualReasonChoice, individualOtherReason);
   const [receipt, setReceipt] = useState<{ id: string; createdAt: string; state: string; active: boolean; sha256: string } | null>(null);
   const [writeError, setWriteError] = useState("");
+  const [managedProposal, setManagedProposal] = useState<string | null>(null);
+  const [duplicateProposal, setDuplicateProposal] = useState<string | null>(null);
+  const proposalOpener = useRef<HTMLElement | null>(null);
+  const historyHeading = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => { if (!authorized) setManagedProposal(null); }, [authorized]);
   const [preselectSku, setPreselectSku] = useState("");
 
   useEffect(() => {
@@ -280,6 +286,7 @@ export default function SkuMappingCenter() {
       identityChecked: true, unitChecked: true,
     };
     setWriteError("");
+    setDuplicateProposal(null);
     setReceipt(null);
     try {
       const saved = await saveProposal.mutateAsync({ data });
@@ -287,6 +294,7 @@ export default function SkuMappingCenter() {
       await queryClient.invalidateQueries({ queryKey: getListCenterProposalsQueryKey() });
       await proposals.refetch();
     } catch (error) {
+      setDuplicateProposal(duplicateProposalId(error));
       setWriteError(error instanceof Error ? error.message : "Proposal could not be saved. No mapping was activated.");
     }
   };
@@ -468,30 +476,41 @@ export default function SkuMappingCenter() {
           onChoice={value => { setIndividualReasonChoice(value); setReceipt(null); }}
           onOther={value => { setIndividualOtherReason(value); setReceipt(null); }} />
         <div className="center-safety-note"><LockKeyhole size={16} /><span><strong>Protected and unverified</strong>A historical catalog selection is only a proposed match. Rejected mappings and protected holds remain blocked. No activation or publishing is possible.</span></div>
-        <div className="center-actions">
+        <div className="center-actions center-individual-save">
           <button type="button" className="center-primary-button" disabled={!canSaveIndividual || saveProposal.isPending} onClick={() => void save()} data-testid="button-save-center-individual">{saveProposal.isPending ? "Saving proposal…" : "Save proposed individual correction"}</button>
+          <p className="center-control-hint">Saved proposals remain inactive and do not alter existing review decisions.</p>
         </div>
-        <p className="center-control-hint align-right">Saved proposals remain inactive and do not alter existing review decisions.</p>
       </section>
     </>}
 
     {!authorized && <div className="center-auth-hint"><LockKeyhole size={14} /><span>Only an authorized reviewer can save a private proposal. Sign in to continue.</span><ReviewerSignIn /></div>}
-    {writeError && <div className="center-write-error" role="alert">{writeError}</div>}
+    {writeError && <div className="center-write-error" role="alert">{writeError}
+      {duplicateProposal && <button onClick={event => { proposalOpener.current = event.currentTarget; setManagedProposal(duplicateProposal); }}>Open existing proposal</button>}
+    </div>}
     {receipt && <section className="center-receipt" role="status" data-testid="status-center-proposal-receipt">
       <Check size={17} /><div><strong>{receipt.active ? "Proposal saved · verify status" : "Inactive proposal saved"}</strong><span>Reference {receipt.id} · {new Date(receipt.createdAt).toLocaleString()} · State: {receipt.state}</span>
       <small>Private development journal · {receipt.active ? "unexpected active flag returned" : "inactive"} · no inventory or publishing changes · SHA-256 {receipt.sha256}</small></div>
     </section>}
 
     <section className="center-panel center-history">
-      <div className="center-panel-heading"><div><h2>Saved proposals</h2><p>Private reviewer journal · inactive proposals only</p></div><span className="center-tag">Latest 50</span></div>
+      <div className="center-panel-heading"><div><h2 ref={historyHeading} tabIndex={-1}>Saved proposals</h2><p>Private reviewer journal · inactive proposals only</p></div><span className="center-tag">Latest 50</span></div>
       {!authorized ? <div className="center-list-state">Sign in as an authorized reviewer to view private proposal history.</div>
         : proposals.isLoading ? <div className="center-loading compact"><i /><i /></div>
           : proposals.isError ? <div className="center-list-state error">Could not load proposal history. <button onClick={() => void proposals.refetch()}>Retry</button></div>
-            : proposals.data?.items.length ? <div className="center-history-list">{proposals.data.items.map(item => <article key={item.id} data-testid={`row-center-proposal-${item.id}`}>
+            : proposals.data?.items.length ? <div className="center-history-list">{proposals.data.items.map(item => <article key={item.id} data-testid={`row-center-proposal-${item.id}`}
+              role="button" tabIndex={0} aria-haspopup="dialog" aria-label={`View proposal ${item.summary}`}
+              onClick={event => { proposalOpener.current = event.currentTarget; setManagedProposal(item.id); }}
+              onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); proposalOpener.current = event.currentTarget; setManagedProposal(item.id); } }}>
               <div><strong>{item.summary}</strong><small>{item.kind === "rule" ? "Manufacturer rule proposal" : "Individual SKU proposal"} · {new Date(item.createdAt).toLocaleString()}</small></div><span className="center-badge">{statusLabel(item.state)}</span>
             </article>)}</div>
               : <div className="center-list-state">No saved proposals yet.</div>}
     </section>
+    {authorized && managedProposal && <MappingProposalDetails key={managedProposal} id={managedProposal}
+      onClose={() => setManagedProposal(null)} onOpenExisting={setManagedProposal}
+      returnFocus={() => {
+        const target = proposalOpener.current?.isConnected ? proposalOpener.current : historyHeading.current;
+        target?.focus({ preventScroll: true });
+      }} />}
     <footer className="center-footer"><CircleHelp size={14} /><span>Historical catalog is unverified. This center never approves rules, activates mappings, changes inventory, or publishes to Shopify.</span></footer>
   </main>;
 }

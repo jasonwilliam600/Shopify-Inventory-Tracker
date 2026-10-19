@@ -1,7 +1,5 @@
 /** Historical proposal evaluation only. Never imported by ingestion or publishing. */
-import { createHash, randomUUID } from "node:crypto";
-import { mkdir, open, lstat, realpath, readdir, readFile } from "node:fs/promises";
-import path from "node:path";
+import { createProposalJournal, listProposalJournal, assertProposalRuntime } from "./mapping-proposal-journal";
 import { z } from "zod";
 import { mappingHold, COLLISION_HISTORY_SOURCES } from "./supplier-mapping-policy";
 import { APPROVED_CATALOG_MAPPINGS, CANDIDATE_RULES } from "./sku-mapping";
@@ -111,48 +109,16 @@ export function individualEvidence(source: CenterSource, destination: CatalogVar
  */
 export async function saveCenterProposal(root: string, input: z.infer<typeof proposalInput>,
   evidence: unknown, reviewer: MappingReviewer) {
-  if (process.env.NODE_ENV !== "development") throw new Error("DEVELOPMENT_PROPOSAL_STORAGE_ONLY");
-  const expected = "/home/runner/tsh-private-mapping-proposals";
-  if (root !== expected) throw new Error("UNSAFE_PROPOSAL_PATH");
+  assertProposalRuntime(root);
   return writePrivateProposal(root, input, evidence, reviewer);
 }
 
 /** Injected directory permits isolated filesystem testing, never exposed as an API input. */
 export async function writePrivateProposal(root: string, input: z.infer<typeof proposalInput>,
   evidence: unknown, reviewer: MappingReviewer) {
-  if (!path.isAbsolute(root)) throw new Error("UNSAFE_PROPOSAL_PATH");
-  await mkdir(root, { recursive: true, mode: 0o700 });
-  const info = await lstat(root);
-  if (!info.isDirectory() || info.isSymbolicLink() || (info.mode & 0o077) !== 0
-    || info.uid !== process.getuid?.() || await realpath(root) !== root) throw new Error("PROPOSAL_STORAGE_NOT_PRIVATE");
-  const id = randomUUID(), createdAt = new Date().toISOString();
-  const data = { id, createdAt, reviewer, input, evidence, state: "proposed", active: false,
-    futureImportsEnabled: false, publishable: false };
-  const text = JSON.stringify(data);
-  const file = await open(path.join(root, `${id}.json`), "wx", 0o600);
-  try { await file.writeFile(text); await file.sync(); }
-  finally { await file.close(); }
-  return { id, createdAt, state: "proposed", active: false, sha256: createHash("sha256").update(text).digest("hex") };
+  return createProposalJournal(root, input, evidence, reviewer);
 }
 
 export async function listCenterProposals(root: string) {
-  try {
-    const info = await lstat(root);
-    if (info.isSymbolicLink() || (info.mode & 0o077) !== 0 || await realpath(root) !== root)
-      throw new Error("PROPOSAL_STORAGE_NOT_PRIVATE");
-    const files = (await readdir(root)).filter(name => /^[a-f0-9-]{36}\.json$/.test(name));
-    const ordered = await Promise.all(files.map(async name => ({ name, info: await lstat(path.join(root, name)) })));
-    return Promise.all(ordered.sort((a, b) => b.info.mtimeMs - a.info.mtimeMs).slice(0, 50).map(async file => {
-      if (!file.info.isFile() || file.info.isSymbolicLink() || (file.info.mode & 0o077) !== 0)
-        throw new Error("PROPOSAL_FILE_NOT_PRIVATE");
-      const record = JSON.parse(await readFile(path.join(root, file.name), "utf8"));
-      return { id: String(record.id), createdAt: String(record.createdAt), kind: String(record.input.kind),
-        summary: record.input.kind === "rule"
-          ? `${record.input.supplier || "All suppliers"}: ${record.input.incoming} → ${record.input.destination}`
-          : `${record.input.supplier}: ${record.input.originalSku}`, state: "proposed" };
-    }));
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
-  }
+  return listProposalJournal(root);
 }

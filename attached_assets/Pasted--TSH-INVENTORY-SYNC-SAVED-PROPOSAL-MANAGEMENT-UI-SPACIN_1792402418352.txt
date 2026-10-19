@@ -1,0 +1,143 @@
+# TSH INVENTORY SYNC — SAVED PROPOSAL MANAGEMENT & UI SPACING FIX
+
+Update the existing **SKU Mapping Center → Fix Individual SKU** page.
+
+This request covers TWO specific improvements:
+
+1. Make saved proposals clickable, editable, and deletable.
+2. Correct the spacing and alignment around the blue **Save proposed individual correction** button.
+
+Do not redesign the page or change unrelated functionality.
+
+## 1. Saved Proposals — Interactive Management
+
+Currently, saved proposals appear as static rows without management controls.
+
+Make each proposal row clickable.
+
+When clicked, open an expandable detail panel or modal matching the existing dark-theme design.
+
+Display all available information:
+
+- Supplier name
+- Original supplier SKU
+- Supplier product title
+- Proposed historical catalog SKU
+- Historical catalog product title
+- Selected correction reason
+- Verification confirmations
+- Proposal status
+- Date and time created
+- Reviewer identity, when available
+
+Do not fabricate missing information.
+
+### Required actions
+
+**View Details**
+- Clicking anywhere on a proposal row opens its details.
+- Support mouse and keyboard interaction.
+- Allow closing the details and returning to the same list position.
+
+**Edit Proposal**
+- Allow editing inactive proposals.
+- Permit changing the historical catalog destination and correction reason.
+- Reuse the existing searchable historical catalog selector.
+- Require renewed verification if the destination changes.
+- Preserve the original proposal identity and modification history.
+- Validate changes server-side.
+- Do not create a duplicate proposal when editing.
+
+**Delete Proposal**
+- Provide a clearly labeled Delete Proposal button.
+- Require confirmation before deletion.
+- Include the supplier SKU and proposed destination in the confirmation.
+- Provide Cancel and Confirm Delete options.
+- Remove deleted proposals from the active list after successful deletion.
+- Preserve an audit record of deletion without retaining the proposal as active.
+- Never delete supplier inventory records, existing approved mappings, manufacturer rules, or protected holds.
+
+**Duplicate Prevention**
+- Detect existing inactive proposals with the same supplier, original SKU, and proposed destination.
+- Prevent accidental duplicate submissions.
+- Offer to open the existing proposal instead.
+- Handle duplicate checks server-side to prevent race conditions.
+- Do not automatically delete existing duplicates or their audit records.
+
+## 2. Save Button — Spacing and Alignment Fix
+
+The current **Save proposed individual correction** button has explanatory text positioned too close underneath it, making the bottom of the form appear cramped and poorly aligned.
+
+Correct this area to match the clean, professional spacing used throughout the approved SKU Mapping Center design.
+
+Requirements:
+
+- Add appropriate vertical spacing between the Save button and its explanatory text.
+- Keep the button right-aligned on desktop.
+- Position the explanatory text neatly beneath the button with sufficient breathing room.
+- Ensure the text never overlaps, touches, or crowds the button.
+- Add appropriate bottom padding before the section border.
+- Maintain consistent spacing between the form, confirmation message, and Saved Proposals section.
+- On smaller screens, allow the button and explanatory text to stack naturally without clipping or overflow.
+- Preserve the existing button styling, colors, and wording.
+
+Use the existing CSS conventions and spacing system. Do not introduce unnecessary layout frameworks or redesign surrounding components.
+
+## 3. Existing Protections — Nonnegotiable
+
+Preserve all existing:
+
+- Manufacturer prefix rules
+- Individual mapping decisions
+- Rejected mapping protections
+- 209 protected source SKU holds
+- Supplier import functionality
+- Historical catalog lookup
+- Verification requirements
+- Reviewer authorization controls
+- Existing proposal records and audit history
+
+Only inactive proposals may be edited or deleted through this interface.
+
+All modifications must be authorized and enforced server-side.
+
+Do not activate mappings or publish inventory.
+
+**Shopify is NOT connected. Do not attempt Shopify authentication, API requests, or integration changes.**
+
+## 4. Verification
+
+Test the following:
+
+- Opening saved proposals by mouse and keyboard
+- Displaying proposal details accurately
+- Editing and saving an inactive proposal
+- Changing a destination and requiring renewed verification
+- Deleting a proposal with confirmation
+- Canceling deletion without changes
+- Preventing duplicate proposals
+- Preserving audit history
+- Rejecting unauthorized edit/delete requests
+- Maintaining rejected mappings and protected holds
+- Save button spacing at desktop and mobile widths
+- No overlapping or clipped text
+
+Run TypeScript checks, relevant automated tests, and the frontend production build.
+
+Inspect the finished page visually.
+
+## 5. Delivery
+
+Report:
+
+1. Features implemented
+2. Files changed
+3. API or database changes, if any
+4. Test results
+5. Any remaining limitations
+
+**FINAL INSTRUCTION:**
+
+Implement these improvements in the existing SKU Mapping Center. Keep the approved appearance intact.
+
+Do not redesign the application, change unrelated features, or connect Shopify.

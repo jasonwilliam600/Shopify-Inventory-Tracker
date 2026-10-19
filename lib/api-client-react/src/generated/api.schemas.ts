@@ -108,6 +108,76 @@ export interface CenterProposalInput {
   unitChecked: boolean;
 }
 
+export interface CenterProposalEdit {
+  /** @minimum 0 */
+  revision: number;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  catalogKey: string;
+  /**
+     * @minLength 12
+     * @maxLength 2000
+     */
+  reason: string;
+  identityChecked: boolean;
+  unitChecked: boolean;
+}
+
+export interface CenterProposalDeletion {
+  /** @minimum 0 */
+  revision: number;
+  confirmed: boolean;
+}
+
+export interface CenterProposalDeleted {
+  id: string;
+  deleted: boolean;
+}
+
+export interface CenterProposalAudit {
+  action: string;
+  at: string;
+  /** @nullable */
+  reviewerIssuer: string | null;
+  /** @nullable */
+  reviewerSubject: string | null;
+  reason: string;
+  /** @nullable */
+  catalogSku: string | null;
+  /** @nullable */
+  catalogTitle: string | null;
+}
+
+export interface CenterProposalDetail {
+  id: string;
+  kind: string;
+  createdAt: string;
+  /** @nullable */
+  updatedAt: string | null;
+  revision: number;
+  state: string;
+  active: boolean;
+  supplier: string;
+  originalSku: string;
+  /** @nullable */
+  supplierTitle: string | null;
+  catalogKey: string;
+  /** @nullable */
+  catalogSku: string | null;
+  /** @nullable */
+  catalogTitle: string | null;
+  reason: string;
+  identityChecked: boolean;
+  unitChecked: boolean;
+  /** @nullable */
+  reviewerIssuer: string | null;
+  /** @nullable */
+  reviewerSubject: string | null;
+  history: CenterProposalAudit[];
+}
+
 export interface CenterProposalReceipt {
   id: string;
   createdAt: string;

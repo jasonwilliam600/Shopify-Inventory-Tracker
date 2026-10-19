@@ -12,8 +12,12 @@ import { BLOCKED_SOURCE_PAIRS, MAPPING_POLICY_COUNTS, REJECTED_MAPPINGS, mapping
 import { APPROVED_CATALOG_MAPPINGS, CANDIDATE_RULES } from "./sku-mapping";
 import { createMappingCenterRouter } from "../routes/mapping-center";
 import { GetMappingCenterResponse, PreviewCenterRuleResponse,
-  SaveCenterProposalResponse, ListCenterProposalsResponse } from "@workspace/api-zod";
-import { INDIVIDUAL_CORRECTION_REASONS, resolveIndividualReason } from "../../../inventory-tracker/src/lib/individual-correction-reason";
+  SaveCenterProposalResponse, ListCenterProposalsResponse, GetCenterProposalResponse } from "@workspace/api-zod";
+import { changeProposalJournal, readProposalJournal, proposalJournalDetail } from "./mapping-proposal-journal";
+const INDIVIDUAL_CORRECTION_REASONS = [
+  "Manually verified product match", "Manufacturer prefix exception", "Supplier SKU formatting difference",
+  "Incorrect previous mapping", "Selling unit / package quantity exception", "Other reason",
+];
 
 const catalog = parseAvailabilityCatalog(
   "Store SKU,Handle,Title,Option 1,Option 2,Option 3,Vendor\nWDS001,tree,Woodland Tree 1:72,,,,Woodland\nWDS002,tree2,Woodland Trees,,,,Woodland\n",
@@ -111,7 +115,8 @@ test("production cannot use the development proposal writer", async () => {
 test("both HTTP workflows round-trip isolated proposals; unauthorized saves, invalid selections and activation fail closed", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "tsh-center-api-"));
   const rejected = Object.keys(REJECTED_MAPPINGS).map(sku => ({ supplier: "MMD/Squadron", sku, title: "" }));
-  const sources = [source, ...rejected];
+  const reasonSources = INDIVIDUAL_CORRECTION_REASONS.map((_, index) => ({ ...source, sku: `FIXTURE-REASON-${index}` }));
+  const sources = [source, ...rejected, ...reasonSources];
   const app = express(); app.use(express.json());
   app.use("/api", createMappingCenterRouter({
     suppliers: async () => ["Fixture supplier", "MMD/Squadron", "Future supplier"],
@@ -121,6 +126,9 @@ test("both HTTP workflows round-trip isolated proposals; unauthorized saves, inv
     catalog: async () => catalog,
     save: async (_root, value, evidence, identity) => writePrivateProposal(root, value, evidence, identity),
     list: async () => listCenterProposals(root),
+    detail: async (_root, id) => proposalJournalDetail(root, id),
+    read: async (_root, id) => readProposalJournal(root, id),
+    change: async (_root, ...args) => changeProposalJournal(root, ...args),
   }, (req, res, next) => {
     if (req.get("x-fixture-reviewer") !== "yes") { res.status(401).json({ code: "REVIEWER_SIGN_IN_REQUIRED" }); return; }
     res.locals.mappingReviewer = reviewer; next();
@@ -152,16 +160,17 @@ test("both HTTP workflows round-trip isolated proposals; unauthorized saves, inv
       assert.ok(mappingHold(s.supplier, s.sku));
     }
     assert.equal(ListCenterProposalsResponse.parse(await (await call("/mapping-center/proposals")).json()).items.length, 13);
-    for (const choice of INDIVIDUAL_CORRECTION_REASONS) {
-      const reason = resolveIndividualReason(choice, "Fixture-only custom correction reason.");
-      const value = { kind: "individual", supplier: source.supplier, originalSku: source.sku,
+    for (const [index, choice] of INDIVIDUAL_CORRECTION_REASONS.entries()) {
+      const reasonSource = reasonSources[index];
+      const reason = choice === "Other reason" ? "Fixture-only custom correction reason." : choice;
+      const value = { kind: "individual", supplier: reasonSource.supplier, originalSku: reasonSource.sku,
         catalogKey: catalog.variants[0].key, reason, identityChecked: true, unitChecked: true };
       const response = await call("/mapping-center/proposals", value);
       assert.equal(response.status, 201);
       const receipt = SaveCenterProposalResponse.parse(await response.json());
       const saved = JSON.parse(await readFile(path.join(root, `${receipt.id}.json`), "utf8"));
       assert.equal(saved.input.reason, reason);
-      assert.deepEqual(saved.evidence.source, source);
+      assert.deepEqual(saved.evidence.source, reasonSource);
       assert.equal(saved.evidence.destination.sku, catalog.variants[0].sku);
       assert.equal(saved.evidence.destination.title, catalog.variants[0].title);
       assert.deepEqual(saved.reviewer, reviewer);
@@ -174,9 +183,60 @@ test("both HTTP workflows round-trip isolated proposals; unauthorized saves, inv
     }
     assert.equal((await call("/mapping-center/proposals", { kind: "individual", supplier: source.supplier,
       originalSku: source.sku, catalogKey: catalog.variants[0].key,
-      reason: resolveIndividualReason("Other reason", "too short"), identityChecked: true, unitChecked: true })).status, 400);
+      reason: "", identityChecked: true, unitChecked: true })).status, 400);
     // Records written with the previous free-text format still coexist and load unchanged.
     assert.equal(ListCenterProposalsResponse.parse(await (await call("/mapping-center/proposals")).json()).items.length, 19);
+    const managedInput = { kind: "individual", supplier: source.supplier, originalSku: source.sku,
+      catalogKey: catalog.variants[0].key, reason: "Manually verified product match", identityChecked: true, unitChecked: true };
+    const created = await call("/mapping-center/proposals", managedInput);
+    assert.equal(created.status, 201);
+    const managed = SaveCenterProposalResponse.parse(await created.json());
+    const original = await readFile(path.join(root, `${managed.id}.json`), "utf8");
+    const duplicate = await call("/mapping-center/proposals", managedInput);
+    assert.equal(duplicate.status, 409);
+    assert.equal((await duplicate.json() as { existingId: string }).existingId, managed.id);
+    const endpoint = `/mapping-center/proposals/${managed.id}`;
+    const mutate = (method: string, data: unknown, auth = true) => fetch(base + endpoint, {
+      method, headers: { "content-type": "application/json", ...(auth ? { "x-fixture-reviewer": "yes" } : {}) },
+      body: JSON.stringify(data),
+    });
+    assert.equal((await call(endpoint, undefined, false)).status, 401);
+    const initial = GetCenterProposalResponse.parse(await (await call(endpoint)).json());
+    assert.equal(initial.supplierTitle, source.title);
+    assert.equal(initial.history.length, 1);
+    const edit = { revision: 0, catalogKey: catalog.variants[1].key, reason: "Manufacturer prefix exception",
+      identityChecked: true, unitChecked: true };
+    assert.equal((await mutate("PATCH", edit, false)).status, 401);
+    assert.equal((await mutate("DELETE", { revision: 0, confirmed: true }, false)).status, 401);
+    assert.equal((await mutate("PATCH", { ...edit, identityChecked: false })).status, 400);
+    assert.equal((await mutate("PATCH", { ...edit, unitChecked: false })).status, 400);
+    assert.equal((await mutate("PATCH", { ...edit, catalogKey: "invented" })).status, 409);
+    assert.equal((await mutate("PATCH", { ...edit, reason: "short" })).status, 400);
+    assert.equal((await mutate("PATCH", { ...edit, active: true })).status, 400);
+    const edited = await mutate("PATCH", edit);
+    assert.equal(edited.status, 200);
+    const details = GetCenterProposalResponse.parse(await edited.json());
+    assert.equal(details.id, managed.id);
+    assert.equal(details.createdAt, initial.createdAt);
+    assert.equal(details.revision, 1);
+    assert.equal(details.catalogSku, catalog.variants[1].sku);
+    assert.equal(details.history.length, 2);
+    assert.equal(details.history[0].reason, managedInput.reason);
+    assert.equal(details.history[1].reason, edit.reason);
+    assert.equal((await mutate("PATCH", edit)).status, 409); // stale revision
+    assert.equal(await readFile(path.join(root, `${managed.id}.json`), "utf8"), original);
+    assert.equal((await mutate("DELETE", { revision: 1, confirmed: false })).status, 400);
+    assert.equal((await call(endpoint)).status, 200); // canceled deletion left it unchanged
+    assert.equal((await mutate("DELETE", { revision: 0, confirmed: true })).status, 409);
+    assert.equal((await mutate("DELETE", { revision: 1, confirmed: true })).status, 200);
+    assert.equal((await call(endpoint)).status, 410);
+    const deleted = await readProposalJournal(root, managed.id);
+    assert.equal(deleted.deleted, true);
+    assert.equal(deleted.events.length, 2);
+    assert.equal(deleted.events[1].action, "deleted");
+    assert.deepEqual(deleted.events[1].reviewer, reviewer);
+    assert.equal(await readFile(path.join(root, `${managed.id}.json`), "utf8"), original);
+    assert.ok(!(await listCenterProposals(root)).some(item => item.id === managed.id));
     const invalid = { kind: "individual", supplier: source.supplier, originalSku: source.sku, catalogKey: "invented",
       reason: "Fixture-only invalid destination.", identityChecked: true, unitChecked: true };
     assert.equal((await call("/mapping-center/proposals", invalid)).status, 409);

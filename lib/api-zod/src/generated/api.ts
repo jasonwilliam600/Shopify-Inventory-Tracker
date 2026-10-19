@@ -124,6 +124,112 @@ export const SaveCenterProposalResponse = zod.object({
 })
 
 
+export const GetCenterProposalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetCenterProposalResponse = zod.object({
+  "id": zod.string(),
+  "kind": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullable(),
+  "revision": zod.number().int(),
+  "state": zod.string(),
+  "active": zod.boolean(),
+  "supplier": zod.string(),
+  "originalSku": zod.string(),
+  "supplierTitle": zod.string().nullable(),
+  "catalogKey": zod.string(),
+  "catalogSku": zod.string().nullable(),
+  "catalogTitle": zod.string().nullable(),
+  "reason": zod.string(),
+  "identityChecked": zod.boolean(),
+  "unitChecked": zod.boolean(),
+  "reviewerIssuer": zod.string().nullable(),
+  "reviewerSubject": zod.string().nullable(),
+  "history": zod.array(zod.object({
+  "action": zod.string(),
+  "at": zod.string(),
+  "reviewerIssuer": zod.string().nullable(),
+  "reviewerSubject": zod.string().nullable(),
+  "reason": zod.string(),
+  "catalogSku": zod.string().nullable(),
+  "catalogTitle": zod.string().nullable()
+}))
+})
+
+
+export const UpdateCenterProposalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateCenterProposalBodyRevisionMin = 0;
+
+export const updateCenterProposalBodyCatalogKeyMax = 100;
+
+export const updateCenterProposalBodyReasonMin = 12;
+export const updateCenterProposalBodyReasonMax = 2000;
+
+
+
+export const UpdateCenterProposalBody = zod.object({
+  "revision": zod.number().int().min(updateCenterProposalBodyRevisionMin),
+  "catalogKey": zod.string().min(1).max(updateCenterProposalBodyCatalogKeyMax),
+  "reason": zod.string().min(updateCenterProposalBodyReasonMin).max(updateCenterProposalBodyReasonMax),
+  "identityChecked": zod.boolean(),
+  "unitChecked": zod.boolean()
+})
+
+export const UpdateCenterProposalResponse = zod.object({
+  "id": zod.string(),
+  "kind": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullable(),
+  "revision": zod.number().int(),
+  "state": zod.string(),
+  "active": zod.boolean(),
+  "supplier": zod.string(),
+  "originalSku": zod.string(),
+  "supplierTitle": zod.string().nullable(),
+  "catalogKey": zod.string(),
+  "catalogSku": zod.string().nullable(),
+  "catalogTitle": zod.string().nullable(),
+  "reason": zod.string(),
+  "identityChecked": zod.boolean(),
+  "unitChecked": zod.boolean(),
+  "reviewerIssuer": zod.string().nullable(),
+  "reviewerSubject": zod.string().nullable(),
+  "history": zod.array(zod.object({
+  "action": zod.string(),
+  "at": zod.string(),
+  "reviewerIssuer": zod.string().nullable(),
+  "reviewerSubject": zod.string().nullable(),
+  "reason": zod.string(),
+  "catalogSku": zod.string().nullable(),
+  "catalogTitle": zod.string().nullable()
+}))
+})
+
+
+export const DeleteCenterProposalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const deleteCenterProposalBodyRevisionMin = 0;
+
+
+
+export const DeleteCenterProposalBody = zod.object({
+  "revision": zod.number().int().min(deleteCenterProposalBodyRevisionMin),
+  "confirmed": zod.boolean()
+})
+
+export const DeleteCenterProposalResponse = zod.object({
+  "id": zod.string(),
+  "deleted": zod.boolean()
+})
+
+
 /**
  * @summary Return server-verified Clerk reviewer session and allowlist status
  */
