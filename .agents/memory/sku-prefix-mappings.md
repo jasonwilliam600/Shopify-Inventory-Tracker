@@ -94,3 +94,15 @@ Store-format exceptions include case differences inside the part number, not onl
 **Why:** The approved export includes supplier `MENDS4s` versus store `MGM-DS4S`. Rejecting all suffix case differences would discard an approved pair; forcing one source casing would fail to reproduce the existing store SKU.
 
 **How to apply:** When validating approved evidence, compare the complete retained alphanumeric part without case sensitivity, then use the exact exported store identifier as the candidate. Never reduce identifiers to a numeric suffix.
+
+The owner's Mapping Center workflow is manufacturer-prefix rules first, with
+individual SKU corrections as the fallback, exclusively for Top Speed Hobbies.
+Supplier choices must expand dynamically, not be permanently limited to four.
+
+**Why:** The owner explicitly approved this workflow and design, while requiring
+historical comparisons to remain unverified and existing exceptions and holds
+to take precedence.
+
+**How to apply:** Keep new proposals separate from active configuration and
+verified product relationships. Prefix or title agreement alone is not product
+identity evidence; a rejected-product proposal must not silently reopen its hold.

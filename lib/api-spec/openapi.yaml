@@ -19,6 +19,85 @@ tags:
   - name: matrixify
     description: Owner-reviewed, read-only Matrixify workbook preparation
 paths:
+  /mapping-center:
+    get:
+      operationId: getMappingCenter
+      tags: [mapping-review]
+      responses:
+        "200":
+          description: Historical mapping center configuration
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MappingCenterConfiguration"}
+  /mapping-center/preview:
+    post:
+      operationId: previewCenterRule
+      tags: [mapping-review]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CenterRulePreviewInput"}
+      responses:
+        "200":
+          description: Paginated historical comparisons
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterRulePreview"}
+        "400":
+          description: Invalid literal prefix
+  /mapping-center/sources:
+    get:
+      operationId: searchCenterSources
+      tags: [mapping-review]
+      parameters:
+        - {name: search, in: query, required: true, schema: {type: string, minLength: 2, maxLength: 200}}
+        - {name: supplier, in: query, schema: {type: string}}
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+      responses:
+        "200":
+          description: Paginated supplier observations
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterSourceResults"}
+  /mapping-center/proposals:
+    get:
+      operationId: listCenterProposals
+      tags: [mapping-review]
+      responses:
+        "200":
+          description: Latest private proposals for an authorized reviewer
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterProposalResults"}
+        "401":
+          description: Reviewer sign-in required
+        "403":
+          description: Reviewer authorization required
+    post:
+      operationId: saveCenterProposal
+      tags: [mapping-review]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CenterProposalInput"}
+      responses:
+        "201":
+          description: Saved inactive historical proposal, never an approval
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CenterProposalReceipt"}
+        "400":
+          description: Invalid or incomplete evidence
+        "401":
+          description: Reviewer sign-in required
+        "403":
+          description: Reviewer authorization required
+        "409":
+          description: Source or historical destination no longer available
+        "503":
+          description: Private development proposal storage unavailable
   /reviewer/session:
     get:
       operationId: getReviewerSession
@@ -493,6 +572,101 @@ paths:
                   $ref: "#/components/schemas/Activity"
 components:
   schemas:
+    MappingCenterConfiguration:
+      type: object
+      required: [suppliers, ruleCount, rejectedCount, heldCount, approvalBlocker]
+      properties:
+        suppliers: {type: array, items: {type: string}}
+        ruleCount: {type: integer}
+        rejectedCount: {type: integer}
+        heldCount: {type: integer}
+        approvalBlocker: {type: string}
+    CenterRulePreviewInput:
+      type: object
+      required: [supplier, incoming, destination]
+      properties:
+        supplier: {type: string}
+        incoming: {type: string, minLength: 1, maxLength: 30}
+        destination: {type: string, minLength: 1, maxLength: 30}
+        search: {type: string, maxLength: 200}
+        status: {type: string, enum: [all, review, conflict, protected]}
+        page: {type: integer, minimum: 1, default: 1}
+    CenterComparison:
+      type: object
+      required: [supplier, originalSku, supplierTitle, proposedSku, catalogTitle, catalogKey, status, warnings, historical, verified, publishable]
+      properties:
+        supplier: {type: string}
+        originalSku: {type: string}
+        supplierTitle: {type: [string, "null"]}
+        proposedSku: {type: string}
+        catalogTitle: {type: [string, "null"]}
+        catalogKey: {type: [string, "null"]}
+        status: {type: string}
+        warnings: {type: array, items: {type: string}}
+        historical: {type: boolean}
+        verified: {type: boolean}
+        publishable: {type: boolean}
+    CenterRulePreview:
+      type: object
+      required: [items, total, affected, page, totalPages, conflicts]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/CenterComparison"}}
+        total: {type: integer}
+        affected: {type: integer}
+        page: {type: integer}
+        totalPages: {type: integer}
+        conflicts: {type: array, items: {type: string}}
+    CenterSource:
+      type: object
+      required: [supplier, sku, title]
+      properties:
+        supplier: {type: string}
+        sku: {type: string}
+        title: {type: [string, "null"]}
+    CenterSourceResults:
+      type: object
+      required: [items, total, page, totalPages]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/CenterSource"}}
+        total: {type: integer}
+        page: {type: integer}
+        totalPages: {type: integer}
+    CenterProposalInput:
+      type: object
+      required: [kind, supplier, reason, identityChecked, unitChecked]
+      properties:
+        kind: {type: string, enum: [rule, individual]}
+        supplier: {type: string}
+        incoming: {type: string, maxLength: 30}
+        destination: {type: string, maxLength: 30}
+        originalSku: {type: string}
+        catalogKey: {type: string}
+        reason: {type: string, minLength: 12, maxLength: 2000}
+        identityChecked: {type: boolean}
+        unitChecked: {type: boolean}
+    CenterProposalReceipt:
+      type: object
+      required: [id, createdAt, state, active, sha256]
+      properties:
+        id: {type: string}
+        createdAt: {type: string}
+        state: {type: string}
+        active: {type: boolean}
+        sha256: {type: string}
+    CenterSavedProposal:
+      type: object
+      required: [id, createdAt, kind, summary, state]
+      properties:
+        id: {type: string}
+        createdAt: {type: string}
+        kind: {type: string}
+        summary: {type: string}
+        state: {type: string}
+    CenterProposalResults:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/CenterSavedProposal"}}
     SkuMappingRow:
       type: object
       required: [supplier, originalSku, suggestedSkus, diagnosticSkus, supplierQuantity, quantityText, quantityKind, availability, freshness, lastFeedImport, mappingStatus, reason, supplierProductName, shopifyTitles, trusted, publishable, ruleDecision, warnings]

@@ -17,6 +17,7 @@ import Dashboard from "@/pages/store-dashboard";
 import Inventory from "@/pages/inventory";
 import Suppliers from "@/pages/suppliers";
 import SkuMappings from "@/pages/sku-mappings";
+import SkuMappingCenter from "@/pages/sku-mapping-center";
 import Matrixify from "@/pages/matrixify";
 import { ClerkHost, ClerkSignInPage, ClerkSignUpPage } from "@/lib/clerk-host";
 
@@ -35,6 +36,7 @@ function Router() {
               <Route path="/inventory" component={Inventory} />
               <Route path="/suppliers" component={Suppliers} />
               <Route path="/sku-mappings" component={SkuMappings} />
+              <Route path="/sku-mapping-center" component={SkuMappingCenter} />
               <Route path="/matrixify" component={Matrixify} />
               <Route component={NotFound} />
             </Switch>

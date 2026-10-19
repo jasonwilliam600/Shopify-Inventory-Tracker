@@ -8,6 +8,122 @@
 import * as zod from 'zod';
 
 
+export const GetMappingCenterResponse = zod.object({
+  "suppliers": zod.array(zod.string()),
+  "ruleCount": zod.number().int(),
+  "rejectedCount": zod.number().int(),
+  "heldCount": zod.number().int(),
+  "approvalBlocker": zod.string()
+})
+
+
+export const previewCenterRuleBodyIncomingMax = 30;
+
+export const previewCenterRuleBodyDestinationMax = 30;
+
+export const previewCenterRuleBodySearchMax = 200;
+
+export const previewCenterRuleBodyPageDefault = 1;
+
+
+
+export const PreviewCenterRuleBody = zod.object({
+  "supplier": zod.string(),
+  "incoming": zod.string().min(1).max(previewCenterRuleBodyIncomingMax),
+  "destination": zod.string().min(1).max(previewCenterRuleBodyDestinationMax),
+  "search": zod.string().max(previewCenterRuleBodySearchMax).optional(),
+  "status": zod.enum(['all', 'review', 'conflict', 'protected']).optional(),
+  "page": zod.number().int().min(1).default(previewCenterRuleBodyPageDefault)
+})
+
+export const PreviewCenterRuleResponse = zod.object({
+  "items": zod.array(zod.object({
+  "supplier": zod.string(),
+  "originalSku": zod.string(),
+  "supplierTitle": zod.string().nullable(),
+  "proposedSku": zod.string(),
+  "catalogTitle": zod.string().nullable(),
+  "catalogKey": zod.string().nullable(),
+  "status": zod.string(),
+  "warnings": zod.array(zod.string()),
+  "historical": zod.boolean(),
+  "verified": zod.boolean(),
+  "publishable": zod.boolean()
+})),
+  "total": zod.number().int(),
+  "affected": zod.number().int(),
+  "page": zod.number().int(),
+  "totalPages": zod.number().int(),
+  "conflicts": zod.array(zod.string())
+})
+
+
+export const searchCenterSourcesQuerySearchMin = 2;
+export const searchCenterSourcesQuerySearchMax = 200;
+
+export const searchCenterSourcesQueryPageDefault = 1;
+
+
+
+export const SearchCenterSourcesQueryParams = zod.object({
+  "search": zod.coerce.string().min(searchCenterSourcesQuerySearchMin).max(searchCenterSourcesQuerySearchMax),
+  "supplier": zod.coerce.string().optional(),
+  "page": zod.coerce.number().int().min(1).default(searchCenterSourcesQueryPageDefault)
+})
+
+export const SearchCenterSourcesResponse = zod.object({
+  "items": zod.array(zod.object({
+  "supplier": zod.string(),
+  "sku": zod.string(),
+  "title": zod.string().nullable()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "totalPages": zod.number().int()
+})
+
+
+export const ListCenterProposalsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.string(),
+  "createdAt": zod.string(),
+  "kind": zod.string(),
+  "summary": zod.string(),
+  "state": zod.string()
+}))
+})
+
+
+export const saveCenterProposalBodyIncomingMax = 30;
+
+export const saveCenterProposalBodyDestinationMax = 30;
+
+export const saveCenterProposalBodyReasonMin = 12;
+export const saveCenterProposalBodyReasonMax = 2000;
+
+
+
+export const SaveCenterProposalBody = zod.object({
+  "kind": zod.enum(['rule', 'individual']),
+  "supplier": zod.string(),
+  "incoming": zod.string().max(saveCenterProposalBodyIncomingMax).optional(),
+  "destination": zod.string().max(saveCenterProposalBodyDestinationMax).optional(),
+  "originalSku": zod.string().optional(),
+  "catalogKey": zod.string().optional(),
+  "reason": zod.string().min(saveCenterProposalBodyReasonMin).max(saveCenterProposalBodyReasonMax),
+  "identityChecked": zod.boolean(),
+  "unitChecked": zod.boolean()
+})
+
+export const SaveCenterProposalResponse = zod.object({
+  "id": zod.string(),
+  "createdAt": zod.string(),
+  "state": zod.string(),
+  "active": zod.boolean(),
+  "sha256": zod.string()
+})
+
+
 /**
  * @summary Return server-verified Clerk reviewer session and allowlist status
  */

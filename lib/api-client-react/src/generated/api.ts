@@ -21,6 +21,12 @@ import type {
 
 import type {
   Activity,
+  CenterProposalInput,
+  CenterProposalReceipt,
+  CenterProposalResults,
+  CenterRulePreview,
+  CenterRulePreviewInput,
+  CenterSourceResults,
   Dashboard,
   HealthStatus,
   ImportResult,
@@ -35,6 +41,7 @@ import type {
   ListSupplierAvailabilityParams,
   MappingCapabilities,
   MappingCatalogPage,
+  MappingCenterConfiguration,
   MappingDecisionResult,
   MatrixifyDownloadInput,
   MatrixifyPreview,
@@ -43,6 +50,7 @@ import type {
   MmdRefreshStatus,
   RetrieveMatrixifyPreviewPageParams,
   ReviewerSession,
+  SearchCenterSourcesParams,
   SearchMappingCatalogParams,
   SkuMappingApprovalInput,
   SkuMappingPage,
@@ -79,6 +87,356 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetMappingCenterUrl = () => {
+
+
+
+
+  return `/api/mapping-center`
+}
+
+export const getMappingCenter = async ( options?: Parameters<typeof customFetch>[1]): Promise<MappingCenterConfiguration> => {
+
+  return customFetch<MappingCenterConfiguration>(getGetMappingCenterUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMappingCenterQueryKey = () => {
+    return [
+    `/api/mapping-center`
+    ] as const;
+    }
+
+
+export const getGetMappingCenterQueryOptions = <TData = Awaited<ReturnType<typeof getMappingCenter>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMappingCenter>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMappingCenterQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMappingCenter>>> = ({ signal }) => getMappingCenter({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMappingCenter>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMappingCenterQueryResult = NonNullable<Awaited<ReturnType<typeof getMappingCenter>>>
+export type GetMappingCenterQueryError = ErrorType<unknown>
+
+
+
+export function useGetMappingCenter<TData = Awaited<ReturnType<typeof getMappingCenter>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMappingCenter>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMappingCenterQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPreviewCenterRuleUrl = () => {
+
+
+
+
+  return `/api/mapping-center/preview`
+}
+
+export const previewCenterRule = async (centerRulePreviewInput: CenterRulePreviewInput, options?: Parameters<typeof customFetch>[1]): Promise<CenterRulePreview> => {
+
+  return customFetch<CenterRulePreview>(getPreviewCenterRuleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(centerRulePreviewInput)
+  }
+);}
+
+
+
+
+
+export const getPreviewCenterRuleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewCenterRule>>, TError,{data: BodyType<CenterRulePreviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof previewCenterRule>>, TError,{data: BodyType<CenterRulePreviewInput>}, TContext> => {
+
+const mutationKey = ['previewCenterRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewCenterRule>>, {data: BodyType<CenterRulePreviewInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  previewCenterRule(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewCenterRuleMutationResult = NonNullable<Awaited<ReturnType<typeof previewCenterRule>>>
+    export type PreviewCenterRuleMutationBody = BodyType<CenterRulePreviewInput>
+    export type PreviewCenterRuleMutationError = ErrorType<void>
+
+    export const usePreviewCenterRule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewCenterRule>>, TError,{data: BodyType<CenterRulePreviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof previewCenterRule>>,
+        TError,
+        {data: BodyType<CenterRulePreviewInput>},
+        TContext
+      > => {
+      return useMutation(getPreviewCenterRuleMutationOptions(options));
+    }
+
+export const getSearchCenterSourcesUrl = (params: SearchCenterSourcesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/mapping-center/sources?${stringifiedParams}` : `/api/mapping-center/sources`
+}
+
+export const searchCenterSources = async (params: SearchCenterSourcesParams, options?: Parameters<typeof customFetch>[1]): Promise<CenterSourceResults> => {
+
+  return customFetch<CenterSourceResults>(getSearchCenterSourcesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchCenterSourcesQueryKey = (params?: SearchCenterSourcesParams,) => {
+    return [
+    `/api/mapping-center/sources`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchCenterSourcesQueryOptions = <TData = Awaited<ReturnType<typeof searchCenterSources>>, TError = ErrorType<unknown>>(params: SearchCenterSourcesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchCenterSources>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchCenterSourcesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchCenterSources>>> = ({ signal }) => searchCenterSources(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchCenterSources>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchCenterSourcesQueryResult = NonNullable<Awaited<ReturnType<typeof searchCenterSources>>>
+export type SearchCenterSourcesQueryError = ErrorType<unknown>
+
+
+
+export function useSearchCenterSources<TData = Awaited<ReturnType<typeof searchCenterSources>>, TError = ErrorType<unknown>>(
+ params: SearchCenterSourcesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchCenterSources>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchCenterSourcesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListCenterProposalsUrl = () => {
+
+
+
+
+  return `/api/mapping-center/proposals`
+}
+
+export const listCenterProposals = async ( options?: Parameters<typeof customFetch>[1]): Promise<CenterProposalResults> => {
+
+  return customFetch<CenterProposalResults>(getListCenterProposalsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCenterProposalsQueryKey = () => {
+    return [
+    `/api/mapping-center/proposals`
+    ] as const;
+    }
+
+
+export const getListCenterProposalsQueryOptions = <TData = Awaited<ReturnType<typeof listCenterProposals>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCenterProposals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCenterProposalsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCenterProposals>>> = ({ signal }) => listCenterProposals({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCenterProposals>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCenterProposalsQueryResult = NonNullable<Awaited<ReturnType<typeof listCenterProposals>>>
+export type ListCenterProposalsQueryError = ErrorType<void>
+
+
+
+export function useListCenterProposals<TData = Awaited<ReturnType<typeof listCenterProposals>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCenterProposals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCenterProposalsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveCenterProposalUrl = () => {
+
+
+
+
+  return `/api/mapping-center/proposals`
+}
+
+export const saveCenterProposal = async (centerProposalInput: CenterProposalInput, options?: Parameters<typeof customFetch>[1]): Promise<CenterProposalReceipt> => {
+
+  return customFetch<CenterProposalReceipt>(getSaveCenterProposalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(centerProposalInput)
+  }
+);}
+
+
+
+
+
+export const getSaveCenterProposalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCenterProposal>>, TError,{data: BodyType<CenterProposalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveCenterProposal>>, TError,{data: BodyType<CenterProposalInput>}, TContext> => {
+
+const mutationKey = ['saveCenterProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveCenterProposal>>, {data: BodyType<CenterProposalInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveCenterProposal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveCenterProposalMutationResult = NonNullable<Awaited<ReturnType<typeof saveCenterProposal>>>
+    export type SaveCenterProposalMutationBody = BodyType<CenterProposalInput>
+    export type SaveCenterProposalMutationError = ErrorType<void>
+
+    export const useSaveCenterProposal = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCenterProposal>>, TError,{data: BodyType<CenterProposalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveCenterProposal>>,
+        TError,
+        {data: BodyType<CenterProposalInput>},
+        TContext
+      > => {
+      return useMutation(getSaveCenterProposalMutationOptions(options));
+    }
 
 export const getGetReviewerSessionUrl = () => {
 

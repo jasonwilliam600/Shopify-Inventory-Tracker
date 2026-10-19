@@ -5,6 +5,129 @@
  * Inventory tracking API for Shopify products and wholesaler updates
  * OpenAPI spec version: 0.1.0
  */
+export interface MappingCenterConfiguration {
+  suppliers: string[];
+  ruleCount: number;
+  rejectedCount: number;
+  heldCount: number;
+  approvalBlocker: string;
+}
+
+export type CenterRulePreviewInputStatus = typeof CenterRulePreviewInputStatus[keyof typeof CenterRulePreviewInputStatus];
+
+
+export const CenterRulePreviewInputStatus = {
+  all: 'all',
+  review: 'review',
+  conflict: 'conflict',
+  protected: 'protected',
+} as const;
+
+export interface CenterRulePreviewInput {
+  supplier: string;
+  /**
+     * @minLength 1
+     * @maxLength 30
+     */
+  incoming: string;
+  /**
+     * @minLength 1
+     * @maxLength 30
+     */
+  destination: string;
+  /** @maxLength 200 */
+  search?: string;
+  status?: CenterRulePreviewInputStatus;
+  /** @minimum 1 */
+  page?: number;
+}
+
+export interface CenterComparison {
+  supplier: string;
+  originalSku: string;
+  /** @nullable */
+  supplierTitle: string | null;
+  proposedSku: string;
+  /** @nullable */
+  catalogTitle: string | null;
+  /** @nullable */
+  catalogKey: string | null;
+  status: string;
+  warnings: string[];
+  historical: boolean;
+  verified: boolean;
+  publishable: boolean;
+}
+
+export interface CenterRulePreview {
+  items: CenterComparison[];
+  total: number;
+  affected: number;
+  page: number;
+  totalPages: number;
+  conflicts: string[];
+}
+
+export interface CenterSource {
+  supplier: string;
+  sku: string;
+  /** @nullable */
+  title: string | null;
+}
+
+export interface CenterSourceResults {
+  items: CenterSource[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export type CenterProposalInputKind = typeof CenterProposalInputKind[keyof typeof CenterProposalInputKind];
+
+
+export const CenterProposalInputKind = {
+  rule: 'rule',
+  individual: 'individual',
+} as const;
+
+export interface CenterProposalInput {
+  kind: CenterProposalInputKind;
+  supplier: string;
+  /** @maxLength 30 */
+  incoming?: string;
+  /** @maxLength 30 */
+  destination?: string;
+  originalSku?: string;
+  catalogKey?: string;
+  /**
+     * @minLength 12
+     * @maxLength 2000
+     */
+  reason: string;
+  identityChecked: boolean;
+  unitChecked: boolean;
+}
+
+export interface CenterProposalReceipt {
+  id: string;
+  createdAt: string;
+  state: string;
+  active: boolean;
+  sha256: string;
+}
+
+export interface CenterSavedProposal {
+  id: string;
+  createdAt: string;
+  kind: string;
+  summary: string;
+  state: string;
+}
+
+export interface CenterProposalResults {
+  items: CenterSavedProposal[];
+}
+
 export type SkuMappingRowMappingStatus = typeof SkuMappingRowMappingStatus[keyof typeof SkuMappingRowMappingStatus];
 
 
@@ -743,6 +866,19 @@ export interface Activity {
   description: string;
   createdAt: string;
 }
+
+export type SearchCenterSourcesParams = {
+/**
+ * @minLength 2
+ * @maxLength 200
+ */
+search: string;
+supplier?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+};
 
 export type RetrieveMatrixifyPreviewPageParams = {
 previewId: string;

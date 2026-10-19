@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocation, useSearch } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import {
   AlertTriangle,
   ArrowLeftRight,
@@ -236,6 +236,11 @@ function MappingDialog({ row, onClose, canApprove, reviewerAuthorized, returnFoc
             <p className="mapping-field-hint">Full timestamped audit events are not exposed by the current review response. Existing history is unchanged.</p>
             {!showReview && <footer className="mapping-dialog-footer">
               <button className="button-secondary" onClick={onClose}>Back to filtered list</button>
+              <Link
+                className="button-secondary"
+                href={`/sku-mapping-center?workflow=individual&supplier=${encodeURIComponent(row.supplier)}&sku=${encodeURIComponent(row.originalSku)}`}
+                data-testid="link-fix-rejected-in-center"
+              >Prepare inactive correction proposal</Link>
               <button className="button-secondary" onClick={() => setShowReview(true)} data-testid="button-open-rejected-review">Open existing mapping review <ChevronRight size={14} /></button>
               <span className="mapping-disabled-caption">Diagnostic review is available; correcting or approving a protected rejection is not supported by this workflow.</span>
             </footer>}
@@ -513,6 +518,10 @@ export default function SkuMappings() {
           <div><span>REFERENCE CATALOG</span><strong>October 5 export</strong><small>Historical snapshot · not live Shopify</small></div>
         </div>
       </section>
+      <div className="mapping-center-entry">
+        <div><strong>Need to propose a SKU relationship?</strong><span>Use the separate, historical-catalog-only Mapping Center. Existing approvals and review decisions remain unchanged.</span></div>
+        <Link href="/sku-mapping-center" data-testid="link-open-mapping-center">Open SKU Mapping Center <ChevronRight size={15} /></Link>
+      </div>
 
       <section className="capability-banner" data-testid="notice-mapping-capabilities">
         <div className="capability-icon"><ShieldAlert size={19} /></div>

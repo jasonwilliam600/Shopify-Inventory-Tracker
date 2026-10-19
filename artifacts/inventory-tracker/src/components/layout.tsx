@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter"
-import { PackageSearch, LayoutDashboard, FileSpreadsheet, GitBranch, ClipboardCheck } from "lucide-react"
+import { PackageSearch, LayoutDashboard, FileSpreadsheet, GitBranch, ClipboardCheck, ArrowRightLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeSelector } from "@/components/theme-selector"
 import { AccountMenu } from "@/components/account-menu"
@@ -18,6 +18,7 @@ export function Layout({ children }: LayoutProps) {
     { href: "/inventory", label: "Inventory", icon: PackageSearch },
     { href: "/suppliers", label: "Suppliers", icon: FileSpreadsheet },
     { href: "/sku-mappings", label: "SKU Mapping Manager", icon: GitBranch },
+    { href: "/sku-mapping-center", label: "SKU Mapping Center", icon: ArrowRightLeft },
     { href: "/matrixify", label: "Matrixify Review", icon: ClipboardCheck },
   ]
 

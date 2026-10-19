@@ -1,0 +1,178 @@
+IMPLEMENTATION REQUEST — TSH INVENTORY SYNC
+SKU MAPPING CENTER — APPROVED DESIGN
+
+Implement a fully functional SKU Mapping Center that reproduces the attached approved ChatGPT mockup as closely as possible, pixel-for-pixel.
+
+THIS DESIGN IS APPROVED. DO NOT REDESIGN IT.
+
+The application is exclusively for Top Speed Hobbies. It must support an expanding number of suppliers without hardcoded supplier limits.
+
+## 1. VISUAL DESIGN — EXACT REPRODUCTION
+
+Match the approved mockup's:
+
+- Dark navy background and panel colors
+- Typography, spacing, borders, and rounded corners
+- Header and summary statistic cards
+- Two large navigation cards
+- Manufacturer Prefix Rule editor
+- Product Match Preview
+- Individual SKU Correction editor
+- Side-by-side supplier/catalog product comparisons
+- Status badges, verification controls, and action buttons
+- Layout hierarchy, responsive behavior, and navigation
+
+Use the attached screenshots as the visual specification.
+
+Do not introduce additional explanatory paragraphs, oversized warning boxes, unrelated features, or developer-oriented clutter.
+
+Preserve the existing application's navigation and surrounding layout.
+
+## 2. PRIMARY WORKFLOW — MANUFACTURER PREFIX RULES
+
+Manufacturer Rules must be the default selected workflow.
+
+Provide:
+
+- Dynamically populated supplier selector, including All Suppliers
+- Incoming supplier prefix field
+- Destination catalog prefix field
+- Visual prefix transformation preview
+- Preview Affected Products action
+- Searchable, filterable product comparison results
+- Supplier SKU and product title
+- Proposed catalog SKU and product title
+- Match status and mismatch warnings
+- Manufacturer, scale, size, and selling-unit checks
+- Collision detection and missing-destination detection
+- Rule validation and approval controls
+
+Example: WOO → WDS.
+
+Approved manufacturer rules should automatically apply to applicable products during future supplier imports.
+
+Preserve original supplier SKUs.
+
+Manufacturer rules must never automatically override rejected mappings, individual exceptions, or protected holds.
+
+Do not treat matching prefixes or similar titles as sufficient proof of product identity.
+
+## 3. SECONDARY WORKFLOW — INDIVIDUAL SKU CORRECTIONS
+
+Provide the exact Fix Individual SKU tab shown in the approved design.
+
+This is a fallback for products that cannot be resolved correctly through manufacturer rules.
+
+Include:
+
+- Searchable supplier product selection
+- Supplier SKU and product title
+- Searchable historical catalog destination selection
+- Proposed destination SKU and product title
+- Side-by-side product comparison
+- Manufacturer and product identity verification
+- Scale, size, and selling-unit verification
+- Required correction reason
+- Save Proposed Individual Correction action
+
+Selecting a rejected mapping from the existing Mapping Manager should open this workflow with the source product preselected.
+
+An individual correction must not silently approve, activate, or publish a rejected or protected mapping.
+
+## 4. HISTORICAL CATALOG AND SHOPIFY RESTRICTIONS
+
+IMPORTANT: TSH Inventory Sync is NOT connected to Shopify.
+
+The existing October 5 historical catalog export is the available catalog reference.
+
+Use that historical data for product lookup and proposed destination comparisons.
+
+Clearly identify historical matches as unverified.
+
+Do not attempt Shopify authentication, live Shopify API calls, publishing, or synchronization.
+
+Do not invent missing product titles, SKU matches, or catalog records.
+
+## 5. DATA INTEGRITY AND SAFETY
+
+Preserve all existing:
+
+- Supplier connections and ingestion workflows
+- Manufacturer prefix mappings
+- Individual mapping records
+- Rejected mapping decisions
+- 209 protected source SKU holds
+- Audit history and reviewer evidence
+- Inventory calculations and matching safeguards
+
+Do not migrate, reset, delete, or overwrite existing records.
+
+Do not silently modify rejected or protected records.
+
+Any new proposed rule or correction must remain separate from an approved, active mapping until all required validations and authorization checks pass.
+
+If additional persistence or API changes are required, implement them narrowly and safely, without altering unrelated systems.
+
+## 6. PERFORMANCE AND SCALABILITY
+
+Supplier lists must be dynamic.
+
+Product comparisons must support efficient searching, filtering, and pagination for large catalogs.
+
+Avoid loading entire supplier catalogs into browser memory.
+
+Prevent duplicate requests and unnecessary rerenders.
+
+The interface must remain responsive with hundreds of thousands of supplier SKUs.
+
+## 7. FULL FUNCTIONALITY
+
+This must NOT be a static visual mockup.
+
+All intended controls must be functional and connected to real existing application data and supported workflows.
+
+Where a feature requires new backend support, implement it safely rather than displaying a fake success message.
+
+Do not use hardcoded example products or pretend that a proposed correction has been saved.
+
+Keep approval or saving actions disabled only when required information, permissions, or validation are missing, with a clear explanation.
+
+## 8. VERIFICATION
+
+Run:
+
+- Frontend and API TypeScript checks
+- Frontend production build
+- Relevant automated tests
+- Manufacturer rule transformation tests
+- Collision and mismatch tests
+- Individual exception tests
+- Protected hold and rejected mapping regression tests
+- UI navigation and keyboard accessibility tests
+
+Verify that the existing 12 rejected records, 200 flagged relationships, and 209 protected holds remain intact.
+
+Test both workflows end to end using non-destructive test fixtures.
+
+If browser testing is unavailable, report that limitation without claiming the UI was fully verified.
+
+## 9. DELIVERY
+
+Provide:
+
+1. A summary of implemented functionality
+2. Files changed
+3. Any new API endpoints or database changes
+4. Test results
+5. Any remaining limitations
+6. Screenshots of the finished Manufacturer Rules and Individual SKU Correction screens
+
+FINAL REQUIREMENT:
+
+Reproduce the approved design faithfully while making it fully functional.
+
+Do not redesign it, simplify it, or replace it with another interface.
+
+Do not change unrelated application features.
+
+Do not connect Shopify.
