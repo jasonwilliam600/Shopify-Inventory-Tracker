@@ -16,3 +16,22 @@ Unicode SKU normalization needs a UTF-8 test database: `initdb --no-locale` alon
 may default to SQL_ASCII. SQL generated through JavaScript text substitution must
 preserve literal dollar quoting and dollar-anchored regexes; use a replacement
 callback instead of replacement-string interpolation.
+
+Non-owner test roles may not read the `unix_socket_directories` setting. Do not
+grant broad settings access merely to let an isolation helper run.
+
+**Why:** PostgreSQL rejects that metadata read for an otherwise correctly
+restricted runtime role.
+
+**How to apply:** Verify an explicitly configured private socket path, its owner
+and non-symlink parent, and a Unix-socket connection instead. Keep live connection
+environment variables out of child-process environments.
+
+When using synchronous child-process tooling, direct PostgreSQL daemon output to
+an explicit private log on restart as well as startup.
+
+**Why:** A restarted daemon can retain inherited pipe handles, hanging the caller
+even when the database has restarted successfully.
+
+**How to apply:** Use `pg_ctl -l`, bounded command timeouts, and guaranteed shutdown
+and disposal of only the test cluster.
