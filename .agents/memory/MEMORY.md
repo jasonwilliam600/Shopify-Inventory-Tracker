@@ -17,3 +17,4 @@
 - [Isolated SQL review](sql-review-safety.md) — preserve exact proposals, isolate tests from application DBs, and preserve Unicode and SQL dollar quoting.
 - [Completion scope](launch-scope.md) — finish existing four-supplier inventory and pricing sync toward one launch; separate explicit approvals for live operations.
 - [OpenAPI generation](openapi-generation.md) — mixed path/query parameters can collide in generated Zod exports; correct the contract or generator, not generated files.
+- [Mapping durability](mapping-durability.md) — permanent PostgreSQL persistence; missing proposal history is not empty history, and migration requires separate approval.

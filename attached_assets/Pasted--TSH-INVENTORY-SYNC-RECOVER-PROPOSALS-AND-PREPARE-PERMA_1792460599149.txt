@@ -1,0 +1,84 @@
+# TSH INVENTORY SYNC — RECOVER PROPOSALS AND PREPARE PERMANENT STORAGE
+
+The database inspection is accepted as the basis for the next phase.
+
+Do not execute the migration yet.
+
+## Priority 1 — Locate the missing proposal journal
+
+The configured directory `/home/runner/tsh-private-mapping-proposals` was absent from the inspected workspace.
+
+Investigate where the original proposal journal was actually written.
+
+Check:
+
+- The journal path configuration and environment-variable overrides.
+- The runtime and workspace used when the proposals were created.
+- Existing Replit development and deployment environments, where accessible.
+- Available persistent storage, snapshots, and backups.
+- Existing application logs for journal write locations and successful saves.
+
+Do not create an empty replacement journal or initialize an empty history.
+
+Do not overwrite or modify any discovered journal.
+
+If found, inventory all proposal records, UUIDs, revisions, edits, deletions, and audit events.
+
+If inaccessible, identify the exact environment or access required to recover it.
+
+## Priority 2 — Verify existing mapping data
+
+Confirm the integrity and current storage of:
+
+- 72 manufacturer prefix rules
+- 4,774 exact-item overrides
+- 12 rejected relationships
+- 200 flagged relationships
+- 209 distinct protected source SKUs
+- Historical catalog destination data
+
+Preserve all existing protections and original evidence.
+
+## Priority 3 — Prepare the PostgreSQL migration
+
+Reuse the existing PostgreSQL database.
+
+Prepare the additive database schema described in the inspection report, including permanent storage for manufacturer rules, individual proposals, protections, historical destinations, and append-only audit events.
+
+Provide:
+
+1. Exact proposed SQL migration.
+2. Exact rollback SQL.
+3. Source-to-destination data mapping.
+4. Baseline record counts and checksums.
+5. Duplicate and conflict-handling strategy.
+6. Backup and isolated restoration procedure.
+7. Development-to-production data transfer considerations.
+8. A clear cutover plan that prevents lost writes.
+
+Do not assume development and production databases are interchangeable.
+
+## Safety requirements
+
+- No database migration without my approval.
+- No destructive schema changes.
+- No data deletion or silent replacement.
+- No changes to mapping approval or activation rules.
+- No supplier inventory changes.
+- No Shopify integration or API requests.
+- No supplier credential exposure.
+- No empty-journal fallback.
+
+If the original proposal journal cannot be recovered, report that clearly and explain the safest way to preserve existing data while proceeding.
+
+## Deliverable
+
+Return a concise report identifying:
+
+- Whether the original journal was found.
+- Its location and record count, if recovered.
+- Any remaining recovery blockers.
+- Whether all existing mapping protections remain intact.
+- Whether the permanent PostgreSQL migration package is ready for approval.
+
+This is a real business application. Data preservation and recoverability are mandatory.
